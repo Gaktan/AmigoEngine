@@ -9,20 +9,39 @@ class AmigoEngine : Project
         Name = "Engine";
 
 		RootPath = @"[project.SharpmakeCsPath]\..\..\";
-		SourceRootPath = @"[project.RootPath]\source";
+		SourceRootPath = @"[project.RootPath]\source\engine";
 
         AddTargets(new Target(
             Platform.win64,
             DevEnv.vs2017,
-            Optimization.Debug | Optimization.Release));
+            Optimization.Debug | Optimization.Release,
+			OutputType.Lib,
+			Blob.NoBlob,
+			BuildSystem.MSBuild));
     }
 	
 	[Configure()]
-	public virtual void ConfigureAll(Configuration conf, Target target)
+	public void ConfigureAll(Configuration conf, Target target)
 	{
 		conf.ProjectPath = @"[project.SharpmakeCsPath]\..\[project.Name]\";
 		conf.ProjectFileName = @"[project.Name].[target.DevEnv].[target.Platform]";
 		conf.IntermediatePath = @"[conf.ProjectPath]\temp\[target.DevEnv]\[target.Platform]\[target]";
+		
+		conf.PrecompHeader = "engine_precomp.h";
+		conf.PrecompSource = "engine_precomp.cpp";
+	}
+	
+	[Configure(Platform.win64)]
+	public void ConfigurePC(Configuration conf, Target target)
+	{
+		conf.Options.Add(Options.Vc.Linker.SubSystem.Application);
+		
+		// DX12
+		conf.IncludePaths.Add(@"[project.RootPath]\external\d3d12\include");
+		//conf.LibraryPaths.Add(@"[project.BasePath]\lib");
+		//conf.LibraryFiles.Add(@"D3Dcompiler_47.lib");
+		conf.LibraryFiles.Add(@"D3D12.lib");
+		conf.LibraryFiles.Add(@"DXGI.lib");
 	}
 	
 	[Generate]
