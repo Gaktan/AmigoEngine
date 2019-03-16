@@ -27,6 +27,8 @@ class AmigoEngine : Project
 		conf.ProjectFileName = @"[project.Name].[target.DevEnv].[target.Platform]";
 		conf.IntermediatePath = @"[conf.ProjectPath]\temp\[target.DevEnv]\[target.Platform]\[target]";
 		
+		conf.IncludePaths.Add(@"[project.SourceRootPath]\");
+		
 		conf.PrecompHeader = "engine_precomp.h";
 		conf.PrecompSource = "engine_precomp.cpp";
 	}
