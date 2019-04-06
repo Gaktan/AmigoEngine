@@ -18,6 +18,8 @@ class AmigoEngine : Project
 			OutputType.Lib,
 			Blob.NoBlob,
 			BuildSystem.MSBuild));
+			
+		ResourceFilesExtension.Add(".hlsl");
     }
 	
 	[Configure()]
@@ -41,7 +43,7 @@ class AmigoEngine : Project
 		// DX12
 		conf.IncludePaths.Add(@"[project.RootPath]\external\d3d12\include");
 		//conf.LibraryPaths.Add(@"[project.BasePath]\lib");
-		//conf.LibraryFiles.Add(@"D3Dcompiler_47.lib");
+		conf.LibraryFiles.Add(@"D3DCompiler.lib");
 		conf.LibraryFiles.Add(@"D3D12.lib");
 		conf.LibraryFiles.Add(@"DXGI.lib");
 	}
@@ -64,7 +66,7 @@ class AmigoEngine : Project
         {
 			// Sets proper Windows Kits version
 			KitsRootPaths.SetUseKitsRootForDevEnv(
-				DevEnv.vs2017,
+				target.DevEnv,
 				KitsRootEnum.KitsRoot10,
 				Options.Vc.General.WindowsTargetPlatformVersion.v10_0_17763_0);
 

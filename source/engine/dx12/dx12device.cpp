@@ -47,20 +47,20 @@ void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
 	IDXGIAdapter4* dxgiAdapter4 = GetAdapter(m_UseWarp);
 
 	m_Device = CreateDevice(dxgiAdapter4);
-	m_CommandQueue = CreateCommandQueue(m_Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_CommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_SwapChain = CreateSwapChain(windowHandle, m_CommandQueue, clientWidth, clientHeight, NUM_FRAMES);
 	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
-	m_RTVDescriptorHeap = CreateDescriptorHeap(m_Device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_FRAMES);
+	m_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_FRAMES);
 	m_RTVDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	UpdateRenderTargetViews(clientWidth, clientHeight);
 
 	for (int i = 0; i < NUM_FRAMES; ++i)
 	{
-		m_CommandAllocators[i] = CreateCommandAllocator(m_Device, D3D12_COMMAND_LIST_TYPE_DIRECT);
+		m_CommandAllocators[i] = CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	}
-	m_CommandList = CreateCommandList(m_Device, m_CommandAllocators[m_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_CommandList = CreateCommandList(m_CommandAllocators[m_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
 
 	m_Fence = new DX12Fence(m_Device);
 
@@ -202,6 +202,8 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* adapter)
 		NewFilter.DenyList.pIDList = DenyIds;
 
 		ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
+
+		pInfoQueue->Release();
 	}
 #endif
 
@@ -251,7 +253,7 @@ IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, ID3D12CommandQueue* comm
 	return dxgiSwapChain4;
 }
 
-ID3D12CommandQueue* DX12Device::CreateCommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
+ID3D12CommandQueue* DX12Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type)
 {
 	ID3D12CommandQueue* d3d12CommandQueue;
 
@@ -261,12 +263,12 @@ ID3D12CommandQueue* DX12Device::CreateCommandQueue(ID3D12Device2* device, D3D12_
 	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	desc.NodeMask = 0;
 
-	ThrowIfFailed(device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
+	ThrowIfFailed(m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
 
 	return d3d12CommandQueue;
 }
 
-ID3D12DescriptorHeap* DX12Device::CreateDescriptorHeap(ID3D12Device2* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors)
+ID3D12DescriptorHeap* DX12Device::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors)
 {
 	ID3D12DescriptorHeap* descriptorHeap;
 
@@ -274,25 +276,25 @@ ID3D12DescriptorHeap* DX12Device::CreateDescriptorHeap(ID3D12Device2* device, D3
 	desc.NumDescriptors = numDescriptors;
 	desc.Type = type;
 
-	ThrowIfFailed(device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
 
 	return descriptorHeap;
 }
 
-ID3D12CommandAllocator* DX12Device::CreateCommandAllocator(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type)
+ID3D12CommandAllocator* DX12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type)
 {
 	ID3D12CommandAllocator* commandAllocator;
-	ThrowIfFailed(device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
+	ThrowIfFailed(m_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
 
 	return commandAllocator;
 }
 
-ID3D12GraphicsCommandList* DX12Device::CreateCommandList(ID3D12Device2* device, ID3D12CommandAllocator* commandAllocator, D3D12_COMMAND_LIST_TYPE type)
+ID3D12GraphicsCommandList2* DX12Device::CreateCommandList(ID3D12CommandAllocator* commandAllocator, D3D12_COMMAND_LIST_TYPE type)
 {
-	ID3D12GraphicsCommandList* commandList;
-	ThrowIfFailed(device->CreateCommandList(0, type, commandAllocator, nullptr, IID_PPV_ARGS(&commandList)));
+	ID3D12GraphicsCommandList2* commandList;
+	ThrowIfFailed(m_Device->CreateCommandList(0, type, commandAllocator, nullptr, IID_PPV_ARGS(&commandList)));
 
-	ThrowIfFailed(commandList->Close());
+	//ThrowIfFailed(commandList->Close());
 
 	return commandList;
 }
@@ -311,7 +313,7 @@ void DX12Device::EnableDebugLayer()
 
 bool DX12Device::CheckTearingSupport()
 {
-	BOOL allowTearing = FALSE;
+	BOOL allowTearing = false;
 
 	// Rather than create the DXGI 1.5 factory interface directly, we create the
 	// DXGI 1.4 interface and query for the 1.5 interface. This is to enable the 
@@ -365,8 +367,7 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool useWarp)
 			// creating it. The adapter with the largest dedicated video memory
 			// is favored.
 			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-				SUCCEEDED(D3D12CreateDevice(dxgiAdapter1,
-											D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
+				SUCCEEDED(D3D12CreateDevice(dxgiAdapter1, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
 				dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory)
 			{
 				maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;

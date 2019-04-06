@@ -1,17 +1,17 @@
 #pragma once
 
 #include "datatypes.h"
+#include "dx12/dx12fence.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
-
-#include "dx12/dx12fence.h"
 
 #define NUM_FRAMES 3
 
 class DX12Device
 {
 protected:
+public: //Temp hack
 	// Use WARP adapter
 	bool m_UseWarp = false;
 	bool m_VSync = true;
@@ -22,7 +22,7 @@ protected:
 	ID3D12CommandQueue* m_CommandQueue;
 	IDXGISwapChain4* m_SwapChain;
 	ID3D12Resource* m_BackBuffers[NUM_FRAMES];
-	ID3D12GraphicsCommandList* m_CommandList;
+	ID3D12GraphicsCommandList2* m_CommandList;
 	ID3D12CommandAllocator* m_CommandAllocators[NUM_FRAMES];
 	ID3D12DescriptorHeap* m_RTVDescriptorHeap;
 	ui32 m_RTVDescriptorSize;
@@ -45,10 +45,10 @@ public:
 protected:
 	ID3D12Device2*				CreateDevice(IDXGIAdapter4* adapter);
 	IDXGISwapChain4*			CreateSwapChain(HWND hWnd, ID3D12CommandQueue* commandQueue, ui32 width, ui32 height, ui32 bufferCount);
-	ID3D12CommandQueue*			CreateCommandQueue(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type);
-	ID3D12DescriptorHeap*		CreateDescriptorHeap(ID3D12Device2* device, D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
-	ID3D12CommandAllocator*		CreateCommandAllocator(ID3D12Device2* device, D3D12_COMMAND_LIST_TYPE type);
-	ID3D12GraphicsCommandList*	DX12Device::CreateCommandList(ID3D12Device2* device, ID3D12CommandAllocator* commandAllocator, D3D12_COMMAND_LIST_TYPE type);
+	ID3D12CommandQueue*			CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type);
+	ID3D12DescriptorHeap*		CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors);
+	ID3D12CommandAllocator*		CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type);
+	ID3D12GraphicsCommandList2*	CreateCommandList(ID3D12CommandAllocator* commandAllocator, D3D12_COMMAND_LIST_TYPE type);
 	
 	void EnableDebugLayer();
 	bool CheckTearingSupport();

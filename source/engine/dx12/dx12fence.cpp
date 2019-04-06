@@ -1,7 +1,7 @@
 #include "engine_precomp.h"
 #include "dx12fence.h"
 
-#include<cassert>
+#include <cassert>
 #include <exception>
 
 inline void ThrowIfFailed(HRESULT hr)

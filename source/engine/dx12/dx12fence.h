@@ -5,15 +5,6 @@
 #include <d3d12.h>
 #include <chrono>
 
-// The min/max macros conflict with like-named member functions.
-#if defined(min)
-#undef min
-#endif
-
-#if defined(max)
-#undef max
-#endif
-
 class DX12Fence
 {
 protected:
@@ -26,5 +17,5 @@ public:
 	virtual ~DX12Fence();
 
 	ui64 Signal(ID3D12CommandQueue* commandQueue);
-	void WaitForFenceValue(ui64 fenceValue, std::chrono::milliseconds duration = std::chrono::milliseconds::max());
+	void WaitForFenceValue(ui64 fenceValue, std::chrono::milliseconds duration = (std::chrono::milliseconds::max)());
 };

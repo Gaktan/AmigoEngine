@@ -1,5 +1,7 @@
 #include "engine_precomp.h"
 
+#define NOMINMAX
+
 #include <Windows.h>
 #include <WinDef.h>
 
@@ -142,6 +144,8 @@ void SetFullscreen(bool fullscreen)
 	}
 }
 
+#include "test.h"
+
 void Update()
 {
 	static ui64 frameCounter = 0;
@@ -165,15 +169,21 @@ void Update()
 		frameCounter = 0;
 		elapsedSeconds = 0.0;
 	}
+
+	OnUpdate(g_ClientWidth, g_ClientHeight);
 }
 
 void Render()
 {
+	/*
 	// Temporary rendering
 	g_Device.TempRendering();
 
 	// Present
 	g_Device.Present();
+	*/
+
+	OnRender(g_Device);
 }
 
 void Resize(uint32_t width, uint32_t height)
@@ -186,6 +196,8 @@ void Resize(uint32_t width, uint32_t height)
 
 		g_Device.UpdateRenderTargetViews(g_ClientWidth, g_ClientHeight);
 	}
+
+	OnResize(g_Device, width, height);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -267,6 +279,8 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 	::GetWindowRect(g_hWnd, &g_WindowRect);
 
 	g_Device.Init(g_hWnd, g_ClientWidth, g_ClientHeight);
+
+	LoadContent(g_Device, g_ClientWidth, g_ClientHeight);
 
 	::ShowWindow(g_hWnd, SW_SHOW);
 
