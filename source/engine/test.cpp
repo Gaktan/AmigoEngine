@@ -7,15 +7,11 @@
 
 #include <d3dcompiler.h>
 
-#include <DirectXMath.h>
-
 #include "math/math.h"
-//#include "math/vector4.h"
-//#include "math/matrix4.h"
+#include "math/vector4.h"
+#include "math/matrix4.h"
 
 #include "dx12/dx12device.h"
-
-using namespace DirectX;
 
 // Vertex buffer for the cube.
 ID3D12Resource* m_VertexBuffer;
@@ -40,9 +36,9 @@ D3D12_RECT m_ScissorRect;
 
 float m_FoV;
 
-XMMATRIX m_ModelMatrix;
-XMMATRIX m_ViewMatrix;
-XMMATRIX m_ProjectionMatrix;
+Matrix4f m_ModelMatrix;
+Matrix4f m_ViewMatrix;
+Matrix4f m_ProjectionMatrix;
 
 bool m_ContentLoaded;
 
@@ -57,19 +53,19 @@ inline void ThrowIfFailed(HRESULT hr)
 // Vertex data for a colored cube.
 struct VertexPosColor
 {
-	XMFLOAT3 Position;
-	XMFLOAT3 Color;
+	Vector4f Position;
+	Vector4f Color;
 };
 
 static VertexPosColor g_Vertices[8] = {
-	{ XMFLOAT3(-1.0f, -1.0f, -1.0f), XMFLOAT3(0.0f, 0.0f, 0.0f) }, // 0
-	{ XMFLOAT3(-1.0f,  1.0f, -1.0f), XMFLOAT3(0.0f, 1.0f, 0.0f) }, // 1
-	{ XMFLOAT3(1.0f,  1.0f, -1.0f), XMFLOAT3(1.0f, 1.0f, 0.0f) }, // 2
-	{ XMFLOAT3(1.0f, -1.0f, -1.0f), XMFLOAT3(1.0f, 0.0f, 0.0f) }, // 3
-	{ XMFLOAT3(-1.0f, -1.0f,  1.0f), XMFLOAT3(0.0f, 0.0f, 1.0f) }, // 4
-	{ XMFLOAT3(-1.0f,  1.0f,  1.0f), XMFLOAT3(0.0f, 1.0f, 1.0f) }, // 5
-	{ XMFLOAT3(1.0f,  1.0f,  1.0f), XMFLOAT3(1.0f, 1.0f, 1.0f) }, // 6
-	{ XMFLOAT3(1.0f, -1.0f,  1.0f), XMFLOAT3(1.0f, 0.0f, 1.0f) }  // 7
+	{ Vector4f(-1.0f, -1.0f, -1.0f), Vector4f(0.0f, 0.0f, 0.0f) }, // 0
+	{ Vector4f(-1.0f,  1.0f, -1.0f), Vector4f(0.0f, 1.0f, 0.0f) }, // 1
+	{ Vector4f( 1.0f,  1.0f, -1.0f), Vector4f(1.0f, 1.0f, 0.0f) }, // 2
+	{ Vector4f( 1.0f, -1.0f, -1.0f), Vector4f(1.0f, 0.0f, 0.0f) }, // 3
+	{ Vector4f(-1.0f, -1.0f,  1.0f), Vector4f(0.0f, 0.0f, 1.0f) }, // 4
+	{ Vector4f(-1.0f,  1.0f,  1.0f), Vector4f(0.0f, 1.0f, 1.0f) }, // 5
+	{ Vector4f( 1.0f,  1.0f,  1.0f), Vector4f(1.0f, 1.0f, 1.0f) }, // 6
+	{ Vector4f( 1.0f, -1.0f,  1.0f), Vector4f(1.0f, 0.0f, 1.0f) }  // 7
 };
 
 static WORD g_Indicies[36] =
@@ -226,8 +222,8 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	// Create the vertex input layout
 	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
 	// Create a root signature.
@@ -248,7 +244,7 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-	rootParameters[0].InitAsConstants(sizeof(XMMATRIX) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	rootParameters[0].InitAsConstants(sizeof(Matrix4f) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
 	rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
@@ -331,27 +327,27 @@ void OnUpdate(ui32 width, ui32 height)
 
 	// Update the model matrix.
 	float angle = TTT * 0.1f;
-	const XMVECTOR rotationAxis = XMVectorSet(0, 1, 1, 0);
-	m_ModelMatrix = XMMatrixRotationAxis(rotationAxis, XMConvertToRadians(angle));
+	const Vector4f rotationAxis(0, 1, 1, 0);
+	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotationAxis, toRadians(angle));
 
 	// Update the view matrix.
-	const XMVECTOR eyePosition = XMVectorSet(0, 0, -10, 1);
-	const XMVECTOR focusPoint = XMVectorSet(0, 0, 0, 1);
-	const XMVECTOR upDirection = XMVectorSet(0, 1, 0, 0);
-	m_ViewMatrix = XMMatrixLookAtLH(eyePosition, focusPoint, upDirection);
+	const Vector4f eyePosition(0, 0, -10, 1);
+	const Vector4f focusPoint(0, 0, 0, 1);
+	const Vector4f upDirection(0, 1, 0, 0);
+	m_ViewMatrix = Matrix4f::CreateLookAtMatrix(eyePosition, focusPoint, upDirection);
 
 	// Update the projection matrix.
 	float aspectRatio = width / static_cast<float>(height);
-	m_ProjectionMatrix = XMMatrixPerspectiveFovLH(XMConvertToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(toRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 }
 
 // Transition a resource
-void TransitionResource(Microsoft::WRL::ComPtr<ID3D12GraphicsCommandList2> commandList,
-								   Microsoft::WRL::ComPtr<ID3D12Resource> resource,
-								   D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
+void TransitionResource(ID3D12GraphicsCommandList2* commandList,
+						ID3D12Resource* resource,
+						D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
 {
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		resource.Get(),
+		resource,
 		beforeState, afterState);
 
 	commandList->ResourceBarrier(1, &barrier);
@@ -409,9 +405,10 @@ void OnRender(DX12Device& dx12Device)
 	commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
 
 	// Update the MVP matrix
-	XMMATRIX mvpMatrix = XMMatrixMultiply(m_ModelMatrix, m_ViewMatrix);
-	mvpMatrix = XMMatrixMultiply(mvpMatrix, m_ProjectionMatrix);
-	commandList->SetGraphicsRoot32BitConstants(0, sizeof(XMMATRIX) / 4, &mvpMatrix, 0);
+	Matrix4f mvpMatrix = m_ModelMatrix.Mul(m_ViewMatrix);
+	mvpMatrix = mvpMatrix.Mul(m_ProjectionMatrix);
+
+	commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix4f) / 4, &mvpMatrix, 0);
 
 	commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 
