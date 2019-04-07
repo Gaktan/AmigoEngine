@@ -18,8 +18,14 @@ class AmigoEngine : Project
 			OutputType.Lib,
 			Blob.NoBlob,
 			BuildSystem.MSBuild));
-			
-		ResourceFilesExtension.Add(".hlsl");
+
+		// Pixel shader
+		ResourceFilesExtensions.Add(".ps");
+		ExtensionBuildTools.Add(".ps", "FxCompile");
+
+		// Vertex shader
+		ResourceFilesExtensions.Add(".vs");
+		ExtensionBuildTools.Add(".vs", "FxCompile");
     }
 	
 	[Configure()]
