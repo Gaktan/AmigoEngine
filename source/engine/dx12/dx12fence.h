@@ -18,4 +18,5 @@ public:
 
 	ui64 Signal(ID3D12CommandQueue* commandQueue);
 	void WaitForFenceValue(ui64 fenceValue, std::chrono::milliseconds duration = (std::chrono::milliseconds::max)());
+	bool IsFenceComplete(ui64 fenceValue);
 };

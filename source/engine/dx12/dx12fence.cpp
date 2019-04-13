@@ -49,3 +49,8 @@ void DX12Fence::WaitForFenceValue(ui64 fenceValue, std::chrono::milliseconds dur
 		::WaitForSingleObject(m_FenceEvent, static_cast<DWORD>(duration.count()));
 	}
 }
+
+bool DX12Fence::IsFenceComplete(ui64 fenceValue)
+{
+	return m_Fence->GetCompletedValue() >= fenceValue;
+}

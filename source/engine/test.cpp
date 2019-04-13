@@ -165,11 +165,10 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 		m_FoV = 45.0f;
 		m_ContentLoaded = false;
 	}
+
 	auto device = dx12Device.m_Device;
-	//auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-	//auto commandList = commandQueue->GetCommandList();
-	auto commandList = dx12Device.m_CommandList;
-	auto commandQueue = dx12Device.m_CommandQueue;
+	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	auto commandList = commandQueue->GetCommandList(&dx12Device);
 
 	// Upload vertex buffer data.
 	ID3D12Resource* intermediateVertexBuffer;
@@ -286,14 +285,8 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	};
 	ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_PipelineState)));
 
-	//auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-	//commandQueue->WaitForFenceValue(fenceValue);
-	commandList->Close();
-	ID3D12CommandList* const commandLists[] =
-	{
-		commandList
-	};
-	commandQueue->ExecuteCommandLists(1, commandLists);
+	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
+	commandQueue->WaitForFenceValue(fenceValue);
 
 	m_ContentLoaded = true;
 
@@ -368,8 +361,8 @@ void ClearDepth(ID3D12GraphicsCommandList2* commandList,
 
 void OnRender(DX12Device& dx12Device)
 {
-	//auto commandQueue = Application::Get().GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	//auto commandList = commandQueue->GetCommandList();
+	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto commandList = commandQueue->GetCommandList(&dx12Device);
 
 	//UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
 	//auto backBuffer = m_pWindow->GetCurrentBackBuffer();
@@ -378,8 +371,7 @@ void OnRender(DX12Device& dx12Device)
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(dx12Device.m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), dx12Device.m_CurrentBackBufferIndex, dx12Device.m_RTVDescriptorSize);
 
-	dx12Device.TempRendering();
-	auto commandList = dx12Device.m_CommandList;
+	dx12Device.TempRendering(commandList);
 
 	// Clear the render targets.
 	{
@@ -413,5 +405,5 @@ void OnRender(DX12Device& dx12Device)
 	commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 
 	// Present
-	dx12Device.Present();
+	dx12Device.Present(commandList);
 }

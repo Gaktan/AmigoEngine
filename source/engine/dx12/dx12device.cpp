@@ -23,18 +23,12 @@ DX12Device::DX12Device()
 
 DX12Device::~DX12Device()
 {
-	delete m_Fence;
-
-	m_CommandList->Release();
-
-	for (int i = 0; i < NUM_FRAMES; ++i)
-	{
-		m_CommandAllocators[i]->Release();
-	}
+	delete m_DirectCommandQueue;
+	delete m_ComputeCommandQueue;
+	delete m_CopyCommandQueue;
 
 	m_RTVDescriptorHeap->Release();
 	m_SwapChain->Release();
-	m_CommandQueue->Release();
 	m_Device->Release();
 }
 
@@ -47,8 +41,12 @@ void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
 	IDXGIAdapter4* dxgiAdapter4 = GetAdapter(m_UseWarp);
 
 	m_Device = CreateDevice(dxgiAdapter4);
-	m_CommandQueue = CreateCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_SwapChain = CreateSwapChain(windowHandle, m_CommandQueue, clientWidth, clientHeight, NUM_FRAMES);
+
+	m_DirectCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_ComputeCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_CopyCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COPY);
+
+	m_SwapChain = CreateSwapChain(windowHandle, m_DirectCommandQueue, clientWidth, clientHeight, NUM_FRAMES);
 	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
 	m_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_FRAMES);
@@ -56,55 +54,37 @@ void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
 
 	UpdateRenderTargetViews(clientWidth, clientHeight);
 
-	for (int i = 0; i < NUM_FRAMES; ++i)
-	{
-		m_CommandAllocators[i] = CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	}
-	m_CommandList = CreateCommandList(m_CommandAllocators[m_CurrentBackBufferIndex], D3D12_COMMAND_LIST_TYPE_DIRECT);
-
-	m_Fence = new DX12Fence(m_Device);
-
 	m_IsInitialized = true;
 }
 
 void DX12Device::Flush()
 {
-	ui64 fenceValueForSignal = m_Fence->Signal(m_CommandQueue);
-	m_Fence->WaitForFenceValue(fenceValueForSignal);
+	m_DirectCommandQueue->Flush();
+	m_ComputeCommandQueue->Flush();
+	m_CopyCommandQueue->Flush();
 }
 
-void DX12Device::Present()
+void DX12Device::Present(ID3D12GraphicsCommandList2* commandList)
 {
 	auto backBuffer = m_BackBuffers[m_CurrentBackBufferIndex];
 
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	m_CommandList->ResourceBarrier(1, &barrier);
+	commandList->ResourceBarrier(1, &barrier);
 
-	ThrowIfFailed(m_CommandList->Close());
-
-	ID3D12CommandList* const commandLists[] =
-	{
-		m_CommandList
-	};
-	m_CommandQueue->ExecuteCommandLists(_countof(commandLists), commandLists);
+	m_FrameFenceValues[m_CurrentBackBufferIndex] = m_DirectCommandQueue->ExecuteCommandList(commandList);
 
 	UINT syncInterval = m_VSync ? 1 : 0;
 	UINT presentFlags = m_TearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
 	ThrowIfFailed(m_SwapChain->Present(syncInterval, presentFlags));
 
-	m_FrameFenceValues[m_CurrentBackBufferIndex] = m_Fence->Signal(m_CommandQueue);
 	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
-	m_Fence->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
+	m_DirectCommandQueue->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
 }
 
-void DX12Device::TempRendering()
+void DX12Device::TempRendering(ID3D12GraphicsCommandList2* commandList)
 {
-	auto commandAllocator = m_CommandAllocators[m_CurrentBackBufferIndex];
 	auto backBuffer = m_BackBuffers[m_CurrentBackBufferIndex];
-
-	commandAllocator->Reset();
-	m_CommandList->Reset(commandAllocator, nullptr);
 
 	// Clear the render target.
 	{
@@ -112,12 +92,12 @@ void DX12Device::TempRendering()
 			backBuffer,
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-		m_CommandList->ResourceBarrier(1, &barrier);
+		commandList->ResourceBarrier(1, &barrier);
 
 		FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
 		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 
-		m_CommandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
+		commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 	}
 }
 
@@ -210,7 +190,7 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* adapter)
 	return d3d12Device2;
 }
 
-IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, ID3D12CommandQueue* commandQueue, ui32 width, ui32 height, ui32 bufferCount)
+IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, DX12CommandQueue* commandQueue, ui32 width, ui32 height, ui32 bufferCount)
 {
 	IDXGISwapChain4* dxgiSwapChain4;
 	IDXGIFactory4* dxgiFactory4;
@@ -237,7 +217,7 @@ IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, ID3D12CommandQueue* comm
 	swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
 	IDXGISwapChain1* swapChain1;
 	ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(
-		commandQueue,
+		commandQueue->GetD3D12CommandQueue(),
 		hWnd,
 		&swapChainDesc,
 		nullptr,
@@ -251,21 +231,6 @@ IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, ID3D12CommandQueue* comm
 	ThrowIfFailed(swapChain1->QueryInterface(__uuidof(IDXGISwapChain4), (void **) &dxgiSwapChain4));
 
 	return dxgiSwapChain4;
-}
-
-ID3D12CommandQueue* DX12Device::CreateCommandQueue(D3D12_COMMAND_LIST_TYPE type)
-{
-	ID3D12CommandQueue* d3d12CommandQueue;
-
-	D3D12_COMMAND_QUEUE_DESC desc = {};
-	desc.Type = type;
-	desc.Priority = D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
-	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-	desc.NodeMask = 0;
-
-	ThrowIfFailed(m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&d3d12CommandQueue)));
-
-	return d3d12CommandQueue;
 }
 
 ID3D12DescriptorHeap* DX12Device::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors)
@@ -287,16 +252,6 @@ ID3D12CommandAllocator* DX12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TY
 	ThrowIfFailed(m_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
 
 	return commandAllocator;
-}
-
-ID3D12GraphicsCommandList2* DX12Device::CreateCommandList(ID3D12CommandAllocator* commandAllocator, D3D12_COMMAND_LIST_TYPE type)
-{
-	ID3D12GraphicsCommandList2* commandList;
-	ThrowIfFailed(m_Device->CreateCommandList(0, type, commandAllocator, nullptr, IID_PPV_ARGS(&commandList)));
-
-	//ThrowIfFailed(commandList->Close());
-
-	return commandList;
 }
 
 void DX12Device::EnableDebugLayer()
@@ -377,4 +332,25 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool useWarp)
 	}
 
 	return dxgiAdapter4;
+}
+
+DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
+{
+	DX12CommandQueue* commandQueue;
+	switch (type)
+	{
+	case D3D12_COMMAND_LIST_TYPE_DIRECT:
+		commandQueue = m_DirectCommandQueue;
+		break;
+	case D3D12_COMMAND_LIST_TYPE_COMPUTE:
+		commandQueue = m_ComputeCommandQueue;
+		break;
+	case D3D12_COMMAND_LIST_TYPE_COPY:
+		commandQueue = m_CopyCommandQueue;
+		break;
+	default:
+		assert(false && "Invalid command queue type.");
+	}
+
+	return commandQueue;
 }
