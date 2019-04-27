@@ -28,19 +28,39 @@ DX12Device::~DX12Device()
 	delete m_CopyCommandQueue;
 
 	m_RTVDescriptorHeap->Release();
+
+	for (int i = 0; i < NUM_FRAMES; ++i)
+	{
+		m_BackBuffers[i]->Release();
+	}
+
 	m_SwapChain->Release();
+
+#if defined(_DEBUG)
+	ID3D12DebugDevice* debugDevice = nullptr;
+	ThrowIfFailed(m_Device->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(&debugDevice)));
+
+	HRESULT result = debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
+	ThrowIfFailed(result);
+
+	debugDevice->Release();
+#endif
+
 	m_Device->Release();
 }
 
 void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
 {
 	EnableDebugLayer();
+	EnableGPUBasedValidation();
 
 	m_TearingSupported = CheckTearingSupport();
 
-	IDXGIAdapter4* dxgiAdapter4 = GetAdapter(m_UseWarp);
-
-	m_Device = CreateDevice(dxgiAdapter4);
+	{
+		IDXGIAdapter4* dxgiAdapter4 = GetAdapter(m_UseWarp);
+		m_Device = CreateDevice(dxgiAdapter4);
+		dxgiAdapter4->Release();
+	}
 
 	m_DirectCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_ComputeCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
@@ -154,7 +174,7 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* adapter)
 	{
 		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
 
 		// Suppress whole categories of messages
 		//D3D12_MESSAGE_CATEGORY Categories[] = {};
@@ -230,6 +250,9 @@ IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, DX12CommandQueue* comman
 
 	ThrowIfFailed(swapChain1->QueryInterface(__uuidof(IDXGISwapChain4), (void **) &dxgiSwapChain4));
 
+	swapChain1->Release();
+	dxgiFactory4->Release();
+
 	return dxgiSwapChain4;
 }
 
@@ -246,12 +269,18 @@ ID3D12DescriptorHeap* DX12Device::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYP
 	return descriptorHeap;
 }
 
-ID3D12CommandAllocator* DX12Device::CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type)
+void DX12Device::EnableGPUBasedValidation()
 {
-	ID3D12CommandAllocator* commandAllocator;
-	ThrowIfFailed(m_Device->CreateCommandAllocator(type, IID_PPV_ARGS(&commandAllocator)));
+#if defined(_DEBUG)
+	ID3D12Debug* spDebugController0;
+	ID3D12Debug1* spDebugController1;
+	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&spDebugController0)));
+	ThrowIfFailed(spDebugController0->QueryInterface(IID_PPV_ARGS(&spDebugController1)));
+	spDebugController1->SetEnableGPUBasedValidation(true);
 
-	return commandAllocator;
+	spDebugController1->Release();
+	spDebugController0->Release();
+#endif
 }
 
 void DX12Device::EnableDebugLayer()
@@ -263,6 +292,8 @@ void DX12Device::EnableDebugLayer()
 	ID3D12Debug* debugInterface;
 	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
 	debugInterface->EnableDebugLayer();
+
+	debugInterface->Release();
 #endif
 }
 
@@ -302,16 +333,18 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool useWarp)
 
 	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
 
-	IDXGIAdapter1* dxgiAdapter1 = nullptr;
 	IDXGIAdapter4* dxgiAdapter4 = nullptr;
 
 	if (useWarp)
 	{
+		IDXGIAdapter1* dxgiAdapter1 = nullptr;
 		ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter1)));
 		ThrowIfFailed(dxgiAdapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgiAdapter4));
+		dxgiAdapter1->Release();
 	}
 	else
 	{
+		IDXGIAdapter1* dxgiAdapter1 = nullptr;
 		SIZE_T maxDedicatedVideoMemory = 0;
 		for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
 		{
@@ -328,8 +361,12 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool useWarp)
 				maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
 				ThrowIfFailed(dxgiAdapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgiAdapter4));
 			}
+
+			dxgiAdapter1->Release();
 		}
 	}
+
+	dxgiFactory->Release();
 
 	return dxgiAdapter4;
 }
@@ -349,6 +386,7 @@ DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) cons
 		commandQueue = m_CopyCommandQueue;
 		break;
 	default:
+		commandQueue = nullptr;
 		assert(false && "Invalid command queue type.");
 	}
 

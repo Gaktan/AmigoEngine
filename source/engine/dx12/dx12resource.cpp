@@ -77,6 +77,12 @@ DX12VertexBuffer::DX12VertexBuffer(
 	m_VertexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
 	m_VertexBufferView.SizeInBytes = bufferSize;
 	m_VertexBufferView.StrideInBytes = stride;
+
+	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_Resource,
+		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
+	
+	commandList->ResourceBarrier(1, &barrier);
 }
 
 void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews)
@@ -94,6 +100,12 @@ DX12IndexBuffer::DX12IndexBuffer(
 	m_IndexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
 	m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
 	m_IndexBufferView.SizeInBytes = bufferSize;
+
+	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
+		m_Resource,
+		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
+
+	commandList->ResourceBarrier(1, &barrier);
 }
 
 void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* commandList)

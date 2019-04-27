@@ -15,8 +15,7 @@ inline void ThrowIfFailed(HRESULT hr)
 }
 
 DX12CommandQueue::DX12CommandQueue(DX12Device* device, D3D12_COMMAND_LIST_TYPE type)
-	: m_FenceValue(0)
-	, m_CommandListType(type)
+	: m_CommandListType(type)
 	, m_Fence(device->m_Device)
 {
 	D3D12_COMMAND_QUEUE_DESC desc = {};
@@ -25,16 +24,33 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device, D3D12_COMMAND_LIST_TYPE t
 	desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
 	desc.NodeMask = 0;
 
-	ThrowIfFailed(device->m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_d3d12CommandQueue)));
+	ThrowIfFailed(device->m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_CommandQueue)));
 }
 
 DX12CommandQueue::~DX12CommandQueue()
 {
+	Flush();
+
+	while (!m_CommandAllocatorQueue.empty())
+	{
+		auto* commandAllocator = m_CommandAllocatorQueue.front().commandAllocator;
+		m_CommandAllocatorQueue.pop();
+		commandAllocator->Release();
+	}
+
+	while (!m_CommandListQueue.empty())
+	{
+		auto* commandList = m_CommandListQueue.front();
+		m_CommandListQueue.pop();
+		commandList->Release();
+	}
+
+	m_CommandQueue->Release();
 }
 
 uint64_t DX12CommandQueue::Signal()
 {
-	return m_Fence.Signal(m_d3d12CommandQueue);
+	return m_Fence.Signal(m_CommandQueue);
 }
 
 bool DX12CommandQueue::IsFenceComplete(ui64 fenceValue)
@@ -119,15 +135,12 @@ ui64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandLis
 		commandList
 	};
 
-	m_d3d12CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+	m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
 	uint64_t fenceValue = Signal();
 
 	m_CommandAllocatorQueue.emplace(CommandAllocatorEntry{ fenceValue, commandAllocator });
 	m_CommandListQueue.push(commandList);
 
-	// The ownership of the command allocator has been transferred to the ComPtr
-	// in the command allocator queue. It is safe to release the reference 
-	// in this temporary COM pointer here.
 	commandAllocator->Release();
 
 	return fenceValue;
@@ -135,5 +148,5 @@ ui64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandLis
 
 ID3D12CommandQueue* DX12CommandQueue::GetD3D12CommandQueue() const
 {
-	return m_d3d12CommandQueue;
+	return m_CommandQueue;
 }

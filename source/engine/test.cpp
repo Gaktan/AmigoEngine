@@ -19,6 +19,9 @@ DX12VertexBuffer* m_VertexBuffer;
 // Index buffer for the cube.
 DX12IndexBuffer* m_IndexBuffer;
 
+ID3DBlob* vertexShaderBlob = nullptr;
+ID3DBlob* pixelShaderBlob = nullptr;
+
 // Depth buffer.
 ID3D12Resource* m_DepthBuffer;
 // Descriptor heap for depth buffer.
@@ -125,7 +128,7 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	}
 
 	auto device = dx12Device.m_Device;
-	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
 	auto commandList = commandQueue->GetCommandList(&dx12Device);
 
 	// Upload vertex buffer data.
@@ -141,21 +144,16 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 
 #if 0
 	// Load the vertex shader.
-	ID3DBlob* vertexShaderBlob;
 	ThrowIfFailed(D3DReadFileToBlob(L"VertexShader.cso", &vertexShaderBlob));
 
 	// Load the pixel shader.
-	ID3DBlob* pixelShaderBlob;
 	ThrowIfFailed(D3DReadFileToBlob(L"PixelShader.cso", &pixelShaderBlob));
 #else
-	ID3DBlob* vertexShaderBlob = nullptr;
 	/*ThrowIfFailed*/HRESULT res = (D3DReadFileToBlob(L"D:/Programming/AmigoEngine/projects/engine/output/win64/debug/VertexShader.cso", &vertexShaderBlob));
 	ThrowIfFailed(res);
 
 	// Load the pixel shader.
-	ID3DBlob* pixelShaderBlob = nullptr;
 	/*ThrowIfFailed*/(D3DReadFileToBlob(L"D:/Programming/AmigoEngine/projects/engine/output/win64/debug/PixelShader.cso", &pixelShaderBlob));
-
 #endif
 
 	// Create the vertex input layout
@@ -243,6 +241,7 @@ void OnResize(DX12Device& device, ui32 width, ui32 height)
 	{
 		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
+		m_DepthBuffer->Release();
 		ResizeDepthBuffer(device, width, height);
 	}
 }
@@ -251,6 +250,14 @@ void UnloadContent()
 {
 	delete m_VertexBuffer;
 	delete m_IndexBuffer;
+
+	vertexShaderBlob->Release();
+	pixelShaderBlob->Release();
+
+	m_DepthBuffer->Release();
+	m_DSVHeap->Release();
+	m_RootSignature->Release();
+	m_PipelineState->Release();
 
 	m_ContentLoaded = false;
 }

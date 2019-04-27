@@ -1,9 +1,8 @@
 #pragma once
 
 #include "datatypes.h"
-#include "dx12fence.h"
 
-#include <d3d12.h>
+#include "dx12fence.h"
 
 #include <queue>
 
@@ -28,8 +27,8 @@ public:
 	void Flush();
 
 	ID3D12CommandQueue* GetD3D12CommandQueue() const;
-protected:
 
+protected:
 	ID3D12CommandAllocator* CreateCommandAllocator(DX12Device* device);
 	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator);
 
@@ -45,10 +44,9 @@ private:
 	using CommandListQueue = std::queue<ID3D12GraphicsCommandList2*>;
 
 	D3D12_COMMAND_LIST_TYPE		m_CommandListType;
-	ID3D12CommandQueue*			m_d3d12CommandQueue;
+	ID3D12CommandQueue*			m_CommandQueue;
 
 	DX12Fence					m_Fence;
-	ui64						m_FenceValue;
 
 	CommandAllocatorQueue		m_CommandAllocatorQueue;
 	CommandListQueue			m_CommandListQueue;

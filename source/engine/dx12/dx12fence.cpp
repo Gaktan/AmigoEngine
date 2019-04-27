@@ -31,6 +31,7 @@ DX12Fence::DX12Fence(ID3D12Device* device)
 DX12Fence::~DX12Fence()
 {
 	m_Fence->Release();
+	::CloseHandle(m_FenceEvent);
 }
 
 ui64 DX12Fence::Signal(ID3D12CommandQueue* commandQueue)
