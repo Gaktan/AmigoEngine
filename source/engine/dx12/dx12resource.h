@@ -42,7 +42,7 @@ public:
 	{
 	}
 
-	void SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews);
+	void SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews) const;
 };
 
 class DX12IndexBuffer : public DX12Resource
@@ -61,5 +61,5 @@ public:
 	{
 	}
 
-	void SetIndexBuffer(ID3D12GraphicsCommandList2* commandList);
+	void SetIndexBuffer(ID3D12GraphicsCommandList2* commandList) const;
 };

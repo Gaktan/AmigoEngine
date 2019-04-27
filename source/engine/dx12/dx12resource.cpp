@@ -85,7 +85,7 @@ DX12VertexBuffer::DX12VertexBuffer(
 	commandList->ResourceBarrier(1, &barrier);
 }
 
-void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews)
+void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews) const
 {
 	commandList->IASetVertexBuffers(startSlot, numViews, &m_VertexBufferView);
 }
@@ -108,7 +108,7 @@ DX12IndexBuffer::DX12IndexBuffer(
 	commandList->ResourceBarrier(1, &barrier);
 }
 
-void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* commandList)
+void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* commandList) const
 {
 	commandList->IASetIndexBuffer(&m_IndexBufferView);
 }

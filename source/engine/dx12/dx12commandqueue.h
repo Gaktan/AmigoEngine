@@ -22,15 +22,15 @@ public:
 	ui64 ExecuteCommandList(ID3D12GraphicsCommandList2* commandList);
 
 	ui64 Signal();
-	bool IsFenceComplete(ui64 fenceValue);
-	void WaitForFenceValue(ui64 fenceValue);
+	bool IsFenceComplete(ui64 fenceValue) const;
+	void WaitForFenceValue(ui64 fenceValue) const;
 	void Flush();
 
 	ID3D12CommandQueue* GetD3D12CommandQueue() const;
 
 protected:
-	ID3D12CommandAllocator* CreateCommandAllocator(DX12Device* device);
-	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator);
+	ID3D12CommandAllocator*		CreateCommandAllocator(DX12Device* device) const;
+	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator) const;
 
 private:
 	// Keep track of command allocators that are "in-flight"
@@ -40,8 +40,8 @@ private:
 		ID3D12CommandAllocator* commandAllocator;
 	};
 
-	using CommandAllocatorQueue = std::queue<CommandAllocatorEntry>;
-	using CommandListQueue = std::queue<ID3D12GraphicsCommandList2*>;
+	using CommandAllocatorQueue	= std::queue<CommandAllocatorEntry>;
+	using CommandListQueue		= std::queue<ID3D12GraphicsCommandList2*>;
 
 	D3D12_COMMAND_LIST_TYPE		m_CommandListType;
 	ID3D12CommandQueue*			m_CommandQueue;

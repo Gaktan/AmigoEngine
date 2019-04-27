@@ -98,21 +98,22 @@ void SetFullscreen(bool fullscreen)
 	{
 		g_Fullscreen = fullscreen;
 
-		if (g_Fullscreen) // Switching to fullscreen.
+		// Switching to fullscreen.
+		if (g_Fullscreen)
 		{
 			// Store the current window dimensions so they can be restored 
 			// when switching out of fullscreen state.
 			::GetWindowRect(g_hWnd, &g_WindowRect);
 
 			// Set the window style to a borderless window so the client area fills
-// the entire screen.
+			// the entire screen.
 			UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
 
 			::SetWindowLongW(g_hWnd, GWL_STYLE, windowStyle);
 
 			// Query the name of the nearest display device for the window.
-// This is required to set the fullscreen dimensions of the window
-// when using a multi-monitor setup.
+			// This is required to set the fullscreen dimensions of the window
+			// when using a multi-monitor setup.
 			HMONITOR hMonitor = ::MonitorFromWindow(g_hWnd, MONITOR_DEFAULTTONEAREST);
 			MONITORINFOEX monitorInfo = {};
 			monitorInfo.cbSize = sizeof(MONITORINFOEX);
@@ -170,20 +171,9 @@ void Update()
 		elapsedSeconds = 0.0;
 	}
 
-	OnUpdate(g_ClientWidth, g_ClientHeight);
-}
+	float deltaMS = deltaTime.count() * 1e-6;
 
-void Render()
-{
-	/*
-	// Temporary rendering
-	g_Device.TempRendering();
-
-	// Present
-	g_Device.Present();
-	*/
-
-	OnRender(g_Device);
+	OnUpdate(g_ClientWidth, g_ClientHeight, deltaMS);
 }
 
 void Resize(uint32_t width, uint32_t height)
@@ -211,7 +201,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 	{
 	case WM_PAINT:
 		Update();
-		Render();
+		OnRender(g_Device);
 		break;
 	case WM_SYSKEYDOWN:
 	case WM_KEYDOWN:
@@ -268,11 +258,11 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 	// Window class name. Used for registering / creating the window.
-	const wchar_t* windowClassName = L"DX12WindowClass";
+	const wchar_t* windowClassName = L"AmigoDX12WindowClass";
 	//ParseCommandLineArguments();
 
 	RegisterWindowClass(hInstance, windowClassName);
-	g_hWnd = CreateWindow(windowClassName, hInstance, L"Learning DirectX 12",
+	g_hWnd = CreateWindow(windowClassName, hInstance, L"Amigo engine DX12",
 						  g_ClientWidth, g_ClientHeight);
 
 	// Initialize the global window rect variable.
@@ -294,12 +284,7 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 		}
 	}
 
-	// Make sure the command queue has finished all commands before closing.
-	g_Device.Flush();
-
-	UnloadContent();
-
-	//::CloseHandle(g_FenceEvent);
+	UnloadContent(g_Device);
 
 	return 0;
 }

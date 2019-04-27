@@ -53,12 +53,12 @@ uint64_t DX12CommandQueue::Signal()
 	return m_Fence.Signal(m_CommandQueue);
 }
 
-bool DX12CommandQueue::IsFenceComplete(ui64 fenceValue)
+bool DX12CommandQueue::IsFenceComplete(ui64 fenceValue) const
 {
 	return m_Fence.IsFenceComplete(fenceValue);
 }
 
-void DX12CommandQueue::WaitForFenceValue(ui64 fenceValue)
+void DX12CommandQueue::WaitForFenceValue(ui64 fenceValue) const
 {
 	m_Fence.WaitForFenceValue(fenceValue);
 }
@@ -68,7 +68,7 @@ void DX12CommandQueue::Flush()
 	WaitForFenceValue(Signal());
 }
 
-ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device* device)
+ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device* device) const
 {
 	ID3D12CommandAllocator* commandAllocator;
 	ThrowIfFailed(device->m_Device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&commandAllocator)));
@@ -76,7 +76,7 @@ ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device* dev
 	return commandAllocator;
 }
 
-ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator)
+ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator) const
 {
 	ID3D12GraphicsCommandList2* commandList;
 	ThrowIfFailed(device->m_Device->CreateCommandList(0, m_CommandListType, allocator, nullptr, IID_PPV_ARGS(&commandList)));

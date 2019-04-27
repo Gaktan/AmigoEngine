@@ -87,8 +87,8 @@ void ResizeDepthBuffer(DX12Device& device, int width, int height)
 		// Flush any GPU commands that might be referencing the depth buffer.
 		device.Flush();
 
-		width = max(1, width);
-		height = max(1, height);
+		width = max(256, width);
+		height = max(256, height);
 
 		// Resize screen dependent resources.
 		// Create a depth buffer.
@@ -246,8 +246,11 @@ void OnResize(DX12Device& device, ui32 width, ui32 height)
 	}
 }
 
-void UnloadContent()
+void UnloadContent(DX12Device& dx12Device)
 {
+	// Make sure the command queue has finished all commands before closing.
+	dx12Device.Flush();
+
 	delete m_VertexBuffer;
 	delete m_IndexBuffer;
 
@@ -264,9 +267,9 @@ void UnloadContent()
 
 float TTT = 0.0f;
 
-void OnUpdate(ui32 width, ui32 height)
+void OnUpdate(ui32 width, ui32 height, float delta)
 {
-	TTT += 1000.0f / 120.0f;
+	TTT += delta;
 
 	// Update the model matrix.
 	float angle = TTT * 0.1f;
