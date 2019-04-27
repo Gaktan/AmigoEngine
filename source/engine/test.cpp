@@ -12,13 +12,12 @@
 #include "math/matrix4.h"
 
 #include "dx12/dx12device.h"
+#include "dx12/dx12resource.h"
 
 // Vertex buffer for the cube.
-ID3D12Resource* m_VertexBuffer;
-D3D12_VERTEX_BUFFER_VIEW m_VertexBufferView;
+DX12VertexBuffer* m_VertexBuffer;
 // Index buffer for the cube.
-ID3D12Resource* m_IndexBuffer;
-D3D12_INDEX_BUFFER_VIEW m_IndexBufferView;
+DX12IndexBuffer* m_IndexBuffer;
 
 // Depth buffer.
 ID3D12Resource* m_DepthBuffer;
@@ -78,47 +77,6 @@ static WORD g_Indicies[36] =
 	4, 0, 3, 4, 3, 7
 };
 
-void UpdateBufferResource(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList2* commandList,
-	ID3D12Resource** pDestinationResource,
-	ID3D12Resource** pIntermediateResource,
-	size_t numElements, size_t elementSize, const void* bufferData,
-	D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE)
-{
-	size_t bufferSize = numElements * elementSize;
-
-	// Create a committed resource for the GPU resource in a default heap.
-	ThrowIfFailed(device->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags),
-		D3D12_RESOURCE_STATE_COPY_DEST,
-		nullptr,
-		IID_PPV_ARGS(pDestinationResource)));
-
-	// Create an committed resource for the upload.
-	if (bufferData)
-	{
-		ThrowIfFailed(device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
-			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(bufferSize),
-			D3D12_RESOURCE_STATE_GENERIC_READ,
-			nullptr,
-			IID_PPV_ARGS(pIntermediateResource)));
-
-		D3D12_SUBRESOURCE_DATA subresourceData = {};
-		subresourceData.pData = bufferData;
-		subresourceData.RowPitch = bufferSize;
-		subresourceData.SlicePitch = subresourceData.RowPitch;
-
-		UpdateSubresources(commandList,
-						   *pDestinationResource, *pIntermediateResource,
-						   0, 0, 1, &subresourceData);
-	}
-}
-
 void ResizeDepthBuffer(DX12Device& device, int width, int height)
 {
 	if (m_ContentLoaded)
@@ -171,26 +129,8 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	auto commandList = commandQueue->GetCommandList(&dx12Device);
 
 	// Upload vertex buffer data.
-	ID3D12Resource* intermediateVertexBuffer;
-	UpdateBufferResource(device, commandList,
-						 &m_VertexBuffer, &intermediateVertexBuffer,
-						 _countof(g_Vertices), sizeof(VertexPosColor), g_Vertices);
-
-	// Create the vertex buffer view.
-	m_VertexBufferView.BufferLocation = m_VertexBuffer->GetGPUVirtualAddress();
-	m_VertexBufferView.SizeInBytes = sizeof(g_Vertices);
-	m_VertexBufferView.StrideInBytes = sizeof(VertexPosColor);
-
-	// Upload index buffer data.
-	ID3D12Resource* intermediateIndexBuffer;
-	UpdateBufferResource(device, commandList,
-						 &m_IndexBuffer, &intermediateIndexBuffer,
-						 _countof(g_Indicies), sizeof(WORD), g_Indicies);
-
-	// Create index buffer view.
-	m_IndexBufferView.BufferLocation = m_IndexBuffer->GetGPUVirtualAddress();
-	m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-	m_IndexBufferView.SizeInBytes = sizeof(g_Indicies);
+	m_VertexBuffer = new DX12VertexBuffer(device, commandList, _countof(g_Vertices) * sizeof(VertexPosColor), g_Vertices, sizeof(VertexPosColor));
+	m_IndexBuffer = new DX12IndexBuffer(device, commandList, _countof(g_Indicies) * sizeof(WORD), g_Indicies);
 
 	// Create the descriptor heap for the depth-stencil view.
 	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
@@ -309,6 +249,9 @@ void OnResize(DX12Device& device, ui32 width, ui32 height)
 
 void UnloadContent()
 {
+	delete m_VertexBuffer;
+	delete m_IndexBuffer;
+
 	m_ContentLoaded = false;
 }
 
@@ -332,18 +275,6 @@ void OnUpdate(ui32 width, ui32 height)
 	// Update the projection matrix.
 	float aspectRatio = width / static_cast<float>(height);
 	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(toRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
-}
-
-// Transition a resource
-void TransitionResource(ID3D12GraphicsCommandList2* commandList,
-						ID3D12Resource* resource,
-						D3D12_RESOURCE_STATES beforeState, D3D12_RESOURCE_STATES afterState)
-{
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-		resource,
-		beforeState, afterState);
-
-	commandList->ResourceBarrier(1, &barrier);
 }
 
 // Clear a render target.
@@ -388,8 +319,8 @@ void OnRender(DX12Device& dx12Device)
 	commandList->SetGraphicsRootSignature(m_RootSignature);
 
 	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	commandList->IASetVertexBuffers(0, 1, &m_VertexBufferView);
-	commandList->IASetIndexBuffer(&m_IndexBufferView);
+	m_VertexBuffer->SetVertexBuffer(commandList, 0, 1);
+	m_IndexBuffer->SetIndexBuffer(commandList);
 
 	commandList->RSSetViewports(1, &m_Viewport);
 	commandList->RSSetScissorRects(1, &m_ScissorRect);

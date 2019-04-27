@@ -22,9 +22,9 @@ public:
 	// Returns the fence value to wait for for this command list.
 	ui64 ExecuteCommandList(ID3D12GraphicsCommandList2* commandList);
 
-	uint64_t Signal();
-	bool IsFenceComplete(uint64_t fenceValue);
-	void WaitForFenceValue(uint64_t fenceValue);
+	ui64 Signal();
+	bool IsFenceComplete(ui64 fenceValue);
+	void WaitForFenceValue(ui64 fenceValue);
 	void Flush();
 
 	ID3D12CommandQueue* GetD3D12CommandQueue() const;

@@ -297,6 +297,8 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 	// Make sure the command queue has finished all commands before closing.
 	g_Device.Flush();
 
+	UnloadContent();
+
 	//::CloseHandle(g_FenceEvent);
 
 	return 0;
