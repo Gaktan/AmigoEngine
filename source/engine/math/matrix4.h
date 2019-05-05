@@ -107,6 +107,17 @@ public:
 		return ret;
 	}
 
+	Matrix4<T> Tanslate(const Vector4<T>& position) const
+	{
+		Matrix4<T> ret(*this);
+
+		ret._m30 += position.x;
+		ret._m31 += position.y;
+		ret._m32 += position.z;
+
+		return ret;
+	}
+
 	static Matrix4<T> CreateRotationMatrix(const Vector4f& axis, float angle)
 	{
 		Matrix4<T> ret(true);

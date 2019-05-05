@@ -246,10 +246,13 @@ void OnUpdate(ui32 width, ui32 height, float delta)
 	const Vector4f rotationAxis(0, 1, 1, 0);
 	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotationAxis, toRadians(angle));
 
+	Vector4f position(0, 0, sinf(angle*0.01));
+	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
+
 	// Update the view matrix.
-	const Vector4f eyePosition(0, 0, -10, 1);
+	const Vector4f eyePosition(0, -10, 0, 1);
 	const Vector4f focusPoint(0, 0, 0, 1);
-	const Vector4f upDirection(0, 1, 0, 0);
+	const Vector4f upDirection(0, 0, 1, 0);
 	m_ViewMatrix = Matrix4f::CreateLookAtMatrix(eyePosition, focusPoint, upDirection);
 
 	// Update the projection matrix.
