@@ -13,6 +13,7 @@
 
 #include "dx12/dx12device.h"
 #include "dx12/dx12resource.h"
+#include "dx12/dx12rendertarget.h"
 
 // Vertex buffer for the cube.
 DX12VertexBuffer* m_VertexBuffer;
@@ -23,9 +24,7 @@ ID3DBlob* vertexShaderBlob = nullptr;
 ID3DBlob* pixelShaderBlob = nullptr;
 
 // Depth buffer.
-ID3D12Resource* m_DepthBuffer;
-// Descriptor heap for depth buffer.
-ID3D12DescriptorHeap* m_DSVHeap;
+DX12DepthRenderTarget* m_DepthBuffer = nullptr;
 
 // Root signature
 ID3D12RootSignature* m_RootSignature;
@@ -82,40 +81,20 @@ static WORD g_Indicies[36] =
 
 void ResizeDepthBuffer(DX12Device& device, int width, int height)
 {
-	if (m_ContentLoaded)
+	// Flush any GPU commands that might be referencing the depth buffer.
+	device.Flush();
+
+	width = max(256, width);
+	height = max(256, height);
+
+	// Resize screen dependent resources.
+	// Create a depth buffer
+	if (m_DepthBuffer)
 	{
-		// Flush any GPU commands that might be referencing the depth buffer.
-		device.Flush();
-
-		width = max(256, width);
-		height = max(256, height);
-
-		// Resize screen dependent resources.
-		// Create a depth buffer.
-		D3D12_CLEAR_VALUE optimizedClearValue = {};
-		optimizedClearValue.Format = DXGI_FORMAT_D32_FLOAT;
-		optimizedClearValue.DepthStencil = { 1.0f, 0 };
-
-		ThrowIfFailed(device.m_Device->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Tex2D(DXGI_FORMAT_D32_FLOAT, width, height,
-										  1, 0, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
-			D3D12_RESOURCE_STATE_DEPTH_WRITE,
-			&optimizedClearValue,
-			IID_PPV_ARGS(&m_DepthBuffer)
-		));
-
-		// Update the depth-stencil view.
-		D3D12_DEPTH_STENCIL_VIEW_DESC dsv = {};
-		dsv.Format = DXGI_FORMAT_D32_FLOAT;
-		dsv.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;
-		dsv.Texture2D.MipSlice = 0;
-		dsv.Flags = D3D12_DSV_FLAG_NONE;
-
-		device.m_Device->CreateDepthStencilView(m_DepthBuffer, &dsv,
-												m_DSVHeap->GetCPUDescriptorHandleForHeapStart());
+		delete m_DepthBuffer;
 	}
+
+	m_DepthBuffer = new DX12DepthRenderTarget(device.m_Device, width, height);
 }
 
 bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
@@ -131,16 +110,19 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
 	auto commandList = commandQueue->GetCommandList(&dx12Device);
 
+	// Create the vertex input layout
+	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+	{
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+	};
+
 	// Upload vertex buffer data.
 	m_VertexBuffer = new DX12VertexBuffer(device, commandList, _countof(g_Vertices) * sizeof(VertexPosColor), g_Vertices, sizeof(VertexPosColor));
 	m_IndexBuffer = new DX12IndexBuffer(device, commandList, _countof(g_Indicies) * sizeof(WORD), g_Indicies);
 
-	// Create the descriptor heap for the depth-stencil view.
-	D3D12_DESCRIPTOR_HEAP_DESC dsvHeapDesc = {};
-	dsvHeapDesc.NumDescriptors = 1;
-	dsvHeapDesc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
-	dsvHeapDesc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
-	ThrowIfFailed(device->CreateDescriptorHeap(&dsvHeapDesc, IID_PPV_ARGS(&m_DSVHeap)));
+	// Create the depth buffer.
+	ResizeDepthBuffer(dx12Device, width, height);
 
 #if 0
 	// Load the vertex shader.
@@ -155,13 +137,6 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	// Load the pixel shader.
 	/*ThrowIfFailed*/(D3DReadFileToBlob(L"D:/Programming/AmigoEngine/projects/engine/output/win64/debug/PixelShader.cso", &pixelShaderBlob));
 #endif
-
-	// Create the vertex input layout
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
-	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
@@ -215,7 +190,7 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob);
 	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob);
-	pipelineStateStream.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+	pipelineStateStream.DSVFormat = m_DepthBuffer->GetFormat();
 	pipelineStateStream.RTVFormats = rtvFormats;
 
 	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
@@ -228,9 +203,6 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 
 	m_ContentLoaded = true;
 
-	// Resize/Create the depth buffer.
-	ResizeDepthBuffer(dx12Device, width, height);
-
 	return true;
 }
 
@@ -241,7 +213,6 @@ void OnResize(DX12Device& device, ui32 width, ui32 height)
 	{
 		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 
-		m_DepthBuffer->Release();
 		ResizeDepthBuffer(device, width, height);
 	}
 }
@@ -257,8 +228,7 @@ void UnloadContent(DX12Device& dx12Device)
 	vertexShaderBlob->Release();
 	pixelShaderBlob->Release();
 
-	m_DepthBuffer->Release();
-	m_DSVHeap->Release();
+	delete m_DepthBuffer;
 	m_RootSignature->Release();
 	m_PipelineState->Release();
 
@@ -294,35 +264,15 @@ void ClearRTV(ID3D12GraphicsCommandList2* commandList,
 	commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
 }
 
-void ClearDepth(ID3D12GraphicsCommandList2* commandList,
-				D3D12_CPU_DESCRIPTOR_HANDLE dsv, FLOAT depth = 1.0f)
-{
-	commandList->ClearDepthStencilView(dsv, D3D12_CLEAR_FLAG_DEPTH, depth, 0, 0, nullptr);
-}
-
 void OnRender(DX12Device& dx12Device)
 {
 	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto commandList = commandQueue->GetCommandList(&dx12Device);
 
-	//UINT currentBackBufferIndex = m_pWindow->GetCurrentBackBufferIndex();
-	//auto backBuffer = m_pWindow->GetCurrentBackBuffer();
-	//auto rtv = m_pWindow->GetCurrentRenderTargetView();
-	auto dsv = m_DSVHeap->GetCPUDescriptorHandleForHeapStart();
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(dx12Device.m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), dx12Device.m_CurrentBackBufferIndex, dx12Device.m_RTVDescriptorSize);
-
-	dx12Device.TempRendering(commandList);
-
 	// Clear the render targets.
 	{
-		//TransitionResource(commandList, backBuffer,
-		//				   D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		//
-		//FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-		//
-		//ClearRTV(commandList, rtv, clearColor);
-		ClearDepth(commandList, dsv);
+		dx12Device.ClearBackBuffer(commandList);
+		m_DepthBuffer->ClearDepth(commandList);
 	}
 
 	commandList->SetPipelineState(m_PipelineState);
@@ -335,7 +285,8 @@ void OnRender(DX12Device& dx12Device)
 	commandList->RSSetViewports(1, &m_Viewport);
 	commandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	commandList->OMSetRenderTargets(1, &rtv, FALSE, &dsv);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(dx12Device.m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), dx12Device.m_CurrentBackBufferIndex, dx12Device.m_RTVDescriptorSize);
+	commandList->OMSetRenderTargets(1, &rtv, FALSE, &m_DepthBuffer->GetCPUDescriptorHandle());
 
 	// Update the MVP matrix
 	Matrix4f mvpMatrix = m_ModelMatrix.Mul(m_ViewMatrix);

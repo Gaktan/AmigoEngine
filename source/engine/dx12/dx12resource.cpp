@@ -14,6 +14,11 @@ inline void ThrowIfFailed(HRESULT hr)
 	}
 }
 
+DX12Resource::DX12Resource()
+	: m_IntermediateResource(nullptr)
+{
+}
+
 DX12Resource::DX12Resource(
 	ID3D12Device* device,
 	ID3D12GraphicsCommandList2* commandList,
@@ -29,20 +34,22 @@ DX12Resource::DX12Resource(
 		nullptr,
 		IID_PPV_ARGS(&m_Resource)));
 
-	UpdateBufferResource(device, commandList, bufferSize, bufferData, flags);
+	UpdateBufferResource(device, commandList, bufferSize, bufferData);
 }
 
 DX12Resource::~DX12Resource()
 {
 	m_Resource->Release();
-	m_IntermediateResource->Release();
+	if (m_IntermediateResource)
+	{
+		m_IntermediateResource->Release();
+	}
 }
 
 void DX12Resource::UpdateBufferResource(
 	ID3D12Device* device,
 	ID3D12GraphicsCommandList2* commandList,
-	size_t bufferSize/* = 0*/, const void* bufferData/* = nullptr*/,
-	D3D12_RESOURCE_FLAGS flags/* = D3D12_RESOURCE_FLAG_NONE*/)
+	size_t bufferSize/* = 0*/, const void* bufferData/* = nullptr*/)
 {
 	// Create an committed resource for the upload.
 	if (bufferData)

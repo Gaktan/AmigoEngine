@@ -102,7 +102,7 @@ void DX12Device::Present(ID3D12GraphicsCommandList2* commandList)
 	m_DirectCommandQueue->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
 }
 
-void DX12Device::TempRendering(ID3D12GraphicsCommandList2* commandList)
+void DX12Device::ClearBackBuffer(ID3D12GraphicsCommandList2* commandList)
 {
 	auto backBuffer = m_BackBuffers[m_CurrentBackBufferIndex];
 

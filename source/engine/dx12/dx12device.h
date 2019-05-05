@@ -41,7 +41,7 @@ public:
 	void Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight);
 	void Flush();
 	void Present(ID3D12GraphicsCommandList2* commandList);
-	void TempRendering(ID3D12GraphicsCommandList2* commandList);
+	void ClearBackBuffer(ID3D12GraphicsCommandList2* commandList);
 	void UpdateRenderTargetViews(ui32 clientWidth, ui32 clientHeight);
 
 	DX12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;

@@ -17,13 +17,14 @@ public:
 		size_t bufferSize = 0, const void* bufferData = nullptr,
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
+	DX12Resource();
+
 	virtual ~DX12Resource();
 
 	void UpdateBufferResource(
 		ID3D12Device* device,
 		ID3D12GraphicsCommandList2* commandList,
-		size_t bufferSize = 0, const void* bufferData = nullptr,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+		size_t bufferSize = 0, const void* bufferData = nullptr);
 };
 
 class DX12VertexBuffer : public DX12Resource
