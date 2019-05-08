@@ -27,14 +27,7 @@ DX12Device::~DX12Device()
 	delete m_ComputeCommandQueue;
 	delete m_CopyCommandQueue;
 
-	m_RTVDescriptorHeap->Release();
-
-	for (int i = 0; i < NUM_FRAMES; ++i)
-	{
-		m_BackBuffers[i]->Release();
-	}
-
-	m_SwapChain->Release();
+	delete m_SwapChain;
 
 #if defined(_DEBUG)
 	ID3D12DebugDevice* debugDevice = nullptr;
@@ -54,8 +47,6 @@ void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
 	EnableDebugLayer();
 	EnableGPUBasedValidation();
 
-	m_TearingSupported = CheckTearingSupport();
-
 	{
 		IDXGIAdapter4* dxgiAdapter4 = GetAdapter(m_UseWarp);
 		m_Device = CreateDevice(dxgiAdapter4);
@@ -66,15 +57,7 @@ void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
 	m_ComputeCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
 	m_CopyCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COPY);
 
-	m_SwapChain = CreateSwapChain(windowHandle, m_DirectCommandQueue, clientWidth, clientHeight, NUM_FRAMES);
-	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
-
-	m_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_FRAMES);
-	m_RTVDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	UpdateRenderTargetViews(clientWidth, clientHeight);
-
-	m_IsInitialized = true;
+	m_SwapChain = new DX12SwapChain(*this, windowHandle, m_DirectCommandQueue, clientWidth, clientHeight);
 }
 
 void DX12Device::Flush()
@@ -86,80 +69,7 @@ void DX12Device::Flush()
 
 void DX12Device::Present(ID3D12GraphicsCommandList2* commandList)
 {
-	auto backBuffer = m_BackBuffers[m_CurrentBackBufferIndex];
-
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	commandList->ResourceBarrier(1, &barrier);
-
-	m_FrameFenceValues[m_CurrentBackBufferIndex] = m_DirectCommandQueue->ExecuteCommandList(commandList);
-
-	UINT syncInterval = m_VSync ? 1 : 0;
-	UINT presentFlags = m_TearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
-	ThrowIfFailed(m_SwapChain->Present(syncInterval, presentFlags));
-
-	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
-
-	m_DirectCommandQueue->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
-}
-
-void DX12Device::ClearBackBuffer(ID3D12GraphicsCommandList2* commandList)
-{
-	auto backBuffer = m_BackBuffers[m_CurrentBackBufferIndex];
-
-	// Clear the render target.
-	{
-		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			backBuffer,
-			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
-
-		commandList->ResourceBarrier(1, &barrier);
-
-		FLOAT clearColor[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
-
-		commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-	}
-}
-
-void DX12Device::UpdateRenderTargetViews(ui32 clientWidth, ui32 clientHeight)
-{
-	if (m_IsInitialized)
-	{
-		// Flush the GPU queue to make sure the swap chain's back buffers
-		// are not being referenced by an in-flight command list.
-		Flush();
-
-		for (int i = 0; i < NUM_FRAMES; ++i)
-		{
-			// Any references to the back buffers must be released
-			// before the swap chain can be resized.
-			m_BackBuffers[i]->Release();
-			m_BackBuffers[i] = nullptr;
-			m_FrameFenceValues[i] = m_FrameFenceValues[m_CurrentBackBufferIndex];
-		}
-
-		DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-		ThrowIfFailed(m_SwapChain->GetDesc(&swapChainDesc));
-		ThrowIfFailed(m_SwapChain->ResizeBuffers(NUM_FRAMES, clientWidth, clientHeight, swapChainDesc.BufferDesc.Format, swapChainDesc.Flags));
-
-		m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
-	}
-
-	auto rtvDescriptorSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
-	for (int i = 0; i < NUM_FRAMES; ++i)
-	{
-		ID3D12Resource* backBuffer;
-		ThrowIfFailed(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
-
-		m_Device->CreateRenderTargetView(backBuffer, nullptr, rtvHandle);
-
-		m_BackBuffers[i] = backBuffer;
-
-		rtvHandle.Offset(rtvDescriptorSize);
-	}
+	m_SwapChain->Present(commandList, m_DirectCommandQueue);
 }
 
 ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* adapter)
@@ -210,65 +120,6 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* adapter)
 	return d3d12Device2;
 }
 
-IDXGISwapChain4* DX12Device::CreateSwapChain(HWND hWnd, DX12CommandQueue* commandQueue, ui32 width, ui32 height, ui32 bufferCount)
-{
-	IDXGISwapChain4* dxgiSwapChain4;
-	IDXGIFactory4* dxgiFactory4;
-	UINT createFactoryFlags = 0;
-#if defined(_DEBUG)
-	createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
-#endif
-
-	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory4)));
-
-	DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-	swapChainDesc.Width = width;
-	swapChainDesc.Height = height;
-	swapChainDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	swapChainDesc.Stereo = FALSE;
-	swapChainDesc.SampleDesc = { 1, 0 };
-	swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swapChainDesc.BufferCount = bufferCount;
-	swapChainDesc.Scaling = DXGI_SCALING_STRETCH;
-	swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
-	swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
-
-	// It is recommended to always allow tearing if tearing support is available.
-	swapChainDesc.Flags = CheckTearingSupport() ? DXGI_SWAP_CHAIN_FLAG_ALLOW_TEARING : 0;
-	IDXGISwapChain1* swapChain1;
-	ThrowIfFailed(dxgiFactory4->CreateSwapChainForHwnd(
-		commandQueue->GetD3D12CommandQueue(),
-		hWnd,
-		&swapChainDesc,
-		nullptr,
-		nullptr,
-		&swapChain1));
-
-	// Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen
-	// will be handled manually.
-	ThrowIfFailed(dxgiFactory4->MakeWindowAssociation(hWnd, DXGI_MWA_NO_ALT_ENTER));
-
-	ThrowIfFailed(swapChain1->QueryInterface(__uuidof(IDXGISwapChain4), (void **) &dxgiSwapChain4));
-
-	swapChain1->Release();
-	dxgiFactory4->Release();
-
-	return dxgiSwapChain4;
-}
-
-ID3D12DescriptorHeap* DX12Device::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE type, uint32_t numDescriptors)
-{
-	ID3D12DescriptorHeap* descriptorHeap;
-
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors = numDescriptors;
-	desc.Type = type;
-
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptorHeap)));
-
-	return descriptorHeap;
-}
-
 void DX12Device::EnableGPUBasedValidation()
 {
 #if defined(_DEBUG)
@@ -295,32 +146,6 @@ void DX12Device::EnableDebugLayer()
 
 	debugInterface->Release();
 #endif
-}
-
-bool DX12Device::CheckTearingSupport()
-{
-	BOOL allowTearing = false;
-
-	// Rather than create the DXGI 1.5 factory interface directly, we create the
-	// DXGI 1.4 interface and query for the 1.5 interface. This is to enable the 
-	// graphics debugging tools which will not support the 1.5 factory interface 
-	// until a future update.
-	IDXGIFactory4* factory4;
-	if (SUCCEEDED(CreateDXGIFactory1(IID_PPV_ARGS(&factory4))))
-	{
-		IDXGIFactory5* factory5;
-		if (SUCCEEDED(factory4->QueryInterface(__uuidof(IDXGIFactory5), (void **) &factory5)))
-		{
-			if (FAILED(factory5->CheckFeatureSupport(
-				DXGI_FEATURE_PRESENT_ALLOW_TEARING,
-				&allowTearing, sizeof(allowTearing))))
-			{
-				allowTearing = FALSE;
-			}
-		}
-	}
-
-	return allowTearing == TRUE;
 }
 
 IDXGIAdapter4* DX12Device::GetAdapter(bool useWarp)

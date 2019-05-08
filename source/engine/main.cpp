@@ -184,7 +184,7 @@ void Resize(uint32_t width, uint32_t height)
 		g_ClientWidth = std::max(1u, width);
 		g_ClientHeight = std::max(1u, height);
 
-		g_Device.UpdateRenderTargetViews(g_ClientWidth, g_ClientHeight);
+		g_Device.m_SwapChain->UpdateRenderTargetViews(g_Device, g_ClientWidth, g_ClientHeight);
 	}
 
 	OnResize(g_Device, width, height);
@@ -192,11 +192,6 @@ void Resize(uint32_t width, uint32_t height)
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (!g_Device.GetIsInitialized())
-	{
-		return ::DefWindowProcW(hwnd, message, wParam, lParam);
-	}
-
 	switch (message)
 	{
 	case WM_PAINT:

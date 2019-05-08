@@ -206,17 +206,6 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	return true;
 }
 
-void OnResize(DX12Device& device, ui32 width, ui32 height)
-{
-	//if (width != GetClientWidth() || height != GetClientHeight())
-	//if (width != 800 || height != 600)
-	{
-		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-
-		ResizeDepthBuffer(device, width, height);
-	}
-}
-
 void UnloadContent(DX12Device& dx12Device)
 {
 	// Make sure the command queue has finished all commands before closing.
@@ -233,6 +222,17 @@ void UnloadContent(DX12Device& dx12Device)
 	m_PipelineState->Release();
 
 	m_ContentLoaded = false;
+}
+
+void OnResize(DX12Device& device, ui32 width, ui32 height)
+{
+	//if (width != GetClientWidth() || height != GetClientHeight())
+	//if (width != 800 || height != 600)
+	{
+		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+
+		ResizeDepthBuffer(device, width, height);
+	}
 }
 
 float TTT = 0.0f;
@@ -260,13 +260,6 @@ void OnUpdate(ui32 width, ui32 height, float delta)
 	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(toRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 }
 
-// Clear a render target.
-void ClearRTV(ID3D12GraphicsCommandList2* commandList,
-			  D3D12_CPU_DESCRIPTOR_HANDLE rtv, FLOAT* clearColor)
-{
-	commandList->ClearRenderTargetView(rtv, clearColor, 0, nullptr);
-}
-
 void OnRender(DX12Device& dx12Device)
 {
 	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -274,7 +267,7 @@ void OnRender(DX12Device& dx12Device)
 
 	// Clear the render targets.
 	{
-		dx12Device.ClearBackBuffer(commandList);
+		dx12Device.m_SwapChain->ClearBackBuffer(commandList);
 		m_DepthBuffer->ClearDepth(commandList);
 	}
 
@@ -288,8 +281,7 @@ void OnRender(DX12Device& dx12Device)
 	commandList->RSSetViewports(1, &m_Viewport);
 	commandList->RSSetScissorRects(1, &m_ScissorRect);
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(dx12Device.m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), dx12Device.m_CurrentBackBufferIndex, dx12Device.m_RTVDescriptorSize);
-	commandList->OMSetRenderTargets(1, &rtv, FALSE, &m_DepthBuffer->GetCPUDescriptorHandle());
+	dx12Device.m_SwapChain->SetRenderTarget(commandList, m_DepthBuffer);
 
 	// Update the MVP matrix
 	Matrix4f mvpMatrix = m_ModelMatrix.Mul(m_ViewMatrix);
