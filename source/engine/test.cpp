@@ -58,7 +58,8 @@ struct VertexPosColor
 	Vector4f Color;
 };
 
-static VertexPosColor g_Vertices[8] = {
+static VertexPosColor g_Vertices[8] =
+{
 	{ Vector4f(-1.0f, -1.0f, -1.0f), Vector4f(0.0f, 0.0f, 0.0f) }, // 0
 	{ Vector4f(-1.0f,  1.0f, -1.0f), Vector4f(0.0f, 1.0f, 0.0f) }, // 1
 	{ Vector4f( 1.0f,  1.0f, -1.0f), Vector4f(1.0f, 1.0f, 0.0f) }, // 2
@@ -84,9 +85,6 @@ void ResizeDepthBuffer(DX12Device& device, int width, int height)
 	// Flush any GPU commands that might be referencing the depth buffer.
 	device.Flush();
 
-	width = max(256, width);
-	height = max(256, height);
-
 	// Resize screen dependent resources.
 	// Create a depth buffer
 	if (m_DepthBuffer)
@@ -96,6 +94,8 @@ void ResizeDepthBuffer(DX12Device& device, int width, int height)
 
 	m_DepthBuffer = new DX12DepthRenderTarget(device.m_Device, width, height);
 }
+#include <iostream>
+#include <filesystem>
 
 bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 {
@@ -124,19 +124,12 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	// Create the depth buffer.
 	ResizeDepthBuffer(dx12Device, width, height);
 
-#if 0
-	// Load the vertex shader.
-	ThrowIfFailed(D3DReadFileToBlob(L"VertexShader.cso", &vertexShaderBlob));
-
-	// Load the pixel shader.
-	ThrowIfFailed(D3DReadFileToBlob(L"PixelShader.cso", &pixelShaderBlob));
-#else
-	/*ThrowIfFailed*/HRESULT res = (D3DReadFileToBlob(L"D:/Programming/AmigoEngine/projects/engine/output/win64/debug/VertexShader.cso", &vertexShaderBlob));
+	// TODO: Still not great, need to find a better way to deal with Working Directory...
+	// Load shaders
+	HRESULT res = D3DReadFileToBlob(L"..\\..\\output\\win64\\VertexShader.cso", &vertexShaderBlob);
 	ThrowIfFailed(res);
-
-	// Load the pixel shader.
-	/*ThrowIfFailed*/(D3DReadFileToBlob(L"D:/Programming/AmigoEngine/projects/engine/output/win64/debug/PixelShader.cso", &pixelShaderBlob));
-#endif
+	res = D3DReadFileToBlob(L"..\\..\\output\\win64\\PixelShader.cso", &pixelShaderBlob);
+	ThrowIfFailed(res);
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
@@ -229,8 +222,10 @@ void OnResize(DX12Device& device, ui32 width, ui32 height)
 	//if (width != GetClientWidth() || height != GetClientHeight())
 	//if (width != 800 || height != 600)
 	{
-		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
+		width = max(256, width);
+		height = max(256, height);
 
+		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 		ResizeDepthBuffer(device, width, height);
 	}
 }

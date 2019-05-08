@@ -31,20 +31,25 @@ class AmigoEngine : Project
 	[Configure()]
 	public void ConfigureAll(Configuration conf, Target target)
 	{
-		conf.ProjectPath = @"[project.SharpmakeCsPath]\..\[project.Name]\";
+		conf.ProjectPath = @"[project.RootPath]\projects\[project.Name]\";
 		conf.ProjectFileName = @"[project.Name].[target.DevEnv].[target.Platform]";
-		conf.IntermediatePath = @"[conf.ProjectPath]\temp\[target.DevEnv]\[target.Platform]\[target]";
+		conf.IntermediatePath = @"[project.RootPath]\output\temp\[target.DevEnv]\[target.Platform]";
+		conf.TargetPath = @"[project.RootPath]\output\[target.Platform]";
 		
 		conf.IncludePaths.Add(@"[project.SourceRootPath]\");
 		
-		conf.PrecompHeader = "engine_precomp.h";
-		conf.PrecompSource = "engine_precomp.cpp";
+		conf.PrecompHeader = @"[project.Name]_precomp.h";
+		conf.PrecompSource = @"[project.Name]_precomp.cpp";
 	}
 	
 	[Configure(Platform.win64)]
 	public void ConfigurePC(Configuration conf, Target target)
 	{
+		// Make this project an Executable
 		conf.Options.Add(Options.Vc.Linker.SubSystem.Application);
+		
+		// Enable C++17
+		conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
 		
 		// DX12
 		conf.IncludePaths.Add(@"[project.RootPath]\external\d3d12\include");

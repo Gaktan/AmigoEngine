@@ -3,3 +3,6 @@
 
 # Ignore generated solutions
 *.sln
+
+# Ignore generated folders
+output/
