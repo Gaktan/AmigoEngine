@@ -1,23 +1,12 @@
 #include "engine_precomp.h"
 #include "dx12fence.h"
 
-#include <cassert>
-#include <exception>
-
-inline void ThrowIfFailed(HRESULT hr)
-{
-	if (FAILED(hr))
-	{
-		throw std::exception();
-	}
-}
-
 HANDLE CreateEventHandle()
 {
 	HANDLE fenceEvent;
 
 	fenceEvent = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-	assert(fenceEvent && "Failed to create fence event.");
+	Assert(fenceEvent && "Failed to create fence event.");
 
 	return fenceEvent;
 }

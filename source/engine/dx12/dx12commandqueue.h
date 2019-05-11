@@ -1,7 +1,5 @@
 #pragma once
 
-#include "datatypes.h"
-
 #include "dx12/dx12device.h"
 #include "dx12/dx12fence.h"
 // For NUM_BUFFERED_FRAMES

@@ -8,17 +8,6 @@
 //
 #include <D3dx12.h>
 
-#include<cassert>
-#include <exception>
-
-inline void ThrowIfFailed(HRESULT hr)
-{
-	if (FAILED(hr))
-	{
-		throw std::exception();
-	}
-}
-
 DX12Device::DX12Device()
 {
 }
@@ -214,7 +203,7 @@ DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) cons
 		break;
 	default:
 		commandQueue = nullptr;
-		assert(false && "Invalid command queue type.");
+		Assert(false && "Invalid command queue type.");
 	}
 
 	return commandQueue;

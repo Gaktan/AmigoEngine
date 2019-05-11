@@ -3,17 +3,6 @@
 
 #include "D3dx12.h"
 
-#include <cassert>
-#include <exception>
-
-inline void ThrowIfFailed(HRESULT hr)
-{
-	if (FAILED(hr))
-	{
-		throw std::exception();
-	}
-}
-
 DX12Resource::DX12Resource()
 	: m_IntermediateResource(nullptr)
 {

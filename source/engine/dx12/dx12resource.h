@@ -1,7 +1,5 @@
 #pragma once
 
-#include "datatypes.h"
-
 #include <d3d12.h>
 
 class DX12Resource

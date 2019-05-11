@@ -1,7 +1,5 @@
 #pragma once
 
-#include "datatypes.h"
-
 constexpr ui32 NUM_BUFFERED_FRAMES = 3;
 
 #include <d3d12.h>

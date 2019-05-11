@@ -1,7 +1,5 @@
 #pragma once
 
-#include "datatypes.h"
-
 #include "dx12resource.h"
 
 // TODO!

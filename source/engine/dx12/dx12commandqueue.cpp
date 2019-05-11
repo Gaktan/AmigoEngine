@@ -4,17 +4,6 @@
 #include "dx12/dx12device.h"
 #include "dx12/dx12swapchain.h"
 
-#include <cassert>
-#include <exception>
-
-inline void ThrowIfFailed(HRESULT hr)
-{
-	if (FAILED(hr))
-	{
-		throw std::exception();
-	}
-}
-
 DX12CommandQueue::DX12CommandQueue(DX12Device* device, D3D12_COMMAND_LIST_TYPE type)
 	: m_CommandListType(type)
 	, m_Fence(device->m_Device)
@@ -133,7 +122,7 @@ ui64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandLis
 
 	auto& entry = m_CommandListEntries[m_CurrentIndex];
 	// Make sure we are executing a commandlist from the correct frame
-	assert(entry.commandList == commandList);
+	Assert(entry.commandList == commandList);
 
 	entry.isBeingRecorded = false;
 

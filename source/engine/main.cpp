@@ -8,7 +8,6 @@
 #include "dx12/dx12device.h"
 #include "dx12/dx12swapchain.h"
 
-#include <cassert>
 #include <algorithm>
 #include <chrono>
 
@@ -48,7 +47,7 @@ void RegisterWindowClass(HINSTANCE hInst, const wchar_t* windowClassName)
 	windowClass.hIconSm = ::LoadIcon(hInst, NULL);
 
 	static ATOM atom = ::RegisterClassExW(&windowClass);
-	assert(atom > 0);
+	Assert(atom > 0);
 }
 
 // In order to define a function called CreateWindow, the Windows macro needs to
@@ -88,7 +87,7 @@ HWND CreateWindow(const wchar_t* windowClassName, HINSTANCE hInst,
 		nullptr
 	);
 
-	assert(hWnd && "Failed to create window");
+	Assert(hWnd && "Failed to create window");
 
 	return hWnd;
 }

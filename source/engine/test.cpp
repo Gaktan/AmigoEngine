@@ -44,14 +44,6 @@ Matrix4f m_ProjectionMatrix;
 
 bool m_ContentLoaded;
 
-inline void ThrowIfFailed(HRESULT hr)
-{
-	if (FAILED(hr))
-	{
-		throw std::exception();
-	}
-}
-
 // Vertex data for a colored cube.
 struct VertexPosColor
 {

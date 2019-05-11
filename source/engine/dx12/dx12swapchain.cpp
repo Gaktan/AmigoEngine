@@ -4,17 +4,6 @@
 #include "dx12device.h"
 #include "D3dx12.h"
 
-#include <cassert>
-#include <exception>
-
-inline void ThrowIfFailed(HRESULT hr)
-{
-	if (FAILED(hr))
-	{
-		throw std::exception();
-	}
-}
-
 bool CheckTearingSupport()
 {
 	bool allowTearing = false;
