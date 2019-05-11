@@ -2,13 +2,14 @@
 
 #include "datatypes.h"
 
+constexpr ui32 NUM_BUFFERED_FRAMES = 3;
+
 #include <d3d12.h>
 #include <dxgi1_6.h>
 
+#include "dx12/dx12device.h"
 #include "dx12/dx12commandqueue.h"
 #include "dx12/dx12rendertarget.h"
-
-constexpr ui32 NUM_BUFFERED_FRAMES = 3;
 
 class DX12SwapChain
 {
@@ -34,4 +35,6 @@ public:
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 
 	void SetRenderTarget(ID3D12GraphicsCommandList2* commandList, DX12DepthRenderTarget* depthBuffer);
+
+	ui32 GetCurrentBackBufferIndex();
 };

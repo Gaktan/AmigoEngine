@@ -1,12 +1,12 @@
 #pragma once
 
 #include "datatypes.h"
-#include "dx12/dx12fence.h"
-#include "dx12/dx12commandqueue.h"
-#include "dx12/dx12swapchain.h"
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
+
+class DX12CommandQueue;
+class DX12SwapChain;
 
 class DX12Device
 {
@@ -33,7 +33,7 @@ public:
 	DX12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;
 
 protected:
-	ID3D12Device2*				CreateDevice(IDXGIAdapter4* adapter);
+	ID3D12Device2* CreateDevice(IDXGIAdapter4* adapter);
 	
 	void EnableGPUBasedValidation();
 	void EnableDebugLayer();

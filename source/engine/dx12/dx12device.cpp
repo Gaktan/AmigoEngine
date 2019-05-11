@@ -1,6 +1,8 @@
 #include "engine_precomp.h"
 #include "dx12device.h"
 
+#include "dx12/dx12commandqueue.h"
+
 #include <d3dcompiler.h>
 //#include <DirectXMath.h>
 //

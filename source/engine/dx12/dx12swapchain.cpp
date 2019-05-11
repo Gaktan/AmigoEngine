@@ -198,3 +198,8 @@ void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* commandList, DX1
 	const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
 	commandList->OMSetRenderTargets(1, &rtv, false, &depthBuffer->GetCPUDescriptorHandle());
 }
+
+ui32 DX12SwapChain::GetCurrentBackBufferIndex()
+{
+	return m_CurrentBackBufferIndex;
+}

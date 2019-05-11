@@ -14,6 +14,7 @@
 #include "dx12/dx12device.h"
 #include "dx12/dx12resource.h"
 #include "dx12/dx12rendertarget.h"
+#include "dx12/dx12commandqueue.h"
 
 // Vertex buffer for the cube.
 DX12VertexBuffer* m_VertexBuffer;
@@ -186,7 +187,8 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	pipelineStateStream.DSVFormat = m_DepthBuffer->GetFormat();
 	pipelineStateStream.RTVFormats = rtvFormats;
 
-	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc = {
+	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc =
+	{
 		sizeof(PipelineStateStream), &pipelineStateStream
 	};
 	ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_PipelineState)));

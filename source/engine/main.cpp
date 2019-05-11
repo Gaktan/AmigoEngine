@@ -6,6 +6,7 @@
 #include <WinDef.h>
 
 #include "dx12/dx12device.h"
+#include "dx12/dx12swapchain.h"
 
 #include <cassert>
 #include <algorithm>

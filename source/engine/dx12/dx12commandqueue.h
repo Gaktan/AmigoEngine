@@ -2,14 +2,31 @@
 
 #include "datatypes.h"
 
-#include "dx12fence.h"
+#include "dx12/dx12device.h"
+#include "dx12/dx12fence.h"
+// For NUM_BUFFERED_FRAMES
+#include "dx12/dx12swapchain.h"
 
 #include <queue>
 
-class DX12Device;
-
 class DX12CommandQueue
 {
+protected:
+	D3D12_COMMAND_LIST_TYPE		m_CommandListType;
+	ID3D12CommandQueue*			m_CommandQueue;
+
+	DX12Fence					m_Fence;
+	ui32						m_CurrentIndex;
+
+	struct CommandListEntry
+	{
+		ID3D12CommandAllocator*		commandAllocator = nullptr;
+		ID3D12GraphicsCommandList2*	commandList = nullptr;
+		bool						isBeingRecorded = false;
+	};
+
+	CommandListEntry m_CommandListEntries[NUM_BUFFERED_FRAMES];
+
 public:
 	DX12CommandQueue(DX12Device* device, D3D12_COMMAND_LIST_TYPE type);
 	virtual ~DX12CommandQueue();
@@ -31,23 +48,4 @@ public:
 protected:
 	ID3D12CommandAllocator*		CreateCommandAllocator(DX12Device* device) const;
 	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator) const;
-
-private:
-	// Keep track of command allocators that are "in-flight"
-	struct CommandAllocatorEntry
-	{
-		ui64 fenceValue;
-		ID3D12CommandAllocator* commandAllocator;
-	};
-
-	using CommandAllocatorQueue	= std::queue<CommandAllocatorEntry>;
-	using CommandListQueue		= std::queue<ID3D12GraphicsCommandList2*>;
-
-	D3D12_COMMAND_LIST_TYPE		m_CommandListType;
-	ID3D12CommandQueue*			m_CommandQueue;
-
-	DX12Fence					m_Fence;
-
-	CommandAllocatorQueue		m_CommandAllocatorQueue;
-	CommandListQueue			m_CommandListQueue;
 };

@@ -1,7 +1,8 @@
 #include "engine_precomp.h"
 #include "dx12commandqueue.h"
 
-#include "dx12device.h"
+#include "dx12/dx12device.h"
+#include "dx12/dx12swapchain.h"
 
 #include <cassert>
 #include <exception>
@@ -30,19 +31,14 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* device, D3D12_COMMAND_LIST_TYPE t
 DX12CommandQueue::~DX12CommandQueue()
 {
 	Flush();
-
-	while (!m_CommandAllocatorQueue.empty())
+	
+	for (auto& commandListEntry : m_CommandListEntries)
 	{
-		auto* commandAllocator = m_CommandAllocatorQueue.front().commandAllocator;
-		m_CommandAllocatorQueue.pop();
-		commandAllocator->Release();
-	}
-
-	while (!m_CommandListQueue.empty())
-	{
-		auto* commandList = m_CommandListQueue.front();
-		m_CommandListQueue.pop();
-		commandList->Release();
+		if (commandListEntry.commandList)
+		{
+			commandListEntry.commandList->Release();
+			commandListEntry.commandAllocator->Release();
+		}
 	}
 
 	m_CommandQueue->Release();
@@ -86,38 +82,39 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device* devi
 
 ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device* device)
 {
-	ID3D12CommandAllocator* commandAllocator;
-	ID3D12GraphicsCommandList2* commandList;
+	m_CurrentIndex = device->m_SwapChain->GetCurrentBackBufferIndex();
 
-	if (!m_CommandAllocatorQueue.empty() && IsFenceComplete(m_CommandAllocatorQueue.front().fenceValue))
+	// No need for fences, a commandlist from 3 frames ago should already have been processed by the GPU
+	auto& entry = m_CommandListEntries[m_CurrentIndex];
+
+	// Test to see if it's worth destroying and recreating command list allocators to free memory.
+	// It doesn't seem to change anything, so let's disable it for now
+#define ALLOCATE_NEW_COMMANDLISTS 0
+
+	if (!entry.isBeingRecorded)
 	{
-		commandAllocator = m_CommandAllocatorQueue.front().commandAllocator;
-		m_CommandAllocatorQueue.pop();
+		entry.isBeingRecorded = true;
 
-		ThrowIfFailed(commandAllocator->Reset());
+		if (entry.commandList)
+		{
+#if !ALLOCATE_NEW_COMMANDLISTS
+			entry.commandAllocator->Reset();
+			entry.commandList->Reset(entry.commandAllocator, nullptr);
+#else
+			entry.commandList->Release();
+			entry.commandAllocator->Release();
+#endif
+		}
+#if !ALLOCATE_NEW_COMMANDLISTS
+		else
+#endif
+		{
+			entry.commandAllocator = CreateCommandAllocator(device);
+			entry.commandList = CreateCommandList(device, entry.commandAllocator);
+		}
 	}
-	else
-	{
-		commandAllocator = CreateCommandAllocator(device);
-	}
 
-	if (!m_CommandListQueue.empty())
-	{
-		commandList = m_CommandListQueue.front();
-		m_CommandListQueue.pop();
-
-		ThrowIfFailed(commandList->Reset(commandAllocator, nullptr));
-	}
-	else
-	{
-		commandList = CreateCommandList(device, commandAllocator);
-	}
-
-	// Associate the command allocator with the command list so that it can be
-	// retrieved when the command list is executed.
-	ThrowIfFailed(commandList->SetPrivateDataInterface(__uuidof(ID3D12CommandAllocator), commandAllocator));
-
-	return commandList;
+	return entry.commandList;
 }
 
 // Execute a command list.
@@ -125,10 +122,6 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device* device)
 ui64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandList)
 {
 	commandList->Close();
-
-	ID3D12CommandAllocator* commandAllocator;
-	UINT dataSize = sizeof(commandAllocator);
-	ThrowIfFailed(commandList->GetPrivateData(__uuidof(ID3D12CommandAllocator), &dataSize, &commandAllocator));
 
 	ID3D12CommandList* const ppCommandLists[] =
 	{
@@ -138,10 +131,11 @@ ui64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* commandLis
 	m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
 	uint64_t fenceValue = Signal();
 
-	m_CommandAllocatorQueue.emplace(CommandAllocatorEntry{ fenceValue, commandAllocator });
-	m_CommandListQueue.push(commandList);
+	auto& entry = m_CommandListEntries[m_CurrentIndex];
+	// Make sure we are executing a commandlist from the correct frame
+	assert(entry.commandList == commandList);
 
-	commandAllocator->Release();
+	entry.isBeingRecorded = false;
 
 	return fenceValue;
 }
