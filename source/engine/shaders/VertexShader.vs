@@ -1,6 +1,6 @@
 struct ModelViewProjection
 {
-    matrix MVP;
+    float4x4 MVP;
 };
 
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);

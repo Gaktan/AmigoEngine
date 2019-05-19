@@ -1,23 +1,26 @@
 using System.IO; // for Path.Combine
 using Sharpmake; // contains the entire Sharpmake object library.
 
+[module: Sharpmake.Include("tools/shadercompiler.sharpmake.cs")]
+
 [Generate]
 class AmigoEngine : Project
 {
-    public AmigoEngine()
-    {
-        Name = "Engine";
+	public AmigoEngine()
+	{
+		Name = "Engine";
 
-		RootPath = @"[project.SharpmakeCsPath]\..\..\";
+		RootPath = @"[project.SharpmakeCsPath]\..\..";
 		SourceRootPath = @"[project.RootPath]\source\engine";
 
-        AddTargets(new Target(
-            Platform.win64,
-            DevEnv.vs2017,
-            Optimization.Debug | Optimization.Release,
+		AddTargets(new Target(
+			Platform.win64,
+			DevEnv.vs2017,
+			Optimization.Debug | Optimization.Release,
 			OutputType.Lib,
 			Blob.NoBlob,
-			BuildSystem.MSBuild));
+			BuildSystem.MSBuild,
+			DotNetFramework.v4_5));
 
 		// Pixel shader
 		ResourceFilesExtensions.Add(".ps");
@@ -26,6 +29,9 @@ class AmigoEngine : Project
 		// Vertex shader
 		ResourceFilesExtensions.Add(".vs");
 		ExtensionBuildTools.Add(".vs", "FxCompile");
+
+        // if set to true, dependencies that the project uses will be copied to the output directory
+        DependenciesCopyLocal = DependenciesCopyLocalTypes.None;
     }
 	
 	[Configure()]
@@ -57,43 +63,53 @@ class AmigoEngine : Project
 		conf.LibraryFiles.Add(@"D3DCompiler.lib");
 		conf.LibraryFiles.Add(@"D3D12.lib");
 		conf.LibraryFiles.Add(@"DXGI.lib");
+
+        // Add dependency to ShaderCompiler
+        conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);
+        
+        // Compiler Shaders during Pre-Build event
+        conf.EventPreBuild.Add(@"[project.RootPath]\tools\ShaderCompiler\ShaderCompiler.exe [project.SourceRootPath]\shaders");
 	}
 	
 	[Generate]
-    public class AmigoSolution : Solution
-    {
-        public AmigoSolution()
-        {
-            Name = "Amigo";
-			
-			AddTargets(new Target(
+	public class AmigoSolution : Solution
+	{
+		public AmigoSolution()
+		{
+			Name = "Amigo";
+
+			Target target = new Target(
 				Platform.win64,
 				DevEnv.vs2017,
-				Optimization.Debug | Optimization.Release));
-        }
+				Optimization.Debug | Optimization.Release);
+			target.Framework = DotNetFramework.v4_5;
+			
+			AddTargets(target);
+		}
 
-        [Configure]
-        public void ConfigureAll(Configuration conf, Target target)
-        {
+		[Configure]
+		public void ConfigureAll(Configuration conf, Target target)
+		{
 			// Sets proper Windows Kits version
 			KitsRootPaths.SetUseKitsRootForDevEnv(
 				target.DevEnv,
 				KitsRootEnum.KitsRoot10,
 				Options.Vc.General.WindowsTargetPlatformVersion.v10_0_17763_0);
 
-            conf.SolutionFileName = "[solution.Name]";
-            conf.SolutionPath = @"[solution.SharpmakeCsPath]\..\..\";
+			conf.SolutionFileName = "[solution.Name]";
+			conf.SolutionPath = @"[solution.SharpmakeCsPath]\..\..\";
 
-            conf.AddProject<AmigoEngine>(target);
-        }
-    }
+			conf.AddProject<AmigoEngine>(target);
+			conf.AddProject<ShaderCompiler>(target);
+		}
+	}
 	
 	public static class Main
-    {
-        [Sharpmake.Main]
-        public static void SharpmakeMain(Arguments arguments)
-        {
-            arguments.Generate<AmigoSolution>();
-        }
-    }
+	{
+		[Sharpmake.Main]
+		public static void SharpmakeMain(Arguments arguments)
+		{
+			arguments.Generate<AmigoSolution>();
+		}
+	}
 }

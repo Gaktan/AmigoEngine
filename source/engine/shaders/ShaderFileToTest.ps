@@ -1,0 +1,61 @@
+struct X1234
+{
+    float1 x1; float2 x2;  float3 x3;   float4 x4;
+};
+
+struct ModelViewProjection
+{
+    float4x4 MVP;
+};
+
+// Nameless
+struct
+{
+    nointerpolation float4 NamelessPosition : POSITION;
+    float4 NamelessColor    : COLOR;
+} Nameless;
+
+// Nameless2 no space
+struct{nointerpolation float4 Nameless2Position:POSITION;float4 Nameless2Color;}Nameless2;
+
+// Nameless3 weird spaces
+struct		              {		    
+nointerpolation                              
+				float4
+Nameless3Position
+			:
+		 POSITION
+	   ;
+	  float4 
+		Nameless3Color
+		;
+} Nameless3
+;
+
+
+struct Interpolators
+{
+	nointerpolation float4 Color    : COLOR;
+    float4 Position : SV_Position;
+};
+
+
+struct InsideStruct
+{
+	X1234 X;
+};
+
+#define DEFINED 10
+
+struct Array
+{
+	float4 _m[4];
+	X1234 p   [12];
+	nointerpolation float4 Color	 
+								[DEFINED]    : COLOR;
+};
+
+float4 main()   : SV_Target
+{
+	return 0.0;
+}
