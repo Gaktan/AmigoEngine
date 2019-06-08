@@ -16,13 +16,16 @@
 #include "dx12/dx12rendertarget.h"
 #include "dx12/dx12commandqueue.h"
 
+// TODO: generate file that contains all the shader includes, and D3D12_SHADER_BYTECODE
+#include "shaders/generated/PixelShader_PixelShader_PixelShader.h"
+#include "shaders/generated/VertexShader_VertexShader_VertexShader.h"
+D3D12_SHADER_BYTECODE vertexShaderByteCode = { g_VertexShader, sizeof(g_VertexShader) };
+D3D12_SHADER_BYTECODE pixelShaderByteCode = { g_PixelShader, sizeof(g_PixelShader) };
+
 // Vertex buffer for the cube.
 DX12VertexBuffer* m_VertexBuffer;
 // Index buffer for the cube.
 DX12IndexBuffer* m_IndexBuffer;
-
-ID3DBlob* vertexShaderBlob = nullptr;
-ID3DBlob* pixelShaderBlob = nullptr;
 
 // Depth buffer.
 DX12DepthRenderTarget* m_DepthBuffer = nullptr;
@@ -117,13 +120,6 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	// Create the depth buffer.
 	ResizeDepthBuffer(dx12Device, width, height);
 
-	// TODO: Still not great, need to find a better way to deal with Working Directory...
-	// Load shaders
-	HRESULT res = D3DReadFileToBlob(L"..\\..\\output\\win64\\VertexShader.cso", &vertexShaderBlob);
-	ThrowIfFailed(res);
-	res = D3DReadFileToBlob(L"..\\..\\output\\win64\\PixelShader.cso", &pixelShaderBlob);
-	ThrowIfFailed(res);
-
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
 	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -174,8 +170,8 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	pipelineStateStream.pRootSignature = m_RootSignature;
 	pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
 	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateStream.VS = CD3DX12_SHADER_BYTECODE(vertexShaderBlob);
-	pipelineStateStream.PS = CD3DX12_SHADER_BYTECODE(pixelShaderBlob);
+	pipelineStateStream.VS = vertexShaderByteCode;
+	pipelineStateStream.PS = pixelShaderByteCode;
 	pipelineStateStream.DSVFormat = m_DepthBuffer->GetFormat();
 	pipelineStateStream.RTVFormats = rtvFormats;
 
@@ -200,9 +196,6 @@ void UnloadContent(DX12Device& dx12Device)
 
 	delete m_VertexBuffer;
 	delete m_IndexBuffer;
-
-	vertexShaderBlob->Release();
-	pixelShaderBlob->Release();
 
 	delete m_DepthBuffer;
 	m_RootSignature->Release();

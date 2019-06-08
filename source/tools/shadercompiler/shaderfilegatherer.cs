@@ -10,29 +10,38 @@ namespace ShaderCompiler
 	[Serializable]
 	class ShaderFile
 	{
-		public string Name;
+		public string FullPath;
 		[NonSerialized]
 		public string Content;
 		// TODO: Deal with dependencies (includes). Will require a deep read of the file.
 		//public List<ShaderFile> Dependencies = null;
 		public UInt32 Hash;
 		public bool DidCompile;
+
+		public string GetFileName()
+		{
+			return Path.GetFileNameWithoutExtension(FullPath);
+		}
 	}
 
 	class ShaderFileGatherer
 	{
-		//static readonly string ShaderFileExtension = ".ps";
+		static readonly string ShaderFileExtension = ".hlsl";
 		static readonly string DataBaseName = "shadercompiler.db";
-		static readonly string ShaderFileToTest = "ShaderFileToTest.ps";
+		//static readonly string ShaderFileToTest = "ShaderFileToTest.ps";
+		static readonly string GeneratedFolderName = "Generated";
 
-		static void ProcessFile(string file)
+		public static string ShaderSourcePath;
+		public static string GeneratedFolder;
+
+		static void ProcessFile(string fullPathToFile)
 		{
 			// TODO: Process all HLSL files
-			if (file.EndsWith(ShaderFileToTest))
+			if (fullPathToFile.EndsWith(ShaderFileExtension))
 			{
 				//Console.WriteLine("Processing file {0}", file);
 
-				string allText = File.ReadAllText(file);
+				string allText = File.ReadAllText(fullPathToFile);
 				//Console.WriteLine(allText);
 
 				Crc32 crc32 = new Crc32();
@@ -42,7 +51,7 @@ namespace ShaderCompiler
 				{
 					DidCompile = false,
 					Hash = Hash,
-					Name = file,
+					FullPath = fullPathToFile,
 					Content = allText
 				};
 
@@ -143,8 +152,21 @@ namespace ShaderCompiler
 			return ret.Distinct().ToList();
 		}
 
+		private static void CreateGeneratedFolder()
+		{
+			// DXC doesn't create directories automatically, so we need to do it manually.
+			if (!Directory.Exists(GeneratedFolder))
+			{
+				Directory.CreateDirectory(GeneratedFolder);
+			}
+		}
+
 		public static void StartProcessing(string rootFolder)
 		{
+			ShaderSourcePath = rootFolder;
+			GeneratedFolder = ShaderSourcePath + @"\" + GeneratedFolderName + @"\";
+			CreateGeneratedFolder();
+
 			CurrentResult = new Dictionary<UInt32, ShaderFile>();
 
 			string DBFile = rootFolder + "\\" + DataBaseName;
@@ -166,6 +188,8 @@ namespace ShaderCompiler
 			//	new ShaderFileParser(f).Process();
 			//	Console.WriteLine("\n\n");
 			//}
+
+			// TODO: Delete generated files from shader files that were deleted
 
 			// Update DB by overwritting it
 			WriteDataBase(DBFile);

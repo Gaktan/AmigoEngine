@@ -2,36 +2,60 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
-using SharpDX.D3DCompiler;
 
 namespace ShaderCompiler
 {
 	class ShaderCompiler
 	{
+		private static string GetDirectXCompilerDirectory()
+		{
+			return @"..\..\external\DirectXShaderCompiler\bin\dxc.exe";
+		}
+
+		enum ShaderType
+		{
+			VertexShader,
+			PixelShader
+		};
+
+		private static ShaderType ShaderTypeFromString(string str)
+		{
+			switch (str.ToLower())
+			{
+			case "vs":
+			case "vertex":
+				return ShaderType.VertexShader;
+			case "ps":
+			case "pixel":
+			case "fragment":
+			default:
+				return ShaderType.PixelShader;
+			}
+		}
+
+		private static string ShaderTypeToString(ShaderType shaderType)
+		{
+			switch(shaderType)
+			{
+			case ShaderType.VertexShader:
+				return "vs";
+			case ShaderType.PixelShader:
+			default:
+				return "ps";
+			}
+		}
+
+		private static readonly string ShaderModel = "6_0";
+
 		struct HeaderInfo
 		{
 			public string Name;
 			public string EntryPoint;
-			public string Type;
+			public ShaderType Type;
 
 			public string DebugPrint()
 			{
 				return "Name: " + Name + ", EntryPoint: " + EntryPoint + ", Type: " + Type + ".";
-			}
-
-			private static string ShaderTypeFromString(string str)
-			{
-				switch(str.ToLower())
-				{
-				case "vs":
-				case "vertex":
-					return "vs_5_0";
-				case "ps":
-				case "pixel":
-				case "fragment":
-				default:
-					return "ps_5_0";
-				}
 			}
 
 			private static string GetInfoFromHeader(string tag, string str, int lineNum, string defaultValue = null)
@@ -53,7 +77,7 @@ namespace ShaderCompiler
 				}
 				else
 				{
-					throw new Exception("Missing tag \"" + tag + "\" in ShaderCompilerHeader.\nIn " + CurrentShaderFile.Name + ":line " + lineNum);
+					throw new Exception("Missing tag \"" + tag + "\" in ShaderCompilerHeader.\nIn " + CurrentShaderFile.FullPath + ":line " + lineNum);
 				}
 			}
 
@@ -108,10 +132,52 @@ namespace ShaderCompiler
 			{
 				Console.WriteLine("HEADER:\t\t" + header.DebugPrint());
 
-				ShaderBytecode bytecode = ShaderBytecode.Compile(shaderFile.Content, header.EntryPoint, header.Type);
-			}
+				string DXC = GetDirectXCompilerDirectory();
 
-			//ShaderBytecode bytecode = ShaderBytecode.Compile(shaderFile.Content, "main", "vs_5_0");
+				// Shader code as header file or binary file
+				bool HeaderFile = true;
+				string ExportOption = HeaderFile ? "Fh" : "Fo";
+				string Extension = HeaderFile ? ".h" : ".bin";
+
+				string ShaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + header.Type;
+				string ShaderOutputFile = ShaderFileGatherer.ShaderSourcePath + @"\generated\" + ShaderName + Extension;
+				string VariableName = "g_" + header.Name;
+				string Optimization = "Od";
+
+				// 0: input file, 1: Entry point, 2: Profile, 3: optimization, 4: Export option 5: Output file, 6: Variable name for the header file, 
+				string args = @"{0} -Zi /E{1} /T{2} -{3} /{4}{5} {6} -nologo";
+				args = String.Format(args,
+					shaderFile.FullPath,
+					header.EntryPoint,
+					ShaderTypeToString(header.Type) + "_" + ShaderModel,
+					Optimization,
+					ExportOption,
+					ShaderOutputFile,
+					HeaderFile ? "/Vn" + VariableName : ""
+					);
+
+				System.Diagnostics.Process process = System.Diagnostics.Process.Start(DXC);
+				process.StartInfo.RedirectStandardOutput = true;
+				process.StartInfo.RedirectStandardError = true;
+				process.StartInfo.UseShellExecute = false;
+				process.StartInfo.CreateNoWindow = true;
+				process.StartInfo.Arguments = args;
+
+				process.Start();
+
+				// To avoid deadlocks, use an asynchronous read operation on at least one of the streams.
+				process.StandardOutput.ReadToEnd();
+
+				process.WaitForExit();
+
+				if (process.ExitCode != 0)
+				{
+					throw new Exception(process.StandardError.ReadToEnd());
+					//throw new Exception(process.StandardOutput.ReadToEnd());
+				}
+				
+				//Console.WriteLine(process.StandardError.ReadToEnd());
+			}
 		}
 
 		static ShaderFile CurrentShaderFile;

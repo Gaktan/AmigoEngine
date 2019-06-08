@@ -22,13 +22,9 @@ class AmigoEngine : Project
 			BuildSystem.MSBuild,
 			DotNetFramework.v4_5));
 
-		// Pixel shader
-		ResourceFilesExtensions.Add(".ps");
-		ExtensionBuildTools.Add(".ps", "FxCompile");
-
-		// Vertex shader
-		ResourceFilesExtensions.Add(".vs");
-		ExtensionBuildTools.Add(".vs", "FxCompile");
+		// Shader files
+		ResourceFilesExtensions.Add(".hlsl");
+        SourceFilesExcludeRegex.Add(@"\\Generated\\.*\.h");
 
         // if set to true, dependencies that the project uses will be copied to the output directory
         DependenciesCopyLocal = DependenciesCopyLocalTypes.None;

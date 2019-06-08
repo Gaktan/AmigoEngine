@@ -42,8 +42,8 @@ namespace ShaderCompiler
 			}
 
 			// Always return -1 when debugging to force recompiling
-			return -1;
-			//return 0;
+			//return -1;
+			return 0;
 		}
 	}
 }
