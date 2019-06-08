@@ -1,3 +1,23 @@
+// Make sure the following fails
+/*
+ShaderCompiler.                          , EntryPoint: main, Type: PS
+ShaderCompiler.                          , EntryPoint: main,         
+ShaderCompiler.                          ,                 , Type: PS
+ShaderCompiler.                          ,                 ,         
+*/
+
+// These are ok though
+// ShaderCompiler. Name: ShaderFileToTest_10,                 , Type: PS
+// ShaderCompiler. Name: ShaderFileToTest_11, EntryPoint: main,         
+// ShaderCompiler. Name: ShaderFileToTest_12,                 ,         
+
+// ShaderCompiler. Name: ShaderFileToTest_14, EntryPoint: main, Type: PS
+// ShaderCompiler. Name: ShaderFileToTest_15, EntryPoint: main, Type: PiXeL
+// ShaderCompiler. Name: ShaderFileToTest_16, EntryPoint: main, Type: fragment
+// ShaderCompiler. Name: ShaderFileToTest_17, EntryPoint: mainVS, Type: VS
+// ShaderCompiler. Name: ShaderFileToTest_18, EntryPoint: mainVS, Type: vertex
+
+
 struct X1234
 {
     float1 x1; float2 x2;  float3 x3;   float4 x4;
@@ -8,12 +28,17 @@ struct ModelViewProjection
     float4x4 MVP;
 };
 
-// Nameless
-struct
+struct VertexInput
 {
-    nointerpolation float4 NamelessPosition : POSITION;
-    float4 NamelessColor    : COLOR;
-} Nameless;
+    nointerpolation float4 Position : POSITION;
+    float4 Color    : COLOR;
+};
+
+struct VertexOutput
+{
+    float4 Position : SV_Position;
+};
+
 
 // Nameless2 no space
 struct{nointerpolation float4 Nameless2Position:POSITION;float4 Nameless2Color;}Nameless2;
@@ -58,4 +83,13 @@ struct Array
 float4 main()   : SV_Target
 {
 	return 0.0;
+}
+
+VertexOutput mainVS(VertexInput IN)
+{
+	VertexOutput OUT;
+
+	OUT.Position = IN.Position * IN.Color;
+
+	return OUT;
 }

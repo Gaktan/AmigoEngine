@@ -7,7 +7,7 @@ namespace ShaderCompiler
 	class ShaderFileParser
 	{
 		protected List<ShaderFile>	ShaderFiles;
-		protected List<Struct>      Structs;
+		protected List<Struct>		Structs;
 
 
 		public ShaderFileParser(List<ShaderFile> shaderFiles)
@@ -20,6 +20,9 @@ namespace ShaderCompiler
 		{
 			// Get all structs
 			Structs.AddRange(Struct.GetAllStructsFromShaderFile(shaderFile));
+
+			// Compile
+			ShaderCompiler.Compile(shaderFile);
 		}
 
 		public void ProcessAllFiles()

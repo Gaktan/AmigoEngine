@@ -120,7 +120,7 @@ namespace ShaderCompiler
 				int numTabs = (32 - line.Length) / 4;
 				string tabs = new string('\t', numTabs);
 
-				string comment  =@"\\ " + (se.Semantic != "" ? "(:" + se.Semantic + ")" : "") +" TODO: Change this " + se.Type + " to the equivalent CPP type.\n";
+				string comment = @"\\ " + (se.Semantic != "" ? "(:" + se.Semantic + ")" : "") +" TODO: Change this " + se.Type + " to the equivalent CPP type.\n";
 
 				ret += line + tabs + comment;
 			}
@@ -178,6 +178,8 @@ namespace ShaderCompiler
 			// For each structure in the code
 			foreach (string str in shaderFile.Content.Split(new[] { "struct" }, StringSplitOptions.RemoveEmptyEntries))
 			{
+				// TODO: Fix bug where we are processing an empty struct. Need to improve this splitting
+
 				// Need to remove those annoying \r\n
 				string text = Regex.Replace(str, "(\r\n|\n\r|\n|\r)", "\n");
 

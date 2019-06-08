@@ -39,5 +39,7 @@ class ShaderCompiler : CSharpProject
         
         // Adds a C# reference, kind of wordy if you ask me
         conf.DotNetReferences.Add(new DotNetReference("System", DotNetReference.ReferenceType.DotNet));
+        
+        conf.ReferencesByNuGetPackage.Add("SharpDX.D3DCompiler", "4.2.0");
 	}
 }
