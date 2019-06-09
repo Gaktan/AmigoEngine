@@ -27,16 +27,15 @@ namespace ShaderCompiler
 	class ShaderFileGatherer
 	{
 		static readonly string ShaderFileExtension = ".hlsl";
-		static readonly string DataBaseName = "shadercompiler.db";
+		static readonly string DataBaseName = ".shadercompiler.db";
 		//static readonly string ShaderFileToTest = "ShaderFileToTest.ps";
-		static readonly string GeneratedFolderName = "Generated";
+		static readonly string GeneratedFolderName = "generated";
 
 		public static string ShaderSourcePath;
 		public static string GeneratedFolder;
 
 		static void ProcessFile(string fullPathToFile)
 		{
-			// TODO: Process all HLSL files
 			if (fullPathToFile.EndsWith(ShaderFileExtension))
 			{
 				//Console.WriteLine("Processing file {0}", file);
@@ -169,9 +168,8 @@ namespace ShaderCompiler
 
 			CurrentResult = new Dictionary<UInt32, ShaderFile>();
 
-			string DBFile = rootFolder + "\\" + DataBaseName;
-
 			// Read back from DB
+			string DBFile = GeneratedFolder + "\\" + DataBaseName;
 			ReadDataBase(DBFile);
 
 			// Go through all the files and create Shaderfiles
@@ -179,6 +177,9 @@ namespace ShaderCompiler
 
 			ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
 			fileParser.ProcessAllFiles();
+
+			// Generate \shaders\include\shaders.h
+			ShaderCompiler.GenerateShaderHeaderFile();
 
 			// TODO: Compile only the files that need recompiling
 			//List<ShaderFile> shaderFiles = GetShaderFilesThatNeedToCompile();

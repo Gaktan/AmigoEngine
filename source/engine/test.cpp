@@ -16,11 +16,7 @@
 #include "dx12/dx12rendertarget.h"
 #include "dx12/dx12commandqueue.h"
 
-// TODO: generate file that contains all the shader includes, and D3D12_SHADER_BYTECODE
-#include "shaders/generated/PixelShader_PixelShader_PixelShader.h"
-#include "shaders/generated/VertexShader_VertexShader_VertexShader.h"
-D3D12_SHADER_BYTECODE vertexShaderByteCode = { g_VertexShader, sizeof(g_VertexShader) };
-D3D12_SHADER_BYTECODE pixelShaderByteCode = { g_PixelShader, sizeof(g_PixelShader) };
+#include "shaders/include/shaders.h"
 
 // Vertex buffer for the cube.
 DX12VertexBuffer* m_VertexBuffer;
@@ -170,8 +166,8 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 	pipelineStateStream.pRootSignature = m_RootSignature;
 	pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
 	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateStream.VS = vertexShaderByteCode;
-	pipelineStateStream.PS = pixelShaderByteCode;
+	pipelineStateStream.VS = GET_SHADER_BYTECODE(VertexShader);
+	pipelineStateStream.PS = GET_SHADER_BYTECODE(PixelShader);
 	pipelineStateStream.DSVFormat = m_DepthBuffer->GetFormat();
 	pipelineStateStream.RTVFormats = rtvFormats;
 

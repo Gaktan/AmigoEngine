@@ -11,7 +11,7 @@ ShaderCompiler.                          ,                 ,
 // ShaderCompiler. Name: Test_11, EntryPoint: main,         
 // ShaderCompiler. Name: Test_12,                 ,         
 
-//		 ShaderCompiler.				 Name:		  ShaderFileToTest_14		 ,				 EntryPoint				 :				  main,				 Type		 :			PS			 
+//		 ShaderCompiler.				 Name:		  Test_14		 ,				 EntryPoint				 :				  main,				 Type		 :			PS			 
 //ShaderCompiler.Name:Test_15,EntryPoint:main,Type:PS
 // ShaderCompiler. Name: Test_16, EntryPoint: main, Type: PS
 // ShaderCompiler. Name: Test_17, EntryPoint: main, Type: PiXeL

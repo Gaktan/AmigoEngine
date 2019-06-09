@@ -24,7 +24,7 @@ class AmigoEngine : Project
 
 		// Shader files
 		ResourceFilesExtensions.Add(".hlsl");
-        SourceFilesExcludeRegex.Add(@"\\Generated\\.*\.h");
+        SourceFilesExcludeRegex.Add(@".*\.generated\.h");
 
         // if set to true, dependencies that the project uses will be copied to the output directory
         DependenciesCopyLocal = DependenciesCopyLocalTypes.None;
