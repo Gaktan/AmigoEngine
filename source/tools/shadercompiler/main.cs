@@ -10,26 +10,17 @@ namespace ShaderCompiler
 		{
 			Console.WriteLine("\n\n\n\t\t=== Starting compiling Shaders ===");
 
-			if (args.Length != 1)
+			bool success = Arguments.ParseArguments(args);
+			if (!success)
 			{
-				Console.WriteLine("Wrong number of arguments.");
-				Console.WriteLine("Usage: <Path to shader folder>");
 				return -1;
 			}
 
-			string pathToShaderFolder = args[0];
-
-			if (!Directory.Exists(pathToShaderFolder))
-			{
-				Console.WriteLine("Given folder \"{0}\" doesn't exist", pathToShaderFolder);
-				return -2;
-			}
-
-			Console.WriteLine("Searching folder \"{0}\"", pathToShaderFolder);
+			Console.WriteLine("Searching folder \"{0}\"", Arguments.SourceFolder);
 
 			try
 			{
-				ShaderFileGatherer.StartProcessing(pathToShaderFolder);
+				ShaderFileGatherer.StartProcessing(Arguments.SourceFolder);
 
 				Console.WriteLine("\t\t=== Finished compiling Shaders with SUCCESS ===\n\n\n");
 			}

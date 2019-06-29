@@ -1,3 +1,5 @@
+// From https://rosettacode.org/wiki/CRC-32#C.23
+
 using System;
 using System.Collections.Generic;
 using System.Linq;

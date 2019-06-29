@@ -34,6 +34,8 @@ namespace ShaderCompiler
 		public static string ShaderSourcePath;
 		public static string GeneratedFolder;
 
+		private static string DBFile;
+
 		static void ProcessFile(string fullPathToFile)
 		{
 			if (fullPathToFile.EndsWith(ShaderFileExtension))
@@ -78,7 +80,7 @@ namespace ShaderCompiler
 			}
 		}
 
-		static void ReadDataBase(string DBFile)
+		static void ReadDataBase()
 		{
 			if (File.Exists(DBFile))
 			{
@@ -98,7 +100,7 @@ namespace ShaderCompiler
 			}
 		}
 
-		static void WriteDataBase(string DBFile)
+		static void WriteDataBase()
 		{
 			IFormatter formatter = new BinaryFormatter();
 			Stream stream = new FileStream(DBFile, FileMode.OpenOrCreate, FileAccess.Write);
@@ -160,20 +162,15 @@ namespace ShaderCompiler
 			}
 		}
 
-		public static void StartProcessing(string rootFolder)
+		public static void Build()
 		{
-			ShaderSourcePath = rootFolder;
-			GeneratedFolder = ShaderSourcePath + @"\" + GeneratedFolderName + @"\";
 			CreateGeneratedFolder();
 
-			CurrentResult = new Dictionary<UInt32, ShaderFile>();
-
 			// Read back from DB
-			string DBFile = GeneratedFolder + "\\" + DataBaseName;
-			ReadDataBase(DBFile);
+			ReadDataBase();
 
 			// Go through all the files and create Shaderfiles
-			ProcessFolder(rootFolder);
+			ProcessFolder(ShaderSourcePath);
 
 			ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
 			fileParser.ProcessAllFiles();
@@ -193,7 +190,41 @@ namespace ShaderCompiler
 			// TODO: Delete generated files from shader files that were deleted
 
 			// Update DB by overwritting it
-			WriteDataBase(DBFile);
+			WriteDataBase();
+		}
+
+		public static void Clean()
+		{
+			// The DB is in the generated folder but delete it just in case
+			if (File.Exists(DBFile))
+			{
+				File.Delete(DBFile);
+			}
+
+			if (Directory.Exists(GeneratedFolder))
+			{
+				Directory.Delete(GeneratedFolder, true);
+			}
+
+			
+		}
+
+		public static void StartProcessing(string rootFolder)
+		{
+			ShaderSourcePath = rootFolder;
+			GeneratedFolder = ShaderSourcePath + @"\" + GeneratedFolderName + @"\";
+			DBFile = GeneratedFolder + "\\" + DataBaseName;
+			CurrentResult = new Dictionary<UInt32, ShaderFile>();
+
+			if (Arguments.IsClean())
+			{
+				Clean();
+			}
+
+			if (Arguments.IsBuild())
+			{
+				Build();
+			}
 		}
 
 		static Dictionary<UInt32, ShaderFile> PreviousResult = null;

@@ -1,5 +1,7 @@
 #pragma once
 
+// Code between Begin and End are generated. Do not modify it
+
 // BeginInclude
 	#include "shaders\generated\PixelShader_PixelShader_ps.generated.h"
 	#include "shaders\generated\ShaderFileToTest_Test_10_ps.generated.h"

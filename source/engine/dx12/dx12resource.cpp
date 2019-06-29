@@ -71,7 +71,7 @@ DX12VertexBuffer::DX12VertexBuffer(
 	: DX12Resource(device, commandList, bufferSize, bufferData, flags)
 {
 	m_VertexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
-	m_VertexBufferView.SizeInBytes = bufferSize;
+	m_VertexBufferView.SizeInBytes = (ui32) bufferSize;
 	m_VertexBufferView.StrideInBytes = stride;
 
 	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
@@ -95,7 +95,7 @@ DX12IndexBuffer::DX12IndexBuffer(
 {
 	m_IndexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
 	m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-	m_IndexBufferView.SizeInBytes = bufferSize;
+	m_IndexBufferView.SizeInBytes = (ui32) bufferSize;
 
 	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_Resource,

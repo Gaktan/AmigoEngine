@@ -5,8 +5,6 @@
 // Once a feature is complete, we can create additional files
 // based on this one
 
-#include <d3dcompiler.h>
-
 #include "math/math.h"
 #include "math/vector4.h"
 #include "math/matrix4.h"
@@ -17,6 +15,7 @@
 #include "dx12/dx12commandqueue.h"
 
 #include "shaders/include/shaders.h"
+
 
 // Vertex buffer for the cube.
 DX12VertexBuffer* m_VertexBuffer;
@@ -86,8 +85,6 @@ void ResizeDepthBuffer(DX12Device& device, int width, int height)
 
 	m_DepthBuffer = new DX12DepthRenderTarget(device.m_Device, width, height);
 }
-#include <iostream>
-#include <filesystem>
 
 bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 {
@@ -224,7 +221,7 @@ void OnUpdate(ui32 width, ui32 height, float delta)
 	const Vector4f rotationAxis(0, 1, 1, 0);
 	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotationAxis, toRadians(angle));
 
-	Vector4f position(0, 0, sinf(angle*0.01));
+	Vector4f position(0, 0, sinf(angle*0.01f));
 	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
 
 	// Update the view matrix.

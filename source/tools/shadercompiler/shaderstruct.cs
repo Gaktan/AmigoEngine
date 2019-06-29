@@ -118,6 +118,7 @@ namespace ShaderCompiler
 				string line = "\t" + se.Type + " " + se.Name + (se.Array != "" ? "[" + se.Array + "]" : "") + ";";
 				// On tab is 4 spaces/characters. One line should be 32 char max
 				int numTabs = (32 - line.Length) / 4;
+				numTabs = Math.Max(numTabs, 1);
 				string tabs = new string('\t', numTabs);
 
 				string comment = @"\\ " + (se.Semantic != "" ? "(:" + se.Semantic + ")" : "") +" TODO: Change this " + se.Type + " to the equivalent CPP type.\n";
