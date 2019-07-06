@@ -56,7 +56,7 @@ namespace ShaderCompiler
 		{
 			if (args.Length != 2)
 			{
-				Console.WriteLine("Wrong number of arguments. Excpeted 2, got {0}", args.Length);
+				Console.WriteLine("Wrong number of arguments. Expected 2, got {0}", args.Length);
 				PrintUsage();
 				return false;
 			}
@@ -80,9 +80,9 @@ namespace ShaderCompiler
 			return true;
 		}
 
-		private static void PrintSingleUsage(string command, string usage)
+		private static void PrintUsage(string command, string usage)
 		{
-			// On tab is 4 spaces/characters. One command should be 16 char max
+			// One tab is 4 spaces/characters. One command should be 16 char max
 			int numTabs = (16 - command.Length) / 4;
 			numTabs = Math.Max(numTabs, 1);
 			string tabs = new string('\t', numTabs);
@@ -94,8 +94,8 @@ namespace ShaderCompiler
 		{
 			Console.WriteLine("Usage:");
 			Console.WriteLine("ShaderCompiler.exe <Operation> <Source>\n");
-			PrintSingleUsage("Operation", "Operation to be performed by the ShaderCompiler. Can be \"-Build\", \"-Clean\" or \"-Rebuild\".");
-			PrintSingleUsage("Source", "Source folder of the shaders to be compiled. All files inside this folder and its subfolders will be processed.");
+			PrintUsage("Operation", "Operation to be performed by the ShaderCompiler. Can be \"-Build\", \"-Clean\" or \"-Rebuild\".");
+			PrintUsage("Source", "Source folder of the shaders to be compiled. All files inside this folder and its subfolders will be processed.");
 
 			Console.WriteLine();
 		}

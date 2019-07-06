@@ -8,6 +8,15 @@ namespace ShaderCompiler
 {
 	class ShaderCompiler
 	{
+		// Captures any line that starts with // ShaderCompiler and puts the content of the header in Group1
+		private static readonly string HeaderRegex = @"//\s*ShaderCompiler\.(.*)";
+		// Reads a single tag from a header and puts the result in Group1
+		private static readonly string HeaderTagRegex = @"\s*:\s*([a-z_][a-z0-9_]*)\s*,*";
+		// Captures anything between Begin{0} (Group1) and End{0} (Group3) in Group2
+		private static readonly string FindBeginEndRegex = @"(\/\/\s*Begin{0})([\s\S]*)(\/\/\s*End{0})";
+		// Captures the name of const unsigned char g_ array. Puts the result in Group1
+		private static readonly string ByteArrayNameFromGeneratedHeaderFileRegex = @"const\s*unsigned\s*char\s*g_(.*)\[\]";
+
 		// TODO: This is actually in the Windows SDK folder. Use this instead?
 		private static string GetDirectXCompilerDirectory()
 		{
@@ -61,18 +70,19 @@ namespace ShaderCompiler
 				return "Name: " + Name + ", EntryPoint: " + EntryPoint + ", Type: " + Type + ".";
 			}
 
-			private static string GetInfoFromHeader(string tag, string str, int lineNum, string defaultValue = null)
+			// Returns the value of a tag from a given header string
+			private static string ReadTagFromHeader(string tag, string str, int lineNum, string defaultValue = null)
 			{
-				// (Tag), {return}
-				// ShaderCompiler. (Name): {ShaderFileToTest_01}, EntryPoint: main, Type: PS
+				// (tag), {return}
+				// ShaderCompiler. (Name): {ShaderFileToTest_01}, (EntryPoint): {main}, (Type): {PS}
 
-				string TagRegex = tag + @"\s*:\s*([a-z_][a-z0-9_]*)\s*,*";
+				string tagRegex = tag + HeaderTagRegex;
 
-				var TagReg = new Regex(TagRegex, RegexOptions.IgnoreCase);
-				Match TagMatch = TagReg.Match(str);
-				if (TagMatch.Success)
+				Regex tagReg = new Regex(tagRegex, RegexOptions.IgnoreCase);
+				Match tagMatch = tagReg.Match(str);
+				if (tagMatch.Success)
 				{
-					return TagMatch.Groups[1].ToString();
+					return tagMatch.Groups[1].ToString();
 				}
 				else if (defaultValue != null)
 				{
@@ -87,9 +97,9 @@ namespace ShaderCompiler
 			public static HeaderInfo FromString(string str, int lineNum)
 			{
 				HeaderInfo header;
-				header.Name = GetInfoFromHeader("Name", str, lineNum);
-				header.EntryPoint = GetInfoFromHeader("EntryPoint", str, lineNum, "main");
-				header.Type = ShaderTypeFromString(GetInfoFromHeader("Type", str, lineNum, "ps"));
+				header.Name = ReadTagFromHeader("Name", str, lineNum);
+				header.EntryPoint = ReadTagFromHeader("EntryPoint", str, lineNum, "main");
+				header.Type = ShaderTypeFromString(ReadTagFromHeader("Type", str, lineNum, "ps"));
 
 				return header;
 			}
@@ -102,8 +112,6 @@ namespace ShaderCompiler
 
 			List<HeaderInfo> headerInfos = new List<HeaderInfo>();
 
-			string HeaderRegex = @"//\s*ShaderCompiler\.(.*)";
-
 			// For each line
 			using (StringReader reader = new StringReader(fileContent))
 			{
@@ -111,11 +119,11 @@ namespace ShaderCompiler
 				int lineNum = 0;
 				while ((line = reader.ReadLine()) != null)
 				{
-					var HeaderReg = new Regex(HeaderRegex, RegexOptions.IgnoreCase);
-					Match HeaderMatch = HeaderReg.Match(line);
-					if (HeaderMatch.Success)
+					Regex headerReg = new Regex(HeaderRegex, RegexOptions.IgnoreCase);
+					Match headerMatch = headerReg.Match(line);
+					if (headerMatch.Success)
 					{
-						string str = HeaderMatch.Groups[1].ToString();
+						string str = headerMatch.Groups[1].ToString();
 						headerInfos.Add(HeaderInfo.FromString(str, lineNum));
 					}
 
@@ -126,6 +134,7 @@ namespace ShaderCompiler
 			return headerInfos;
 		}
 
+		// Processes all headers from a shader file and compiles every permutation
 		public static void Compile(ShaderFile shaderFile)
 		{
 			CurrentShaderFile = shaderFile;
@@ -138,14 +147,14 @@ namespace ShaderCompiler
 				string DXC = GetDirectXCompilerDirectory();
 
 				// Shader code as header file or binary file
-				bool HeaderFile = true;
-				string ExportOption = HeaderFile ? "Fh" : "Fo";
-				string Extension = HeaderFile ? GeneratedHeaderExtension : ".bin";
-				string VariableName = HeaderFile ? "/Vng_" + header.Name : "";
-				string Optimization = "Od";
+				bool headerFile = true;
+				string exportOption = headerFile ? "Fh" : "Fo";
+				string extension = headerFile ? GeneratedHeaderExtension : ".bin";
+				string variableName = headerFile ? "/Vng_" + header.Name : "";
+				string optimization = "Od";
 
-				string ShaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
-				string ShaderOutputFile = ShaderFileGatherer.ShaderSourcePath + @"\generated\" + ShaderName + Extension;
+				string shaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
+				string shaderOutputFile = ShaderFileGatherer.ShaderSourcePath + @"\generated\" + shaderName + extension;
 
 
 				// 0: input file, 1: Entry point, 2: Profile, 3: optimization, 4: Export option 5: Output file, 6: Variable name for the header file, 
@@ -154,10 +163,10 @@ namespace ShaderCompiler
 					shaderFile.FullPath,
 					header.EntryPoint,
 					ShaderTypeToString(header.Type) + "_" + ShaderModel,
-					Optimization,
-					ExportOption,
-					ShaderOutputFile,
-					VariableName
+					optimization,
+					exportOption,
+					shaderOutputFile,
+					variableName
 					);
 
 				System.Diagnostics.Process process = System.Diagnostics.Process.Start(DXC);
@@ -187,74 +196,62 @@ namespace ShaderCompiler
 		// Will replace anything bewtween Begin{Pattern} and End{Pattern} with Replacement string
 		static void ReplaceHeaderFileContent(string Pattern, string Replacement)
 		{
-			if (!File.Exists(ShaderHeaderFile))
+			// TODO: hardcoded for now
+			string shaderHeaderFile = ShaderFileGatherer.ShaderSourcePath + @"\include\shaders.h";
+
+			if (!File.Exists(shaderHeaderFile))
 			{
-				throw new Exception("File (" + ShaderHeaderFile + ") does not exist.");
+				throw new Exception("File (" + shaderHeaderFile + ") does not exist.");
 			}
 
-			string HeaderFileContent = File.ReadAllText(ShaderHeaderFile);
+			string HeaderFileContent = File.ReadAllText(shaderHeaderFile);
 
-			string RegexPattern = string.Format(FindBeginEndRegex, Pattern);
+			string regexPattern = string.Format(FindBeginEndRegex, Pattern);
 
-			var Reg = new Regex(RegexPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			Match RegMatch = Reg.Match(HeaderFileContent);
-			if (!RegMatch.Success)
+			Regex regex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
+			Match regMatch = regex.Match(HeaderFileContent);
+			if (!regMatch.Success)
 			{
-				throw new Exception("BeginShaderByteCode or EndShaderByteCode were not found in file (" + ShaderHeaderFile + ")");
+				throw new Exception("BeginShaderByteCode or EndShaderByteCode were not found in file (" + shaderHeaderFile + ")");
 			}
 
-			string newFileContent = Reg.Replace(HeaderFileContent, "$1" + Environment.NewLine + Replacement + "$3");
-			File.WriteAllText(ShaderHeaderFile, newFileContent);
+			string newFileContent = regex.Replace(HeaderFileContent, "$1" + Environment.NewLine + Replacement + "$3");
+			File.WriteAllText(shaderHeaderFile, newFileContent);
 		}
-
-		// Captures anything between Begin{0} (group 1) and End{0} (group 3) in group 2
-		static readonly string FindBeginEndRegex = @"(\/\/\s*Begin{0})([\s\S]*)(\/\/\s*End{0})";
-		static readonly string ByteArrayNameFromGeneratedHeaderFileRegex = @"const\s*unsigned\s*char\s*g_(.*)\[\]";
-
-		static readonly string ShaderHeaderFile = ShaderFileGatherer.ShaderSourcePath + @"\include\shaders.h";
 
 		public static void GenerateShaderHeaderFile()
 		{
 			// Search all generated header files (.generated.h) to grab the name of the array inside it and the filename as well
-			StringBuilder ShaderByteCodeBuilder = new StringBuilder();
-			StringBuilder IncludeBuilder = new StringBuilder();
-			foreach (string FileStr in Directory.GetFiles(ShaderFileGatherer.GeneratedFolder))
+			StringBuilder shaderByteCodeBuilder = new StringBuilder();
+			StringBuilder includeBuilder = new StringBuilder();
+			foreach (string fileStr in Directory.GetFiles(ShaderFileGatherer.GeneratedFolder))
 			{
-				if (!FileStr.EndsWith(GeneratedHeaderExtension))
+				// Don't process non shader compiled files
+				if (!fileStr.EndsWith(GeneratedHeaderExtension))
 				{
 					continue;
 				}
 
-				string GeneratedFileContent = File.ReadAllText(FileStr);
+				string GeneratedFileContent = File.ReadAllText(fileStr);
 
-				var ByteArrayNameReg = new Regex(ByteArrayNameFromGeneratedHeaderFileRegex, RegexOptions.IgnoreCase);
-				Match ByteArrayNameMatch = ByteArrayNameReg.Match(GeneratedFileContent);
-				if (!ByteArrayNameMatch.Success)
+				// Look for the byte array containing the shader code
+				Regex byteArrayNameReg = new Regex(ByteArrayNameFromGeneratedHeaderFileRegex, RegexOptions.IgnoreCase);
+				Match byteArrayNameMatch = byteArrayNameReg.Match(GeneratedFileContent);
+				if (!byteArrayNameMatch.Success)
 				{
-					throw new Exception("Given header file (" + FileStr + ") does not contain a Byte array. Something is seriously wrong.");
+					throw new Exception("Given header file (" + fileStr + ") does not contain a Byte array. Something is seriously wrong.");
 				}
 
-				string ByteArrayName = ByteArrayNameMatch.Groups[1].ToString();
+				string ByteArrayName = byteArrayNameMatch.Groups[1].ToString();
 
-				ShaderByteCodeBuilder.AppendLine("\tINIT_SHADER_BYTECODE(" + ByteArrayName + ");");
-				IncludeBuilder.AppendLine("\t#include \"shaders\\generated\\" + Path.GetFileName(FileStr) + "\"");
+				shaderByteCodeBuilder.AppendLine("\tINIT_SHADER_BYTECODE(" + ByteArrayName + ");");
+				includeBuilder.AppendLine("\t#include \"shaders\\generated\\" + Path.GetFileName(fileStr) + "\"");
 			}
 
-			ReplaceHeaderFileContent("Include", IncludeBuilder.ToString());
-			ReplaceHeaderFileContent("ShaderByteCode", ShaderByteCodeBuilder.ToString());
-
-			/*
-				// BeginInclude
-				// EndInclude
-
-				#define SHADER_BYTECODE(name) D3D12_SHADER_BYTECODE name # ByteCode = { g_ # name, sizeof(g_ # name) }
-
-				// BeginShaderByteCode
-				// EndShaderByteCode
-			*/
+			ReplaceHeaderFileContent("Include", includeBuilder.ToString());
+			ReplaceHeaderFileContent("ShaderByteCode", shaderByteCodeBuilder.ToString());
 		}
 
 		static ShaderFile CurrentShaderFile;
 	}
 }
- 

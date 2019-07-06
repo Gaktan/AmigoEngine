@@ -33,8 +33,10 @@ namespace ShaderCompiler
 
 		public static string ShaderSourcePath;
 		public static string GeneratedFolder;
-
 		private static string DBFile;
+
+		private static Dictionary<UInt32, ShaderFile> PreviousResult = null;
+		private static Dictionary<UInt32, ShaderFile> CurrentResult = null;
 
 		static void ProcessFile(string fullPathToFile)
 		{
@@ -46,22 +48,22 @@ namespace ShaderCompiler
 				//Console.WriteLine(allText);
 
 				Crc32 crc32 = new Crc32();
-				UInt32 Hash = crc32.Get(allText);
+				UInt32 hash = crc32.Get(allText);
 
 				ShaderFile shaderFile = new ShaderFile
 				{
 					DidCompile = false,
-					Hash = Hash,
+					Hash = hash,
 					FullPath = fullPathToFile,
 					Content = allText
 				};
 
-				if (CurrentResult.ContainsKey(Hash))
+				if (CurrentResult.ContainsKey(hash))
 				{
 					throw new Exception("Same file shouldn't be processed twice");
 				}
 
-				CurrentResult[Hash] = shaderFile;
+				CurrentResult[hash] = shaderFile;
 			}
 		}
 
@@ -95,7 +97,7 @@ namespace ShaderCompiler
 					// Deserialization didnd't work. Recompile everything
 					PreviousResult = new Dictionary<uint, ShaderFile>();
 				}
-				
+
 				stream.Close();
 			}
 		}
@@ -205,8 +207,6 @@ namespace ShaderCompiler
 			{
 				Directory.Delete(GeneratedFolder, true);
 			}
-
-			
 		}
 
 		public static void StartProcessing(string rootFolder)
@@ -226,8 +226,5 @@ namespace ShaderCompiler
 				Build();
 			}
 		}
-
-		static Dictionary<UInt32, ShaderFile> PreviousResult = null;
-		static Dictionary<UInt32, ShaderFile> CurrentResult = null;
 	}
 }
