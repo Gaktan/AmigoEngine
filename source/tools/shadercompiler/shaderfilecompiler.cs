@@ -23,9 +23,6 @@ namespace ShaderCompiler
 			return @"..\..\external\DirectXShaderCompiler\bin\dxc.exe";
 		}
 
-		static readonly string ShaderModel = "6_0";
-		static readonly string GeneratedHeaderExtension = ".generated.h";
-
 		enum ShaderType
 		{
 			VertexShader,
@@ -149,7 +146,7 @@ namespace ShaderCompiler
 				// Shader code as header file or binary file
 				bool headerFile = true;
 				string exportOption = headerFile ? "Fh" : "Fo";
-				string extension = headerFile ? GeneratedHeaderExtension : ".bin";
+				string extension = headerFile ? Config.GeneratedHeaderExtension : ".bin";
 				string variableName = headerFile ? "/Vng_" + header.Name : "";
 				string optimization = "Od";
 
@@ -162,7 +159,7 @@ namespace ShaderCompiler
 				args = String.Format(args,
 					shaderFile.FullPath,
 					header.EntryPoint,
-					ShaderTypeToString(header.Type) + "_" + ShaderModel,
+					ShaderTypeToString(header.Type) + "_" + Config.ShaderModel,
 					optimization,
 					exportOption,
 					shaderOutputFile,
@@ -204,19 +201,25 @@ namespace ShaderCompiler
 				throw new Exception("File (" + shaderHeaderFile + ") does not exist.");
 			}
 
-			string HeaderFileContent = File.ReadAllText(shaderHeaderFile);
+			string headerFileContent = File.ReadAllText(shaderHeaderFile);
 
 			string regexPattern = string.Format(FindBeginEndRegex, Pattern);
 
 			Regex regex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			Match regMatch = regex.Match(HeaderFileContent);
+			Match regMatch = regex.Match(headerFileContent);
 			if (!regMatch.Success)
 			{
 				throw new Exception("BeginShaderByteCode or EndShaderByteCode were not found in file (" + shaderHeaderFile + ")");
 			}
 
-			string newFileContent = regex.Replace(HeaderFileContent, "$1" + Environment.NewLine + Replacement + "$3");
-			File.WriteAllText(shaderHeaderFile, newFileContent);
+			string newFileContent = regex.Replace(headerFileContent, "$1" + Environment.NewLine + Replacement + "$3");
+
+			// Before overwritting the file, check if the content is actually different.
+			// This will prevent recompiling if the content was not actually changed.
+			if (headerFileContent != newFileContent)
+			{
+				File.WriteAllText(shaderHeaderFile, newFileContent);
+			}
 		}
 
 		public static void GenerateShaderHeaderFile()
@@ -227,7 +230,7 @@ namespace ShaderCompiler
 			foreach (string fileStr in Directory.GetFiles(Config.GeneratedFolderPath))
 			{
 				// Don't process non shader compiled files
-				if (!fileStr.EndsWith(GeneratedHeaderExtension))
+				if (!fileStr.EndsWith(Config.GeneratedHeaderExtension))
 				{
 					continue;
 				}

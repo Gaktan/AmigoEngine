@@ -14,6 +14,9 @@ namespace ShaderCompiler
 		public static string ShaderSourcePath;
 		public static string DatabasePath;
 		public static string GeneratedFolderPath;
+		public static string GeneratedHeaderExtension;
+
+		public static string ShaderModel;
 
 		public static void DebugPrint()
 		{
@@ -163,6 +166,9 @@ namespace ShaderCompiler
 			Config.ShaderSourcePath = ResolvePath(Data["ShaderCompiler"]["ShaderSourcePath"], true);
 			Config.DatabasePath = ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
 			Config.GeneratedFolderPath = ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
+
+			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];
+			Config.ShaderModel = Data["ShaderCompiler"]["ShaderModel"];
 
 			Config.DebugPrint();
 		}
