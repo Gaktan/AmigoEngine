@@ -14,7 +14,8 @@ namespace ShaderCompiler
 		};
 
 		public static OperationType Operation;
-		public static string SourceFolder;
+		public static string ConfigFile;
+		public static string RootFolder;
 
 		public static bool IsBuild()
 		{
@@ -54,27 +55,50 @@ namespace ShaderCompiler
 
 		public static bool ParseArguments(string[] args)
 		{
-			if (args.Length != 2)
+			if (args.Length == 0)
 			{
-				Console.WriteLine("Wrong number of arguments. Expected 2, got {0}", args.Length);
+				Console.WriteLine("Expected arguments.", args.Length);
 				PrintUsage();
 				return false;
 			}
 
-			string operationString = args[0];
-			if (!ParseOperation(operationString))
+			for (int i = 0; i < args.Length; i++)
 			{
-				Console.WriteLine(@"Unkown argument '{0}' in commandline '{1}'", operationString, string.Join(" ", args));
-				PrintUsage();
-				return false;
-			}
-
-			SourceFolder = args[1];
-
-			if (!Directory.Exists(SourceFolder))
-			{
-				Console.WriteLine(@"Given folder '{0}' doesn't exist", SourceFolder);
-				return false;
+				string command = args[i];
+				switch (command.ToLower())
+				{
+				case "-c":
+				{
+					string pathToExe = System.Reflection.Assembly.GetEntryAssembly().Location;
+					ConfigFile = Path.GetDirectoryName(pathToExe) + @"\" + args[++i];
+					if (!File.Exists(ConfigFile))
+					{
+						Console.WriteLine(@"Given config file '{0}' doesn't exist", ConfigFile);
+						return false;
+					}
+					break;
+				}
+				case "-r":
+				{
+					RootFolder = args[++i];
+					if (!Directory.Exists(RootFolder))
+					{
+						Console.WriteLine(@"Given root folder '{0}' doesn't exist", RootFolder);
+						return false;
+					}
+					break;
+				}
+				default:
+				{
+					if (!ParseOperation(command))
+					{
+						Console.WriteLine(@"Unkown argument '{0}' in commandline '{1}'", command, string.Join(" ", args));
+						PrintUsage();
+						return false;
+					}
+					break;
+				}
+				}
 			}
 
 			return true;
@@ -82,8 +106,8 @@ namespace ShaderCompiler
 
 		private static void PrintUsage(string command, string usage)
 		{
-			// One tab is 4 spaces/characters. One command should be 16 char max
-			int numTabs = (16 - command.Length) / 4;
+			// One tab is 4 spaces/characters. One command should be 24 char max
+			int numTabs = (24 - command.Length) / 4;
 			numTabs = Math.Max(numTabs, 1);
 			string tabs = new string('\t', numTabs);
 
@@ -93,9 +117,10 @@ namespace ShaderCompiler
 		private static void PrintUsage()
 		{
 			Console.WriteLine("Usage:");
-			Console.WriteLine("ShaderCompiler.exe <Operation> <Source>\n");
-			PrintUsage("Operation", "Operation to be performed by the ShaderCompiler. Can be \"-Build\", \"-Clean\" or \"-Rebuild\".");
-			PrintUsage("Source", "Source folder of the shaders to be compiled. All files inside this folder and its subfolders will be processed.");
+			Console.WriteLine("ShaderCompiler.exe <Operation> -c <ConfigFile> -r <RootFolder>\n");
+			PrintUsage("Operation", "Operation to be performed by the ShaderCompiler. Can be \"-Build\" (default), \"-Clean\" or \"-Rebuild\".");
+			PrintUsage("ConfigFile", "INI file used for configuration. Optional. Relative to the executable location.");
+			PrintUsage("RootFolder", "ShaderCompiler will run from this folder. Default is workspace directory");
 
 			Console.WriteLine();
 		}

@@ -19,6 +19,10 @@ class ShaderCompiler : CSharpProject
 			Blob.NoBlob,
 			BuildSystem.MSBuild,
 			DotNetFramework.v4_5));
+
+        // Copy defaultconfig.ini to the output directory
+        AdditionalNoneCopyIfNewer.Add(@"[project.SourceRootPath]\Resources\\defaultconfig.ini");
+        //PreserveLinkFolderPaths = true;
 	}
 	
 	[Configure()]
@@ -34,10 +38,10 @@ class ShaderCompiler : CSharpProject
         // Make this project an Executable without console
 		conf.Output = Project.Configuration.OutputType.DotNetWindowsApp;
         
-        // Creates a filter "Tools" in the solution
+        // TODO: Create a filter "Tools" in the solution
         //conf.SolutionFolder = conf.ProjectPath;
         
-        // Adds a C# reference, kind of wordy if you ask me
+        // Add a C# reference, kind of wordy if you ask me
         conf.DotNetReferences.Add(new DotNetReference("System", DotNetReference.ReferenceType.DotNet));
 	}
 }

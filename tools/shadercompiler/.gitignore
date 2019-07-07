@@ -1,3 +1,6 @@
 *.exe
 *.dll
 *.pdb
+
+# Ignore file copied after compilation
+defaultconfig.ini

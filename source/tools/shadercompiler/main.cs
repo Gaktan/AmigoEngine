@@ -16,11 +16,13 @@ namespace ShaderCompiler
 				return -1;
 			}
 
-			Console.WriteLine("Searching folder \"{0}\"", Arguments.SourceFolder);
+			IniParser.Parse();
+
+			Console.WriteLine("Searching folder \"{0}\"", Config.ShaderSourcePath);
 
 			try
 			{
-				ShaderFileGatherer.StartProcessing(Arguments.SourceFolder);
+				ShaderFileGatherer.StartProcessing(Config.ShaderSourcePath);
 
 				Console.WriteLine("\t\t=== Finished compiling Shaders with SUCCESS ===\n\n\n");
 			}

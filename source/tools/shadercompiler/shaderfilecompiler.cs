@@ -154,7 +154,7 @@ namespace ShaderCompiler
 				string optimization = "Od";
 
 				string shaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
-				string shaderOutputFile = ShaderFileGatherer.ShaderSourcePath + @"\generated\" + shaderName + extension;
+				string shaderOutputFile = Config.GeneratedFolderPath + shaderName + extension;
 
 
 				// 0: input file, 1: Entry point, 2: Profile, 3: optimization, 4: Export option 5: Output file, 6: Variable name for the header file, 
@@ -197,7 +197,7 @@ namespace ShaderCompiler
 		static void ReplaceHeaderFileContent(string Pattern, string Replacement)
 		{
 			// TODO: hardcoded for now
-			string shaderHeaderFile = ShaderFileGatherer.ShaderSourcePath + @"\include\shaders.h";
+			string shaderHeaderFile = Config.ShaderSourcePath + @"\include\shaders.h";
 
 			if (!File.Exists(shaderHeaderFile))
 			{
@@ -224,7 +224,7 @@ namespace ShaderCompiler
 			// Search all generated header files (.generated.h) to grab the name of the array inside it and the filename as well
 			StringBuilder shaderByteCodeBuilder = new StringBuilder();
 			StringBuilder includeBuilder = new StringBuilder();
-			foreach (string fileStr in Directory.GetFiles(ShaderFileGatherer.GeneratedFolder))
+			foreach (string fileStr in Directory.GetFiles(Config.GeneratedFolderPath))
 			{
 				// Don't process non shader compiled files
 				if (!fileStr.EndsWith(GeneratedHeaderExtension))

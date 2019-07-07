@@ -26,21 +26,12 @@ namespace ShaderCompiler
 
 	class ShaderFileGatherer
 	{
-		static readonly string ShaderFileExtension = ".hlsl";
-		static readonly string DataBaseName = ".shadercompiler.db";
-		//static readonly string ShaderFileToTest = "ShaderFileToTest.ps";
-		static readonly string GeneratedFolderName = "generated";
-
-		public static string ShaderSourcePath;
-		public static string GeneratedFolder;
-		private static string DBFile;
-
 		private static Dictionary<UInt32, ShaderFile> PreviousResult = null;
 		private static Dictionary<UInt32, ShaderFile> CurrentResult = null;
 
 		static void ProcessFile(string fullPathToFile)
 		{
-			if (fullPathToFile.EndsWith(ShaderFileExtension))
+			if (Config.ShaderExtensions.Any(x => fullPathToFile.EndsWith(x)))
 			{
 				//Console.WriteLine("Processing file {0}", file);
 
@@ -84,10 +75,10 @@ namespace ShaderCompiler
 
 		static void ReadDataBase()
 		{
-			if (File.Exists(DBFile))
+			if (File.Exists(Config.DatabasePath))
 			{
 				IFormatter formatter = new BinaryFormatter();
-				Stream stream = new FileStream(DBFile, FileMode.Open, FileAccess.Read);
+				Stream stream = new FileStream(Config.DatabasePath, FileMode.Open, FileAccess.Read);
 				try
 				{
 					PreviousResult = (Dictionary<UInt32, ShaderFile>) formatter.Deserialize(stream);
@@ -105,7 +96,7 @@ namespace ShaderCompiler
 		static void WriteDataBase()
 		{
 			IFormatter formatter = new BinaryFormatter();
-			Stream stream = new FileStream(DBFile, FileMode.OpenOrCreate, FileAccess.Write);
+			Stream stream = new FileStream(Config.DatabasePath, FileMode.OpenOrCreate, FileAccess.Write);
 			formatter.Serialize(stream, CurrentResult);
 			stream.Close();
 		}
@@ -158,9 +149,9 @@ namespace ShaderCompiler
 		private static void CreateGeneratedFolder()
 		{
 			// DXC doesn't create directories automatically, so we need to do it manually.
-			if (!Directory.Exists(GeneratedFolder))
+			if (!Directory.Exists(Config.GeneratedFolderPath))
 			{
-				Directory.CreateDirectory(GeneratedFolder);
+				Directory.CreateDirectory(Config.GeneratedFolderPath);
 			}
 		}
 
@@ -172,7 +163,7 @@ namespace ShaderCompiler
 			ReadDataBase();
 
 			// Go through all the files and create Shaderfiles
-			ProcessFolder(ShaderSourcePath);
+			ProcessFolder(Config.ShaderSourcePath);
 
 			ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
 			fileParser.ProcessAllFiles();
@@ -198,22 +189,19 @@ namespace ShaderCompiler
 		public static void Clean()
 		{
 			// The DB is in the generated folder but delete it just in case
-			if (File.Exists(DBFile))
+			if (File.Exists(Config.DatabasePath))
 			{
-				File.Delete(DBFile);
+				File.Delete(Config.DatabasePath);
 			}
 
-			if (Directory.Exists(GeneratedFolder))
+			if (Directory.Exists(Config.GeneratedFolderPath))
 			{
-				Directory.Delete(GeneratedFolder, true);
+				Directory.Delete(Config.GeneratedFolderPath, true);
 			}
 		}
 
 		public static void StartProcessing(string rootFolder)
 		{
-			ShaderSourcePath = rootFolder;
-			GeneratedFolder = ShaderSourcePath + @"\" + GeneratedFolderName + @"\";
-			DBFile = GeneratedFolder + "\\" + DataBaseName;
 			CurrentResult = new Dictionary<UInt32, ShaderFile>();
 
 			if (Arguments.IsClean())
