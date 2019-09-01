@@ -20,8 +20,8 @@ protected:
 		};
 	};
 
-	static Matrix4<T> ZERO;
-	static Matrix4<T> IDENTITY;
+	static Matrix4<T> s_Zero;
+	static Matrix4<T> s_Identity;
 
 public:
 
@@ -29,12 +29,12 @@ public:
 	{
 		if (inIdentity)
 		{
-			*this = IDENTITY;
+			*this = s_Identity;
 		}
 #if defined(_DEBUG)
 		else
 		{
-			*this = ZERO;
+			*this = s_Zero;
 		}
 #endif
 	}
@@ -225,11 +225,10 @@ public:
 
 #pragma warning(default : 4201)
 
-
 typedef Matrix4<float> Matrix4f;
 
-Matrix4f Matrix4f::ZERO = { 0.0f };
-Matrix4f Matrix4f::IDENTITY =
+Matrix4f Matrix4f::s_Zero		= { 0.0f };
+Matrix4f Matrix4f::s_Identity	=
 {
 	{ 1.0f, 0.0f, 0.0f, 0.0f },
 	{ 0.0f, 1.0f, 0.0f, 0.0f },

@@ -8,13 +8,13 @@ namespace Math
 	template<typename T>
 	inline T Abs(T x)
 	{
-		return fabs(x);
+		return ::fabs(x);
 	}
 
 	template<typename T>
 	inline T Mod(T x, T y)
 	{
-		return x - y * floor(x / y);
+		return x - y * ::floor(x / y);
 	}
 
 	template<typename T>
@@ -53,7 +53,7 @@ namespace Math
 
 	inline bool FloatEquals(float a, float b, float epsilon = 1e-5)
 	{
-		return abs(a - b) < epsilon;
+		return Abs(a - b) < epsilon;
 	}
 
 	inline bool IsInf(float a)
@@ -64,5 +64,10 @@ namespace Math
 	inline bool IsNaN(float a)
 	{
 		return std::isnan(a);
+	}
+
+	inline float Sin(float a)
+	{
+		return ::sinf(a);
 	}
 }

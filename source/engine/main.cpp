@@ -16,7 +16,7 @@ HWND g_hWnd;
 // Window rectangle (used to toggle fullscreen state).
 RECT g_WindowRect;
 
-ui32 g_ClientWidth = 1280;
+ui32 g_ClientWidth	= 1280;
 ui32 g_ClientHeight = 720;
 
 // By default, use windowed mode.
@@ -28,25 +28,25 @@ DX12Device g_Device;
 // Window callback function.
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
-void RegisterWindowClass(HINSTANCE hInst, const wchar_t* windowClassName)
+void RegisterWindowClass(HINSTANCE inIstance, const wchar_t* inWindowClassName)
 {
 	// Register a window class for creating our render window with.
-	WNDCLASSEXW windowClass = {};
+	WNDCLASSEXW window_class = {};
 
-	windowClass.cbSize = sizeof(WNDCLASSEX);
-	windowClass.style = CS_HREDRAW | CS_VREDRAW;
-	windowClass.lpfnWndProc = &WndProc;
-	windowClass.cbClsExtra = 0;
-	windowClass.cbWndExtra = 0;
-	windowClass.hInstance = hInst;
-	windowClass.hIcon = ::LoadIcon(hInst, NULL);
-	windowClass.hCursor = ::LoadCursor(NULL, IDC_ARROW);
-	windowClass.hbrBackground = (HBRUSH) (COLOR_WINDOW + 1);
-	windowClass.lpszMenuName = NULL;
-	windowClass.lpszClassName = windowClassName;
-	windowClass.hIconSm = ::LoadIcon(hInst, NULL);
+	window_class.cbSize			= sizeof(WNDCLASSEX);
+	window_class.style			= CS_HREDRAW | CS_VREDRAW;
+	window_class.lpfnWndProc	= &WndProc;
+	window_class.cbClsExtra		= 0;
+	window_class.cbWndExtra		= 0;
+	window_class.hInstance		= inIstance;
+	window_class.hIcon			= ::LoadIcon(inIstance, NULL);
+	window_class.hCursor		= ::LoadCursor(NULL, IDC_ARROW);
+	window_class.hbrBackground	= (HBRUSH) (COLOR_WINDOW + 1);
+	window_class.lpszMenuName	= NULL;
+	window_class.lpszClassName	= inWindowClassName;
+	window_class.hIconSm		= ::LoadIcon(inIstance, NULL);
 
-	static ATOM atom = ::RegisterClassExW(&windowClass);
+	static ATOM atom = ::RegisterClassExW(&window_class);
 	Assert(atom > 0);
 }
 
@@ -56,47 +56,47 @@ void RegisterWindowClass(HINSTANCE hInst, const wchar_t* windowClassName)
 #undef CreateWindow
 #endif
 
-HWND CreateWindow(const wchar_t* windowClassName, HINSTANCE hInst,
-				  const wchar_t* windowTitle, ui32 width, ui32 height)
+HWND CreateWindow(const wchar_t* inWindowClassName, HINSTANCE inInstance,
+				  const wchar_t* inWindowTitle, ui32 inWidth, ui32 inHeight)
 {
-	int screenWidth = ::GetSystemMetrics(SM_CXSCREEN);
-	int screenHeight = ::GetSystemMetrics(SM_CYSCREEN);
+	int screen_width	= ::GetSystemMetrics(SM_CXSCREEN);
+	int screen_height	= ::GetSystemMetrics(SM_CYSCREEN);
 
-	RECT windowRect = { 0, 0, static_cast<LONG>(width), static_cast<LONG>(height) };
+	RECT windowRect = { 0, 0, static_cast<LONG>(inWidth), static_cast<LONG>(inHeight) };
 	::AdjustWindowRect(&windowRect, WS_OVERLAPPEDWINDOW, FALSE);
 
-	int windowWidth = windowRect.right - windowRect.left;
-	int windowHeight = windowRect.bottom - windowRect.top;
+	int window_width	= windowRect.right - windowRect.left;
+	int window_height	= windowRect.bottom - windowRect.top;
 
 	// Center the window within the screen. Clamp to 0, 0 for the top-left corner.
-	int windowX = Math::Max(0, (screenWidth - windowWidth) / 2);
-	int windowY = Math::Max(0, (screenHeight - windowHeight) / 2);
+	int windowX = Math::Max(0, (screen_width - window_width) / 2);
+	int windowY = Math::Max(0, (screen_height - window_height) / 2);
 
-	HWND hWnd = ::CreateWindowExW(
+	HWND h_window = ::CreateWindowExW(
 		NULL,
-		windowClassName,
-		windowTitle,
+		inWindowClassName,
+		inWindowTitle,
 		WS_OVERLAPPEDWINDOW,
 		windowX,
 		windowY,
-		windowWidth,
-		windowHeight,
+		window_width,
+		window_height,
 		NULL,
 		NULL,
-		hInst,
+		inInstance,
 		nullptr
 	);
 
-	Assert(hWnd && "Failed to create window");
+	Assert(h_window && "Failed to create window");
 
-	return hWnd;
+	return h_window;
 }
 
-void SetFullscreen(bool fullscreen)
+void SetFullscreen(bool inFullscreen)
 {
-	if (g_Fullscreen != fullscreen)
+	if (g_Fullscreen != inFullscreen)
 	{
-		g_Fullscreen = fullscreen;
+		g_Fullscreen = inFullscreen;
 
 		// Switching to fullscreen.
 		if (g_Fullscreen)
@@ -107,23 +107,23 @@ void SetFullscreen(bool fullscreen)
 
 			// Set the window style to a borderless window so the client area fills
 			// the entire screen.
-			UINT windowStyle = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
+			UINT window_style = WS_OVERLAPPEDWINDOW & ~(WS_CAPTION | WS_SYSMENU | WS_THICKFRAME | WS_MINIMIZEBOX | WS_MAXIMIZEBOX);
 
-			::SetWindowLongW(g_hWnd, GWL_STYLE, windowStyle);
+			::SetWindowLongW(g_hWnd, GWL_STYLE, window_style);
 
 			// Query the name of the nearest display device for the window.
 			// This is required to set the fullscreen dimensions of the window
 			// when using a multi-monitor setup.
-			HMONITOR hMonitor = ::MonitorFromWindow(g_hWnd, MONITOR_DEFAULTTONEAREST);
-			MONITORINFOEX monitorInfo = {};
-			monitorInfo.cbSize = sizeof(MONITORINFOEX);
-			::GetMonitorInfo(hMonitor, &monitorInfo);
+			HMONITOR h_monitor = ::MonitorFromWindow(g_hWnd, MONITOR_DEFAULTTONEAREST);
+			MONITORINFOEX monitor_info = {};
+			monitor_info.cbSize = sizeof(MONITORINFOEX);
+			::GetMonitorInfo(h_monitor, &monitor_info);
 
 			::SetWindowPos(g_hWnd, HWND_TOP,
-						   monitorInfo.rcMonitor.left,
-						   monitorInfo.rcMonitor.top,
-						   monitorInfo.rcMonitor.right - monitorInfo.rcMonitor.left,
-						   monitorInfo.rcMonitor.bottom - monitorInfo.rcMonitor.top,
+						   monitor_info.rcMonitor.left,
+						   monitor_info.rcMonitor.top,
+						   monitor_info.rcMonitor.right - monitor_info.rcMonitor.left,
+						   monitor_info.rcMonitor.bottom - monitor_info.rcMonitor.top,
 						   SWP_FRAMECHANGED | SWP_NOACTIVATE);
 
 			::ShowWindow(g_hWnd, SW_MAXIMIZE);
@@ -149,45 +149,45 @@ void SetFullscreen(bool fullscreen)
 
 void Update()
 {
-	static ui64 frameCounter = 0;
-	static double elapsedSeconds = 0.0;
+	static ui64 frame_counter		= 0;
+	static double elapsed_seconds	= 0.0;
 	static std::chrono::high_resolution_clock clock;
-	static auto t0 = clock.now();
+	static auto t0					= clock.now();
 
-	frameCounter++;
+	frame_counter++;
 	auto t1 = clock.now();
-	auto deltaTime = t1 - t0;
+	auto delta_time = t1 - t0;
 	t0 = t1;
 
-	elapsedSeconds += deltaTime.count() * 1e-9;
-	if (elapsedSeconds > 1.0)
+	elapsed_seconds += delta_time.count() * 1e-9;
+	if (elapsed_seconds > 1.0)
 	{
 		char buffer[500];
-		auto fps = frameCounter / elapsedSeconds;
+		auto fps = frame_counter / elapsed_seconds;
 		sprintf_s(buffer, 500, "FPS: %f\n", fps);
 		OutputDebugString(buffer);
 
-		frameCounter = 0;
-		elapsedSeconds = 0.0;
+		frame_counter = 0;
+		elapsed_seconds = 0.0;
 	}
 
-	float deltaMS = deltaTime.count() * 1e-6;
+	float deltaMS = delta_time.count() * 1e-6;
 
 	OnUpdate(g_ClientWidth, g_ClientHeight, deltaMS);
 }
 
-void Resize(uint32_t width, uint32_t height)
+void Resize(uint32_t inWwidth, uint32_t inHeight)
 {
-	if (g_ClientWidth != width || g_ClientHeight != height)
+	if (g_ClientWidth != inWwidth || g_ClientHeight != inHeight)
 	{
 		// Don't allow 0 size swap chain back buffers.
-		g_ClientWidth = Math::Max(1u, width);
-		g_ClientHeight = Math::Max(1u, height);
+		g_ClientWidth	= Math::Max(1u, inWwidth);
+		g_ClientHeight	= Math::Max(1u, inHeight);
 
 		g_Device.m_SwapChain->UpdateRenderTargetViews(g_Device, g_ClientWidth, g_ClientHeight);
 	}
 
-	OnResize(g_Device, width, height);
+	OnResize(g_Device, inWwidth, inHeight);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -228,8 +228,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 		RECT clientRect = {};
 		::GetClientRect(g_hWnd, &clientRect);
 
-		int width = clientRect.right - clientRect.left;
-		int height = clientRect.bottom - clientRect.top;
+		int width	= clientRect.right - clientRect.left;
+		int height	= clientRect.bottom - clientRect.top;
 
 		Resize(width, height);
 	}
@@ -253,11 +253,11 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 	SetThreadDpiAwarenessContext(DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2);
 
 	// Window class name. Used for registering / creating the window.
-	const wchar_t* windowClassName = L"AmigoDX12WindowClass";
+	const wchar_t* window_class_name = L"AmigoDX12WindowClass";
 	//ParseCommandLineArguments();
 
-	RegisterWindowClass(hInstance, windowClassName);
-	g_hWnd = CreateWindow(windowClassName, hInstance, L"Amigo engine DX12",
+	RegisterWindowClass(hInstance, window_class_name);
+	g_hWnd = CreateWindow(window_class_name, hInstance, L"Amigo engine DX12",
 						  g_ClientWidth, g_ClientHeight);
 
 	// Initialize the global window rect variable.

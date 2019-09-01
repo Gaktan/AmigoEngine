@@ -34,7 +34,7 @@ ID3D12PipelineState* m_PipelineState;
 D3D12_VIEWPORT m_Viewport;
 D3D12_RECT m_ScissorRect;
 
-float m_FoV;
+float m_FOV;
 
 Matrix4f m_ModelMatrix;
 Matrix4f m_ViewMatrix;
@@ -71,10 +71,10 @@ static WORD g_Indicies[36] =
 	4, 0, 3, 4, 3, 7
 };
 
-void ResizeDepthBuffer(DX12Device& device, int width, int height)
+void ResizeDepthBuffer(DX12Device& inDevice, int inWidth, int inHeight)
 {
 	// Flush any GPU commands that might be referencing the depth buffer.
-	device.Flush();
+	inDevice.Flush();
 
 	// Resize screen dependent resources.
 	// Create a depth buffer
@@ -83,42 +83,42 @@ void ResizeDepthBuffer(DX12Device& device, int width, int height)
 		delete m_DepthBuffer;
 	}
 
-	m_DepthBuffer = new DX12DepthRenderTarget(device.m_Device, width, height);
+	m_DepthBuffer = new DX12DepthRenderTarget(inDevice.m_Device, inWidth, inHeight);
 }
 
-bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
+bool LoadContent(DX12Device& inDevice, ui32 inWidth, ui32 inHeight)
 {
 	{
-		m_ScissorRect = CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-		m_FoV = 45.0f;
+		m_ScissorRect	= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
+		m_Viewport		= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
+		m_FOV			= 45.0f;
 		m_ContentLoaded = false;
 	}
 
-	auto device = dx12Device.m_Device;
-	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
-	auto commandList = commandQueue->GetCommandList(&dx12Device);
+	auto dx12_device	= inDevice.m_Device;
+	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
+	auto command_list	= command_queue->GetCommandList(&inDevice);
 
 	// Create the vertex input layout
-	D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+	D3D12_INPUT_ELEMENT_DESC input_layout[] =
 	{
 		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
 	// Upload vertex buffer data.
-	m_VertexBuffer = new DX12VertexBuffer(device, commandList, _countof(g_Vertices) * sizeof(VertexPosColor), g_Vertices, sizeof(VertexPosColor));
-	m_IndexBuffer = new DX12IndexBuffer(device, commandList, _countof(g_Indicies) * sizeof(WORD), g_Indicies);
+	m_VertexBuffer	= new DX12VertexBuffer(dx12_device, command_list, _countof(g_Vertices) * sizeof(VertexPosColor), g_Vertices, sizeof(VertexPosColor));
+	m_IndexBuffer	= new DX12IndexBuffer(dx12_device, command_list, _countof(g_Indicies) * sizeof(WORD), g_Indicies);
 
 	// Create the depth buffer.
-	ResizeDepthBuffer(dx12Device, width, height);
+	ResizeDepthBuffer(inDevice, inWidth, inHeight);
 
 	// Create a root signature.
-	D3D12_FEATURE_DATA_ROOT_SIGNATURE featureData = {};
-	featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	if (FAILED(device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &featureData, sizeof(featureData))))
+	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
+	feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
+	if (FAILED(dx12_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
 	{
-		featureData.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
+		feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
 
 	// Allow input layout and deny unnecessary access to certain pipeline stages.
@@ -130,62 +130,62 @@ bool LoadContent(DX12Device& dx12Device, ui32 width, ui32 height)
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
 	// A single 32-bit constant root parameter that is used by the vertex shader.
-	CD3DX12_ROOT_PARAMETER1 rootParameters[1];
-	rootParameters[0].InitAsConstants(sizeof(Matrix4f) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	CD3DX12_ROOT_PARAMETER1 root_parameters[1];
+	root_parameters[0].InitAsConstants(sizeof(Matrix4f) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
 
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC rootSignatureDescription;
-	rootSignatureDescription.Init_1_1(_countof(rootParameters), rootParameters, 0, nullptr, rootSignatureFlags);
+	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_desc;
+	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 0, nullptr, rootSignatureFlags);
 
 	// Serialize the root signature.
-	ID3DBlob* rootSignatureBlob;
-	ID3DBlob* errorBlob;
-	ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&rootSignatureDescription,
-														featureData.HighestVersion, &rootSignatureBlob, &errorBlob));
+	ID3DBlob* root_signature_blob;
+	ID3DBlob* error_blob;
+	ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&root_signature_desc,
+														feature_data.HighestVersion, &root_signature_blob, &error_blob));
 	// Create the root signature.
-	ThrowIfFailed(device->CreateRootSignature(0, rootSignatureBlob->GetBufferPointer(),
-											  rootSignatureBlob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+	ThrowIfFailed(dx12_device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
+												   root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
 
 	struct PipelineStateStream
 	{
-		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE pRootSignature;
-		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT InputLayout;
-		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY PrimitiveTopologyType;
-		CD3DX12_PIPELINE_STATE_STREAM_VS VS;
-		CD3DX12_PIPELINE_STATE_STREAM_PS PS;
-		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT DSVFormat;
-		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS RTVFormats;
-	} pipelineStateStream;
+		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE			m_RootSignature;
+		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT				m_InputLayout;
+		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY		m_PrimitiveTopologyType;
+		CD3DX12_PIPELINE_STATE_STREAM_VS						m_VertexShader;
+		CD3DX12_PIPELINE_STATE_STREAM_PS						m_PixelShader;
+		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT		m_DSVFormat;
+		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS		m_RTVFormats;
+	} pipeline_state_stream;
 
-	D3D12_RT_FORMAT_ARRAY rtvFormats = {};
-	rtvFormats.NumRenderTargets = 1;
-	rtvFormats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+	D3D12_RT_FORMAT_ARRAY rtv_formats = {};
+	rtv_formats.NumRenderTargets	= 1;
+	rtv_formats.RTFormats[0]		= DXGI_FORMAT_R8G8B8A8_UNORM;
 
-	pipelineStateStream.pRootSignature = m_RootSignature;
-	pipelineStateStream.InputLayout = { inputLayout, _countof(inputLayout) };
-	pipelineStateStream.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipelineStateStream.VS = GET_SHADER_BYTECODE(VertexShader);
-	pipelineStateStream.PS = GET_SHADER_BYTECODE(PixelShader);
-	pipelineStateStream.DSVFormat = m_DepthBuffer->GetFormat();
-	pipelineStateStream.RTVFormats = rtvFormats;
+	pipeline_state_stream.m_RootSignature			= m_RootSignature;
+	pipeline_state_stream.m_InputLayout				= { input_layout, _countof(input_layout) };
+	pipeline_state_stream.m_PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
+	pipeline_state_stream.m_VertexShader			= GET_SHADER_BYTECODE(VertexShader);
+	pipeline_state_stream.m_PixelShader				= GET_SHADER_BYTECODE(PixelShader);
+	pipeline_state_stream.m_DSVFormat				= m_DepthBuffer->GetFormat();
+	pipeline_state_stream.m_RTVFormats				= rtv_formats;
 
-	D3D12_PIPELINE_STATE_STREAM_DESC pipelineStateStreamDesc =
+	D3D12_PIPELINE_STATE_STREAM_DESC pipeline_state_desc =
 	{
-		sizeof(PipelineStateStream), &pipelineStateStream
+		sizeof(PipelineStateStream), &pipeline_state_stream
 	};
-	ThrowIfFailed(device->CreatePipelineState(&pipelineStateStreamDesc, IID_PPV_ARGS(&m_PipelineState)));
+	ThrowIfFailed(dx12_device->CreatePipelineState(&pipeline_state_desc, IID_PPV_ARGS(&m_PipelineState)));
 
-	auto fenceValue = commandQueue->ExecuteCommandList(commandList);
-	commandQueue->WaitForFenceValue(fenceValue);
+	auto fence_value = command_queue->ExecuteCommandList(command_list);
+	command_queue->WaitForFenceValue(fence_value);
 
 	m_ContentLoaded = true;
 
 	return true;
 }
 
-void UnloadContent(DX12Device& dx12Device)
+void UnloadContent(DX12Device& inDevice)
 {
 	// Make sure the command queue has finished all commands before closing.
-	dx12Device.Flush();
+	inDevice.Flush();
 
 	delete m_VertexBuffer;
 	delete m_IndexBuffer;
@@ -197,75 +197,75 @@ void UnloadContent(DX12Device& dx12Device)
 	m_ContentLoaded = false;
 }
 
-void OnResize(DX12Device& device, ui32 width, ui32 height)
+void OnResize(DX12Device& inDevice, ui32 inWidth, ui32 inHeight)
 {
-	//if (width != GetClientWidth() || height != GetClientHeight())
-	//if (width != 800 || height != 600)
+	//if (inWidth != GetClientWidth() || inHeight != GetClientHeight())
+	//if (inWidth != 800 || inHeight != 600)
 	{
-		width	= Math::Max(256u, width);
-		height	= Math::Max(256u, height);
+		inWidth		= Math::Max(256u, inWidth);
+		inHeight	= Math::Max(256u, inHeight);
+		m_Viewport	= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
 
-		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
-		ResizeDepthBuffer(device, width, height);
+		ResizeDepthBuffer(inDevice, inWidth, inHeight);
 	}
 }
 
 float TTT = 0.0f;
 
-void OnUpdate(ui32 width, ui32 height, float delta)
+void OnUpdate(ui32 inWidth, ui32 inHeight, float inDeltaT)
 {
-	TTT += delta;
+	TTT += inDeltaT;
 
 	// Update the model matrix.
 	float angle = TTT * 0.1f;
-	const Vector4f rotationAxis(0, 1, 1, 0);
-	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotationAxis, Math::ToRadians(angle));
+	const Vector4f rotation_axis(0, 1, 1, 0);
+	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotation_axis, Math::ToRadians(angle));
 
-	Vector4f position(0, 0, sinf(angle*0.01f));
+	Vector4f position(0, 0, Math::Sin(angle*0.01f));
 	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
 
 	// Update the view matrix.
-	const Vector4f eyePosition(0, -10, 0, 1);
-	const Vector4f focusPoint(0, 0, 0, 1);
-	const Vector4f upDirection(0, 0, 1, 0);
-	m_ViewMatrix = Matrix4f::CreateLookAtMatrix(eyePosition, focusPoint, upDirection);
+	const Vector4f eye_position(0, -10, 0, 1);
+	const Vector4f focus_point(0, 0, 0, 1);
+	const Vector4f up_direction(0, 0, 1, 0);
+	m_ViewMatrix = Matrix4f::CreateLookAtMatrix(eye_position, focus_point, up_direction);
 
 	// Update the projection matrix.
-	float aspectRatio = width / static_cast<float>(height);
-	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(Math::ToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+	float aspect_ratio = inWidth / static_cast<float>(inHeight);
+	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
 }
 
-void OnRender(DX12Device& dx12Device)
+void OnRender(DX12Device& inDevice)
 {
-	auto commandQueue = dx12Device.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto commandList = commandQueue->GetCommandList(&dx12Device);
+	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto command_list	= command_queue->GetCommandList(&inDevice);
 
 	// Clear the render targets.
 	{
-		dx12Device.m_SwapChain->ClearBackBuffer(commandList);
-		m_DepthBuffer->ClearDepth(commandList);
+		inDevice.m_SwapChain->ClearBackBuffer(command_list);
+		m_DepthBuffer->ClearDepth(command_list);
 	}
 
-	commandList->SetPipelineState(m_PipelineState);
-	commandList->SetGraphicsRootSignature(m_RootSignature);
+	command_list->SetPipelineState(m_PipelineState);
+	command_list->SetGraphicsRootSignature(m_RootSignature);
 
-	commandList->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_VertexBuffer->SetVertexBuffer(commandList, 0, 1);
-	m_IndexBuffer->SetIndexBuffer(commandList);
+	command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	m_VertexBuffer->SetVertexBuffer(command_list, 0, 1);
+	m_IndexBuffer->SetIndexBuffer(command_list);
 
-	commandList->RSSetViewports(1, &m_Viewport);
-	commandList->RSSetScissorRects(1, &m_ScissorRect);
+	command_list->RSSetViewports(1, &m_Viewport);
+	command_list->RSSetScissorRects(1, &m_ScissorRect);
 
-	dx12Device.m_SwapChain->SetRenderTarget(commandList, m_DepthBuffer);
+	inDevice.m_SwapChain->SetRenderTarget(command_list, m_DepthBuffer);
 
 	// Update the MVP matrix
-	Matrix4f mvpMatrix = m_ModelMatrix.Mul(m_ViewMatrix);
-	mvpMatrix = mvpMatrix.Mul(m_ProjectionMatrix);
+	Matrix4f mvp_matrix = m_ModelMatrix.Mul(m_ViewMatrix);
+	mvp_matrix			= mvp_matrix.Mul(m_ProjectionMatrix);
 
-	commandList->SetGraphicsRoot32BitConstants(0, sizeof(Matrix4f) / 4, &mvpMatrix, 0);
+	command_list->SetGraphicsRoot32BitConstants(0, sizeof(Matrix4f) / 4, &mvp_matrix, 0);
 
-	commandList->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+	command_list->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 
 	// Present
-	dx12Device.Present(commandList);
+	inDevice.Present(command_list);
 }
