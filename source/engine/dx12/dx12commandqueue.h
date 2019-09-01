@@ -18,23 +18,23 @@ protected:
 
 	struct CommandListEntry
 	{
-		ID3D12CommandAllocator*		commandAllocator = nullptr;
-		ID3D12GraphicsCommandList2*	commandList = nullptr;
-		bool						isBeingRecorded = false;
+		ID3D12CommandAllocator*		m_CommandAllocator	= nullptr;
+		ID3D12GraphicsCommandList2*	m_CommandList		= nullptr;
+		bool						m_IsBeingRecorded	= false;
 	};
 
-	CommandListEntry m_CommandListEntries[NUM_BUFFERED_FRAMES];
+	CommandListEntry			m_CommandListEntries[NUM_BUFFERED_FRAMES];
 
 public:
-	DX12CommandQueue(DX12Device* device, D3D12_COMMAND_LIST_TYPE type);
+	DX12CommandQueue(DX12Device* inDevice, D3D12_COMMAND_LIST_TYPE inType);
 	virtual ~DX12CommandQueue();
 
 	// Get an available command list from the command queue.
-	ID3D12GraphicsCommandList2* GetCommandList(DX12Device* device);
+	ID3D12GraphicsCommandList2* GetCommandList(DX12Device* inDevice);
 
 	// Execute a command list.
 	// Returns the fence value to wait for for this command list.
-	ui64 ExecuteCommandList(ID3D12GraphicsCommandList2* commandList);
+	ui64 ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList);
 
 	ui64 Signal();
 	bool IsFenceComplete(ui64 fenceValue) const;
@@ -44,6 +44,6 @@ public:
 	ID3D12CommandQueue* GetD3D12CommandQueue() const;
 
 protected:
-	ID3D12CommandAllocator*		CreateCommandAllocator(DX12Device* device) const;
-	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* device, ID3D12CommandAllocator* allocator) const;
+	ID3D12CommandAllocator*		CreateCommandAllocator(DX12Device* inDevice) const;
+	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* inDevice, ID3D12CommandAllocator* inCommandAllocator) const;
 };

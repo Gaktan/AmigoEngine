@@ -13,7 +13,7 @@ public: //Temp hack
 	ID3D12Device2*			m_Device;
 	DX12SwapChain*			m_SwapChain;
 
-protected:					
+protected:
 	// Use WARP adapter
 	bool					m_UseWarp = false;
 
@@ -24,17 +24,17 @@ protected:
 public:
 	DX12Device();
 	~DX12Device();
-	void Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight);
+	void Init(HWND inWindowHandle, ui32 inClientWidth, ui32 inClientHeight);
 	void Flush();
-	void Present(ID3D12GraphicsCommandList2* commandList);
+	void Present(ID3D12GraphicsCommandList2* inCommandList);
 
 	DX12CommandQueue* GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const;
 
 protected:
-	ID3D12Device2* CreateDevice(IDXGIAdapter4* adapter);
-	
+	ID3D12Device2* CreateDevice(IDXGIAdapter4* inAdapter);
+
 	void EnableGPUBasedValidation();
 	void EnableDebugLayer();
 
-	IDXGIAdapter4* GetAdapter(bool useWarp);
+	IDXGIAdapter4* GetAdapter(bool inUseWarp);
 };

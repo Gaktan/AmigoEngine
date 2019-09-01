@@ -21,34 +21,34 @@ DX12Device::~DX12Device()
 	delete m_SwapChain;
 
 #if defined(_DEBUG)
-	ID3D12DebugDevice* debugDevice = nullptr;
-	ThrowIfFailed(m_Device->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(&debugDevice)));
+	ID3D12DebugDevice* debug_device = nullptr;
+	ThrowIfFailed(m_Device->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(&debug_device)));
 
-	HRESULT result = debugDevice->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
+	HRESULT result = debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
 	ThrowIfFailed(result);
 
-	debugDevice->Release();
+	debug_device->Release();
 #endif
 
 	m_Device->Release();
 }
 
-void DX12Device::Init(HWND windowHandle, ui32 clientWidth, ui32 clientHeight)
+void DX12Device::Init(HWND inWindowHandle, ui32 inClientWidth, ui32 inClientHeight)
 {
 	EnableDebugLayer();
 	EnableGPUBasedValidation();
 
 	{
-		IDXGIAdapter4* dxgiAdapter4 = GetAdapter(m_UseWarp);
-		m_Device = CreateDevice(dxgiAdapter4);
-		dxgiAdapter4->Release();
+		IDXGIAdapter4* dxgi_adapter4 = GetAdapter(m_UseWarp);
+		m_Device = CreateDevice(dxgi_adapter4);
+		dxgi_adapter4->Release();
 	}
 
 	m_DirectCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_ComputeCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
 	m_CopyCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COPY);
 
-	m_SwapChain = new DX12SwapChain(*this, windowHandle, m_DirectCommandQueue, clientWidth, clientHeight);
+	m_SwapChain = new DX12SwapChain(*this, inWindowHandle, *m_DirectCommandQueue, inClientWidth, inClientHeight);
 }
 
 void DX12Device::Flush()
@@ -58,70 +58,70 @@ void DX12Device::Flush()
 	m_CopyCommandQueue->Flush();
 }
 
-void DX12Device::Present(ID3D12GraphicsCommandList2* commandList)
+void DX12Device::Present(ID3D12GraphicsCommandList2* inCommandList)
 {
-	m_SwapChain->Present(commandList, m_DirectCommandQueue);
+	m_SwapChain->Present(inCommandList, m_DirectCommandQueue);
 }
 
-ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* adapter)
+ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
 {
-	ID3D12Device2* d3d12Device2;
-	ThrowIfFailed(D3D12CreateDevice(adapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12Device2)));
+	ID3D12Device2* d3d12_device2;
+	ThrowIfFailed(D3D12CreateDevice(inAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12_device2)));
 
 	// Enable debug messages in debug mode.
 #if defined(_DEBUG)
-	ID3D12InfoQueue* pInfoQueue;
-	if (SUCCEEDED(d3d12Device2->QueryInterface(__uuidof(ID3D12InfoQueue), (void **) &pInfoQueue)))
+	ID3D12InfoQueue* info_queue;
+	if (SUCCEEDED(d3d12_device2->QueryInterface(__uuidof(ID3D12InfoQueue), (void **) &info_queue)))
 	{
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-		pInfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
+		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, false);
 
 		// Suppress whole categories of messages
 		//D3D12_MESSAGE_CATEGORY Categories[] = {};
 
 		// Suppress messages based on their severity level
-		D3D12_MESSAGE_SEVERITY Severities[] =
+		D3D12_MESSAGE_SEVERITY severities[] =
 		{
 			D3D12_MESSAGE_SEVERITY_INFO
 		};
 
 		// Suppress individual messages by their ID
-		D3D12_MESSAGE_ID DenyIds[] =
+		D3D12_MESSAGE_ID deny_IDs[] =
 		{
-			D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,   // I'm really not sure how to avoid this message.
-			D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,                         // This warning occurs when using capture frame while graphics debugging.
-			D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,                       // This warning occurs when using capture frame while graphics debugging.
+			D3D12_MESSAGE_ID_CLEARRENDERTARGETVIEW_MISMATCHINGCLEARVALUE,	// I'm really not sure how to avoid this message.
+			D3D12_MESSAGE_ID_MAP_INVALID_NULLRANGE,							// This warning occurs when using capture frame while graphics debugging.
+			D3D12_MESSAGE_ID_UNMAP_INVALID_NULLRANGE,						// This warning occurs when using capture frame while graphics debugging.
 		};
 
-		D3D12_INFO_QUEUE_FILTER NewFilter = {};
-		//NewFilter.DenyList.NumCategories = _countof(Categories);
-		//NewFilter.DenyList.pCategoryList = Categories;
-		NewFilter.DenyList.NumSeverities = _countof(Severities);
-		NewFilter.DenyList.pSeverityList = Severities;
-		NewFilter.DenyList.NumIDs = _countof(DenyIds);
-		NewFilter.DenyList.pIDList = DenyIds;
+		D3D12_INFO_QUEUE_FILTER new_filter = {};
+		//new_filter.DenyList.NumCategories	= _countof(Categories);
+		//new_filter.DenyList.pCategoryList	= Categories;
+		new_filter.DenyList.NumSeverities	= _countof(severities);
+		new_filter.DenyList.pSeverityList	= severities;
+		new_filter.DenyList.NumIDs			= _countof(deny_IDs);
+		new_filter.DenyList.pIDList			= deny_IDs;
 
-		ThrowIfFailed(pInfoQueue->PushStorageFilter(&NewFilter));
+		ThrowIfFailed(info_queue->PushStorageFilter(&new_filter));
 
-		pInfoQueue->Release();
+		info_queue->Release();
 	}
 #endif
 
-	return d3d12Device2;
+	return d3d12_device2;
 }
 
 void DX12Device::EnableGPUBasedValidation()
 {
 #if defined(_DEBUG)
-	ID3D12Debug* spDebugController0;
-	ID3D12Debug1* spDebugController1;
-	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&spDebugController0)));
-	ThrowIfFailed(spDebugController0->QueryInterface(IID_PPV_ARGS(&spDebugController1)));
-	spDebugController1->SetEnableGPUBasedValidation(true);
+	ID3D12Debug*	debug_controller0 = nullptr;
+	ID3D12Debug1*	debug_controller1 = nullptr;
+	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller0)));
+	ThrowIfFailed(debug_controller0->QueryInterface(IID_PPV_ARGS(&debug_controller1)));
+	debug_controller1->SetEnableGPUBasedValidation(true);
 
-	spDebugController1->Release();
-	spDebugController0->Release();
+	debug_controller1->Release();
+	debug_controller0->Release();
 #endif
 }
 
@@ -131,80 +131,79 @@ void DX12Device::EnableDebugLayer()
 	// Always enable the debug layer before doing anything DX12 related
 	// so all possible errors generated while creating DX12 objects
 	// are caught by the debug layer.
-	ID3D12Debug* debugInterface;
-	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
-	debugInterface->EnableDebugLayer();
+	ID3D12Debug* debug_interface;
+	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_interface)));
+	debug_interface->EnableDebugLayer();
 
-	debugInterface->Release();
+	debug_interface->Release();
 #endif
 }
 
-IDXGIAdapter4* DX12Device::GetAdapter(bool useWarp)
+IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 {
-	IDXGIFactory4* dxgiFactory = nullptr;
-	UINT createFactoryFlags = 0;
+	IDXGIFactory4* dxgi_factory = nullptr;
+	UINT create_factory_flags = 0;
 #if defined(_DEBUG)
-	createFactoryFlags = DXGI_CREATE_FACTORY_DEBUG;
+	create_factory_flags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
 
-	ThrowIfFailed(CreateDXGIFactory2(createFactoryFlags, IID_PPV_ARGS(&dxgiFactory)));
+	ThrowIfFailed(CreateDXGIFactory2(create_factory_flags, IID_PPV_ARGS(&dxgi_factory)));
 
-	IDXGIAdapter4* dxgiAdapter4 = nullptr;
+	IDXGIAdapter4* dxgi_adapter4 = nullptr;
 
-	if (useWarp)
+	if (inUseWarp)
 	{
-		IDXGIAdapter1* dxgiAdapter1 = nullptr;
-		ThrowIfFailed(dxgiFactory->EnumWarpAdapter(IID_PPV_ARGS(&dxgiAdapter1)));
-		ThrowIfFailed(dxgiAdapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgiAdapter4));
-		dxgiAdapter1->Release();
+		IDXGIAdapter1* dxgi_adapter1 = nullptr;
+		ThrowIfFailed(dxgi_factory->EnumWarpAdapter(IID_PPV_ARGS(&dxgi_adapter1)));
+		ThrowIfFailed(dxgi_adapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgi_adapter4));
+		dxgi_adapter1->Release();
 	}
 	else
 	{
-		IDXGIAdapter1* dxgiAdapter1 = nullptr;
-		SIZE_T maxDedicatedVideoMemory = 0;
-		for (UINT i = 0; dxgiFactory->EnumAdapters1(i, &dxgiAdapter1) != DXGI_ERROR_NOT_FOUND; ++i)
+		IDXGIAdapter1* dxgi_adapter1 = nullptr;
+		SIZE_T max_dedicated_video_memory = 0;
+		for (UINT i = 0; dxgi_factory->EnumAdapters1(i, &dxgi_adapter1) != DXGI_ERROR_NOT_FOUND; ++i)
 		{
-			DXGI_ADAPTER_DESC1 dxgiAdapterDesc1;
-			dxgiAdapter1->GetDesc1(&dxgiAdapterDesc1);
+			DXGI_ADAPTER_DESC1 desc;
+			dxgi_adapter1->GetDesc1(&desc);
 
 			// Check to see if the adapter can create a D3D12 device without actually 
 			// creating it. The adapter with the largest dedicated video memory
 			// is favored.
-			if ((dxgiAdapterDesc1.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-				SUCCEEDED(D3D12CreateDevice(dxgiAdapter1, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
-				dxgiAdapterDesc1.DedicatedVideoMemory > maxDedicatedVideoMemory)
+			if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
+				SUCCEEDED(D3D12CreateDevice(dxgi_adapter1, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
+				desc.DedicatedVideoMemory > max_dedicated_video_memory)
 			{
-				maxDedicatedVideoMemory = dxgiAdapterDesc1.DedicatedVideoMemory;
-				ThrowIfFailed(dxgiAdapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgiAdapter4));
+				max_dedicated_video_memory = desc.DedicatedVideoMemory;
+				ThrowIfFailed(dxgi_adapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgi_adapter4));
 			}
 
-			dxgiAdapter1->Release();
+			dxgi_adapter1->Release();
 		}
 	}
 
-	dxgiFactory->Release();
+	dxgi_factory->Release();
 
-	return dxgiAdapter4;
+	return dxgi_adapter4;
 }
 
 DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
 {
-	DX12CommandQueue* commandQueue;
+	DX12CommandQueue* command_queue = nullptr;
 	switch (type)
 	{
 	case D3D12_COMMAND_LIST_TYPE_DIRECT:
-		commandQueue = m_DirectCommandQueue;
+		command_queue = m_DirectCommandQueue;
 		break;
 	case D3D12_COMMAND_LIST_TYPE_COMPUTE:
-		commandQueue = m_ComputeCommandQueue;
+		command_queue = m_ComputeCommandQueue;
 		break;
 	case D3D12_COMMAND_LIST_TYPE_COPY:
-		commandQueue = m_CopyCommandQueue;
+		command_queue = m_CopyCommandQueue;
 		break;
 	default:
-		commandQueue = nullptr;
 		Assert(false && "Invalid command queue type.");
 	}
 
-	return commandQueue;
+	return command_queue;
 }

@@ -28,13 +28,13 @@ protected:
 
 public:
 	DX12DepthRenderTarget(
-		ID3D12Device* device,
-		ui32 width, ui32 height, float clearValue = 1.0f, DXGI_FORMAT depthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
+		ID3D12Device* inDevice,
+		ui32 inWidth, ui32 inHeight, float inClearValue = 1.0f, DXGI_FORMAT inDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 
 	virtual ~DX12DepthRenderTarget();
 
-	void ClearDepth(ID3D12GraphicsCommandList2* commandList);
+	void ClearDepth(ID3D12GraphicsCommandList2* inCommandList) const;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle();
-	DXGI_FORMAT					GetFormat();
+	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle() const;
+	DXGI_FORMAT					GetFormat() const;
 };

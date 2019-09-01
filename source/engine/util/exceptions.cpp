@@ -4,15 +4,15 @@
 #include <exception>
 #include <cassert>
 
-void ThrowIfFailed(ui32 hr)
+void ThrowIfFailed(ui32 inResult)
 {
-	if (hr != 0)
+	if (inResult != 0)
 	{
 		throw std::exception();
 	}
 }
 
-void Assert(bool test)
+void Assert(bool inCondition)
 {
-	assert(test);
+	assert(inCondition);
 }

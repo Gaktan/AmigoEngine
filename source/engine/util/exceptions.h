@@ -1,4 +1,4 @@
 #pragma once
 
-void ThrowIfFailed(ui32 hr);
-void Assert(bool test);
+void ThrowIfFailed(ui32 inResult);
+void Assert(bool inCondition);

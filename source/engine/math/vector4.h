@@ -36,11 +36,11 @@ public:
 	{
 	}
 
-	Vector4(const Vector4<T>& other) :
-		x(other.x),
-		y(other.y),
-		z(other.z),
-		w(other.w)
+	Vector4(const Vector4<T>& inOther) :
+		x(inOther.x),
+		y(inOther.y),
+		z(inOther.z),
+		w(inOther.w)
 	{
 	}
 
@@ -58,16 +58,16 @@ public:
 	}
 
 
-	T& operator[](size_t index)
+	T& operator[](size_t inIndex)
 	{
 		//assert(index < 4);
-		return data[index];
+		return data[inIndex];
 	}
 
-	const T& operator[](size_t index) const
+	const T& operator[](size_t inIndex) const
 	{
 		//assert(index < 4);
-		return data[index];
+		return data[inIndex];
 	}
 
 	Vector4<T> operator + (T X) const
@@ -82,14 +82,14 @@ public:
 		return ret;
 	}
 
-	Vector4<T> operator + (const Vector4<T>& v) const
+	Vector4<T> operator + (const Vector4<T>& inOther) const
 	{
 		Vector4<T> ret(*this);
 
-		ret.x += v.x;
-		ret.y += v.y;
-		ret.z += v.z;
-		ret.w += v.w;
+		ret.x += inOther.x;
+		ret.y += inOther.y;
+		ret.z += inOther.z;
+		ret.w += inOther.w;
 
 		return ret;
 	}
@@ -106,14 +106,14 @@ public:
 		return ret;
 	}
 
-	Vector4<T> operator - (const Vector4<T>& v) const
+	Vector4<T> operator - (const Vector4<T>& inOther) const
 	{
 		Vector4<T> ret(*this);
 
-		ret.x -= v.x;
-		ret.y -= v.y;
-		ret.z -= v.z;
-		ret.w -= v.w;
+		ret.x -= inOther.x;
+		ret.y -= inOther.y;
+		ret.z -= inOther.z;
+		ret.w -= inOther.w;
 
 		return ret;
 	}

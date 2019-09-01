@@ -69,8 +69,8 @@ HWND CreateWindow(const wchar_t* windowClassName, HINSTANCE hInst,
 	int windowHeight = windowRect.bottom - windowRect.top;
 
 	// Center the window within the screen. Clamp to 0, 0 for the top-left corner.
-	int windowX = std::max<int>(0, (screenWidth - windowWidth) / 2);
-	int windowY = std::max<int>(0, (screenHeight - windowHeight) / 2);
+	int windowX = Math::Max(0, (screenWidth - windowWidth) / 2);
+	int windowY = Math::Max(0, (screenHeight - windowHeight) / 2);
 
 	HWND hWnd = ::CreateWindowExW(
 		NULL,
@@ -181,8 +181,8 @@ void Resize(uint32_t width, uint32_t height)
 	if (g_ClientWidth != width || g_ClientHeight != height)
 	{
 		// Don't allow 0 size swap chain back buffers.
-		g_ClientWidth = std::max(1u, width);
-		g_ClientHeight = std::max(1u, height);
+		g_ClientWidth = Math::Max(1u, width);
+		g_ClientHeight = Math::Max(1u, height);
 
 		g_Device.m_SwapChain->UpdateRenderTargetViews(g_Device, g_ClientWidth, g_ClientHeight);
 	}

@@ -9,21 +9,21 @@ DX12Resource::DX12Resource()
 }
 
 DX12Resource::DX12Resource(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList2* commandList,
-	size_t bufferSize/* = 0*/, const void* bufferData/* = nullptr*/,
-	D3D12_RESOURCE_FLAGS flags/* = D3D12_RESOURCE_FLAG_NONE*/)
+	ID3D12Device* inDevice,
+	ID3D12GraphicsCommandList2* inCommandList,
+	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/,
+	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
 {
 	// Create a committed resource for the GPU resource in a default heap.
-	ThrowIfFailed(device->CreateCommittedResource(
+	ThrowIfFailed(inDevice->CreateCommittedResource(
 		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(bufferSize, flags),
+		&CD3DX12_RESOURCE_DESC::Buffer(inBufferSize, inFlags),
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&m_Resource)));
 
-	UpdateBufferResource(device, commandList, bufferSize, bufferData);
+	UpdateBufferResource(inDevice, inCommandList, inBufferSize, inBufferData);
 }
 
 DX12Resource::~DX12Resource()
@@ -36,75 +36,75 @@ DX12Resource::~DX12Resource()
 }
 
 void DX12Resource::UpdateBufferResource(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList2* commandList,
-	size_t bufferSize/* = 0*/, const void* bufferData/* = nullptr*/)
+	ID3D12Device* inDevice,
+	ID3D12GraphicsCommandList2* inCommandList,
+	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
 	// Create an committed resource for the upload.
-	if (bufferData)
+	if (inBufferData)
 	{
 		// Create upload buffer on the CPU
-		ThrowIfFailed(device->CreateCommittedResource(
+		ThrowIfFailed(inDevice->CreateCommittedResource(
 			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(bufferSize),
+			&CD3DX12_RESOURCE_DESC::Buffer(inBufferSize),
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_IntermediateResource)));
 
-		D3D12_SUBRESOURCE_DATA subresourceData = {};
-		subresourceData.pData = bufferData;
-		subresourceData.RowPitch = bufferSize;
-		subresourceData.SlicePitch = subresourceData.RowPitch;
+		D3D12_SUBRESOURCE_DATA subresource_data = {};
+		subresource_data.pData		= inBufferData;
+		subresource_data.RowPitch	= inBufferSize;
+		subresource_data.SlicePitch	= subresource_data.RowPitch;
 
-		UpdateSubresources(commandList,
+		UpdateSubresources(inCommandList,
 						   m_Resource, m_IntermediateResource,
-						   0, 0, 1, &subresourceData);
+						   0, 0, 1, &subresource_data);
 	}
 }
 
 DX12VertexBuffer::DX12VertexBuffer(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList2* commandList,
-	size_t bufferSize, const void* bufferData, ui32 stride,
-	D3D12_RESOURCE_FLAGS flags/* = D3D12_RESOURCE_FLAG_NONE*/)
-	: DX12Resource(device, commandList, bufferSize, bufferData, flags)
+	ID3D12Device* inDevice,
+	ID3D12GraphicsCommandList2* inCommandList,
+	size_t inBufferSize, const void* inBufferData, ui32 inStride,
+	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
+	: DX12Resource(inDevice, inCommandList, inBufferSize, inBufferData, inFlags)
 {
-	m_VertexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
-	m_VertexBufferView.SizeInBytes = (ui32) bufferSize;
-	m_VertexBufferView.StrideInBytes = stride;
+	m_VertexBufferView.BufferLocation	= m_Resource->GetGPUVirtualAddress();
+	m_VertexBufferView.SizeInBytes		= (ui32) inBufferSize;
+	m_VertexBufferView.StrideInBytes	= inStride;
 
 	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_Resource,
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
-	
-	commandList->ResourceBarrier(1, &barrier);
+
+	inCommandList->ResourceBarrier(1, &barrier);
 }
 
-void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews) const
+void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList, ui32 inStartSlot, ui32 inNumViews) const
 {
-	commandList->IASetVertexBuffers(startSlot, numViews, &m_VertexBufferView);
+	inCommandList->IASetVertexBuffers(inStartSlot, inNumViews, &m_VertexBufferView);
 }
 
 DX12IndexBuffer::DX12IndexBuffer(
-	ID3D12Device* device,
-	ID3D12GraphicsCommandList2* commandList,
-	size_t bufferSize, const void* bufferData,
-	D3D12_RESOURCE_FLAGS flags/* = D3D12_RESOURCE_FLAG_NONE*/)
-	: DX12Resource(device, commandList, bufferSize, bufferData, flags)
+	ID3D12Device* inDevice,
+	ID3D12GraphicsCommandList2* inCommandList,
+	size_t inBufferSize, const void* inBufferData,
+	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
+	: DX12Resource(inDevice, inCommandList, inBufferSize, inBufferData, inFlags)
 {
-	m_IndexBufferView.BufferLocation = m_Resource->GetGPUVirtualAddress();
-	m_IndexBufferView.Format = DXGI_FORMAT_R16_UINT;
-	m_IndexBufferView.SizeInBytes = (ui32) bufferSize;
+	m_IndexBufferView.BufferLocation	= m_Resource->GetGPUVirtualAddress();
+	m_IndexBufferView.Format			= DXGI_FORMAT_R16_UINT;
+	m_IndexBufferView.SizeInBytes		= (ui32) inBufferSize;
 
 	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_Resource,
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
-	commandList->ResourceBarrier(1, &barrier);
+	inCommandList->ResourceBarrier(1, &barrier);
 }
 
-void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* commandList) const
+void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* inCommandList) const
 {
-	commandList->IASetIndexBuffer(&m_IndexBufferView);
+	inCommandList->IASetIndexBuffer(&m_IndexBufferView);
 }

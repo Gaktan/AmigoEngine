@@ -202,8 +202,8 @@ void OnResize(DX12Device& device, ui32 width, ui32 height)
 	//if (width != GetClientWidth() || height != GetClientHeight())
 	//if (width != 800 || height != 600)
 	{
-		width = max(256, width);
-		height = max(256, height);
+		width	= Math::Max(256u, width);
+		height	= Math::Max(256u, height);
 
 		m_Viewport = CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(width), static_cast<float>(height));
 		ResizeDepthBuffer(device, width, height);
@@ -219,7 +219,7 @@ void OnUpdate(ui32 width, ui32 height, float delta)
 	// Update the model matrix.
 	float angle = TTT * 0.1f;
 	const Vector4f rotationAxis(0, 1, 1, 0);
-	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotationAxis, toRadians(angle));
+	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotationAxis, Math::ToRadians(angle));
 
 	Vector4f position(0, 0, sinf(angle*0.01f));
 	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
@@ -232,7 +232,7 @@ void OnUpdate(ui32 width, ui32 height, float delta)
 
 	// Update the projection matrix.
 	float aspectRatio = width / static_cast<float>(height);
-	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(toRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
+	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(Math::ToRadians(m_FoV), aspectRatio, 0.1f, 100.0f);
 }
 
 void OnRender(DX12Device& dx12Device)

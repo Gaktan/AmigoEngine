@@ -25,14 +25,14 @@ protected:
 	bool					m_TearingSupported;
 
 public:
-	DX12SwapChain(DX12Device& device, HWND hWnd, DX12CommandQueue* commandQueue, ui32 width, ui32 height);
+	DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, ui32 inWidth, ui32 inHeight);
 	virtual ~DX12SwapChain();
 
-	void UpdateRenderTargetViews(DX12Device& device, ui32 clientWidth, ui32 clientHeight, bool firstCall = false);
-	void ClearBackBuffer(ID3D12GraphicsCommandList2* commandList);
+	void UpdateRenderTargetViews(DX12Device& inDevice, ui32 inClientWidth, ui32 inClientHeight, bool inFirstCall = false);
+	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList);
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 
-	void SetRenderTarget(ID3D12GraphicsCommandList2* commandList, DX12DepthRenderTarget* depthBuffer);
+	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer);
 
 	ui32 GetCurrentBackBufferIndex();
 };

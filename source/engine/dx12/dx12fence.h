@@ -11,10 +11,10 @@ protected:
 	HANDLE			m_FenceEvent;
 
 public:
-	DX12Fence(ID3D12Device* device);
+	DX12Fence(ID3D12Device* inDevice);
 	virtual ~DX12Fence();
 
-	ui64 Signal(ID3D12CommandQueue* commandQueue);
-	void WaitForFenceValue(ui64 fenceValue, std::chrono::milliseconds duration = (std::chrono::milliseconds::max)()) const;
-	bool IsFenceComplete(ui64 fenceValue) const;
+	ui64 Signal(ID3D12CommandQueue* inCommandQueue);
+	void WaitForFenceValue(ui64 inFenceValue, std::chrono::milliseconds inDuration = (std::chrono::milliseconds::max)()) const;
+	bool IsFenceComplete(ui64 inFenceValue) const;
 };

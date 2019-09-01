@@ -10,19 +10,19 @@ protected:
 
 public:
 	DX12Resource(
-		ID3D12Device* device,
-		ID3D12GraphicsCommandList2* commandList,
-		size_t bufferSize = 0, const void* bufferData = nullptr,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+		ID3D12Device* inDevice,
+		ID3D12GraphicsCommandList2* inCommandList,
+		size_t inBufferSize = 0, const void* inBufferData = nullptr,
+		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	DX12Resource();
 
 	virtual ~DX12Resource();
 
 	void UpdateBufferResource(
-		ID3D12Device* device,
-		ID3D12GraphicsCommandList2* commandList,
-		size_t bufferSize = 0, const void* bufferData = nullptr);
+		ID3D12Device* inDevice,
+		ID3D12GraphicsCommandList2* inCommandList,
+		size_t inBufferSize = 0, const void* inBufferData = nullptr);
 };
 
 class DX12VertexBuffer : public DX12Resource
@@ -32,16 +32,16 @@ protected:
 
 public:
 	DX12VertexBuffer(
-		ID3D12Device* device,
-		ID3D12GraphicsCommandList2* commandList,
-		size_t bufferSize, const void* bufferData, ui32 stride,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+		ID3D12Device* inDevice,
+		ID3D12GraphicsCommandList2* inCommandList,
+		size_t inBufferSize, const void* inBufferData, ui32 inStride,
+		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	virtual ~DX12VertexBuffer()
 	{
 	}
 
-	void SetVertexBuffer(ID3D12GraphicsCommandList2* commandList, ui32 startSlot, ui32 numViews) const;
+	void SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList, ui32 inStartSlot, ui32 inNumViews) const;
 };
 
 class DX12IndexBuffer : public DX12Resource
@@ -51,14 +51,14 @@ protected:
 
 public:
 	DX12IndexBuffer(
-		ID3D12Device* device,
-		ID3D12GraphicsCommandList2* commandList,
-		size_t bufferSize, const void* bufferData,
-		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
+		ID3D12Device* inDevice,
+		ID3D12GraphicsCommandList2* inCommandList,
+		size_t inBufferSize, const void* inBufferData,
+		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	virtual ~DX12IndexBuffer()
 	{
 	}
 
-	void SetIndexBuffer(ID3D12GraphicsCommandList2* commandList) const;
+	void SetIndexBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
 };

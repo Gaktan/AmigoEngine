@@ -25,9 +25,9 @@ protected:
 
 public:
 
-	Matrix4(bool identity = false)
+	Matrix4(bool inIdentity = false)
 	{
-		if (identity)
+		if (inIdentity)
 		{
 			*this = IDENTITY;
 		}
@@ -39,30 +39,30 @@ public:
 #endif
 	}
 
-	Matrix4(const Matrix4<T>& other)
+	Matrix4(const Matrix4<T>& inOther)
 	{
-		memcpy(m, other.m, sizeof(T) * 4 * 4);
+		memcpy(m, inOther.m, sizeof(T) * 4 * 4);
 	}
 
-	Matrix4(const Vector4<T>& row0, const Vector4<T>& row1, const Vector4<T>& row2, const Vector4<T>& row3)
+	Matrix4(const Vector4<T>& inRow0, const Vector4<T>& inRow1, const Vector4<T>& inRow2, const Vector4<T>& inRow3)
 	{
-		r[0] = row0;
-		r[1] = row1;
-		r[2] = row2;
-		r[3] = row3;
+		r[0] = inRow0;
+		r[1] = inRow1;
+		r[2] = inRow2;
+		r[3] = inRow3;
 	}
 
-	T* operator[](size_t row)
+	T* operator[](size_t inRow)
 	{
-		return &r[row];
+		return &r[inRow];
 	}
 
-	const T* operator[](size_t row) const
+	const T* operator[](size_t inRow) const
 	{
-		return &r[row];
+		return &r[inRow];
 	}
 
-	Matrix4<T> Mul(const Matrix4<T>& other) const
+	Matrix4<T> Mul(const Matrix4<T>& inOther) const
 	{
 		Matrix4<T> ret;
 
@@ -71,61 +71,61 @@ public:
 		float z = m[0][2];
 		float w = m[0][3];
 		// Perform the operation on the first row
-		ret.m[0][0] = (other.m[0][0] * x) + (other.m[1][0] * y) + (other.m[2][0] * z) + (other.m[3][0] * w);
-		ret.m[0][1] = (other.m[0][1] * x) + (other.m[1][1] * y) + (other.m[2][1] * z) + (other.m[3][1] * w);
-		ret.m[0][2] = (other.m[0][2] * x) + (other.m[1][2] * y) + (other.m[2][2] * z) + (other.m[3][2] * w);
-		ret.m[0][3] = (other.m[0][3] * x) + (other.m[1][3] * y) + (other.m[2][3] * z) + (other.m[3][3] * w);
-		
-		// Repeat for all the other rows
+		ret.m[0][0] = (inOther.m[0][0] * x) + (inOther.m[1][0] * y) + (inOther.m[2][0] * z) + (inOther.m[3][0] * w);
+		ret.m[0][1] = (inOther.m[0][1] * x) + (inOther.m[1][1] * y) + (inOther.m[2][1] * z) + (inOther.m[3][1] * w);
+		ret.m[0][2] = (inOther.m[0][2] * x) + (inOther.m[1][2] * y) + (inOther.m[2][2] * z) + (inOther.m[3][2] * w);
+		ret.m[0][3] = (inOther.m[0][3] * x) + (inOther.m[1][3] * y) + (inOther.m[2][3] * z) + (inOther.m[3][3] * w);
+
+		// Repeat for all the inOther rows
 		x = m[1][0];
 		y = m[1][1];
 		z = m[1][2];
 		w = m[1][3];
-		ret.m[1][0] = (other.m[0][0] * x) + (other.m[1][0] * y) + (other.m[2][0] * z) + (other.m[3][0] * w);
-		ret.m[1][1] = (other.m[0][1] * x) + (other.m[1][1] * y) + (other.m[2][1] * z) + (other.m[3][1] * w);
-		ret.m[1][2] = (other.m[0][2] * x) + (other.m[1][2] * y) + (other.m[2][2] * z) + (other.m[3][2] * w);
-		ret.m[1][3] = (other.m[0][3] * x) + (other.m[1][3] * y) + (other.m[2][3] * z) + (other.m[3][3] * w);
-		
+		ret.m[1][0] = (inOther.m[0][0] * x) + (inOther.m[1][0] * y) + (inOther.m[2][0] * z) + (inOther.m[3][0] * w);
+		ret.m[1][1] = (inOther.m[0][1] * x) + (inOther.m[1][1] * y) + (inOther.m[2][1] * z) + (inOther.m[3][1] * w);
+		ret.m[1][2] = (inOther.m[0][2] * x) + (inOther.m[1][2] * y) + (inOther.m[2][2] * z) + (inOther.m[3][2] * w);
+		ret.m[1][3] = (inOther.m[0][3] * x) + (inOther.m[1][3] * y) + (inOther.m[2][3] * z) + (inOther.m[3][3] * w);
+
 		x = m[2][0];
 		y = m[2][1];
 		z = m[2][2];
 		w = m[2][3];
-		ret.m[2][0] = (other.m[0][0] * x) + (other.m[1][0] * y) + (other.m[2][0] * z) + (other.m[3][0] * w);
-		ret.m[2][1] = (other.m[0][1] * x) + (other.m[1][1] * y) + (other.m[2][1] * z) + (other.m[3][1] * w);
-		ret.m[2][2] = (other.m[0][2] * x) + (other.m[1][2] * y) + (other.m[2][2] * z) + (other.m[3][2] * w);
-		ret.m[2][3] = (other.m[0][3] * x) + (other.m[1][3] * y) + (other.m[2][3] * z) + (other.m[3][3] * w);
-		
+		ret.m[2][0] = (inOther.m[0][0] * x) + (inOther.m[1][0] * y) + (inOther.m[2][0] * z) + (inOther.m[3][0] * w);
+		ret.m[2][1] = (inOther.m[0][1] * x) + (inOther.m[1][1] * y) + (inOther.m[2][1] * z) + (inOther.m[3][1] * w);
+		ret.m[2][2] = (inOther.m[0][2] * x) + (inOther.m[1][2] * y) + (inOther.m[2][2] * z) + (inOther.m[3][2] * w);
+		ret.m[2][3] = (inOther.m[0][3] * x) + (inOther.m[1][3] * y) + (inOther.m[2][3] * z) + (inOther.m[3][3] * w);
+
 		x = m[3][0];
 		y = m[3][1];
 		z = m[3][2];
 		w = m[3][3];
-		ret.m[3][0] = (other.m[0][0] * x) + (other.m[1][0] * y) + (other.m[2][0] * z) + (other.m[3][0] * w);
-		ret.m[3][1] = (other.m[0][1] * x) + (other.m[1][1] * y) + (other.m[2][1] * z) + (other.m[3][1] * w);
-		ret.m[3][2] = (other.m[0][2] * x) + (other.m[1][2] * y) + (other.m[2][2] * z) + (other.m[3][2] * w);
-		ret.m[3][3] = (other.m[0][3] * x) + (other.m[1][3] * y) + (other.m[2][3] * z) + (other.m[3][3] * w);
+		ret.m[3][0] = (inOther.m[0][0] * x) + (inOther.m[1][0] * y) + (inOther.m[2][0] * z) + (inOther.m[3][0] * w);
+		ret.m[3][1] = (inOther.m[0][1] * x) + (inOther.m[1][1] * y) + (inOther.m[2][1] * z) + (inOther.m[3][1] * w);
+		ret.m[3][2] = (inOther.m[0][2] * x) + (inOther.m[1][2] * y) + (inOther.m[2][2] * z) + (inOther.m[3][2] * w);
+		ret.m[3][3] = (inOther.m[0][3] * x) + (inOther.m[1][3] * y) + (inOther.m[2][3] * z) + (inOther.m[3][3] * w);
 
 		return ret;
 	}
 
-	Matrix4<T> Tanslate(const Vector4<T>& position) const
+	Matrix4<T> Tanslate(const Vector4<T>& inPosition) const
 	{
 		Matrix4<T> ret(*this);
 
-		ret._m30 += position.x;
-		ret._m31 += position.y;
-		ret._m32 += position.z;
+		ret._m30 += inPosition.x;
+		ret._m31 += inPosition.y;
+		ret._m32 += inPosition.z;
 
 		return ret;
 	}
 
-	static Matrix4<T> CreateRotationMatrix(const Vector4f& axis, float angle)
+	static Matrix4<T> CreateRotationMatrix(const Vector4f& inAxis, float inAngle)
 	{
 		Matrix4<T> ret(true);
 
-		const Vector4f rotationAxis = Vector4f::Normalize(axis);
+		const Vector4f rotationAxis = Vector4f::Normalize(inAxis);
 
-		float s = sin(angle);
-		float c = cos(angle);
+		float s = sin(inAngle);
+		float c = cos(inAngle);
 		float t = 1.0f - c;
 
 		float x = rotationAxis.x;
@@ -142,16 +142,16 @@ public:
 
 		ret._m20 = t * x*z + s * y;
 		ret._m21 = t * y*z - s * x;
-		ret._m22 = t*z*z + c;
+		ret._m22 = t * z*z + c;
 
 		return ret;
 	}
 
-	static Matrix4<T> CreateLookAtMatrix(const Vector4f& eye, const Vector4f& focus, const Vector4f& upVector = { 0, 0, 1 })
+	static Matrix4<T> CreateLookAtMatrix(const Vector4f& inEye, const Vector4f& inFocus, const Vector4f& inUpVector = { 0, 0, 1 })
 	{
-		Vector4f forward = Vector4f::Normalize(focus - eye);
-		Vector4f right = Vector4f::Cross(Vector4f::Normalize(upVector), forward);
-		Vector4f up = Vector4f::Cross(forward, right);
+		Vector4f forward	= Vector4f::Normalize(inFocus - inEye);
+		Vector4f right		= Vector4f::Cross(Vector4f::Normalize(inUpVector), forward);
+		Vector4f up			= Vector4f::Cross(forward, right);
 
 		Matrix4<T> ret(true);
 
@@ -165,22 +165,22 @@ public:
 		ret._m21 = forward.y;
 		ret._m22 = forward.z;
 
-		ret._m30 = 0.0f - Vector4f::Dot(right, eye);
-		ret._m31 = 0.0f - Vector4f::Dot(up, eye);
-		ret._m32 = 0.0f - Vector4f::Dot(forward, eye);
+		ret._m30 = 0.0f - Vector4f::Dot(right, inEye);
+		ret._m31 = 0.0f - Vector4f::Dot(up, inEye);
+		ret._m32 = 0.0f - Vector4f::Dot(forward, inEye);
 
 		return ret;
 	}
 
-	static Matrix4<T> CreatePerspectiveMatrix(float fov, float aspectRatio, float zNear, float zFar)
+	static Matrix4<T> CreatePerspectiveMatrix(float inFOV, float inAspectRatio, float inZNear, float inZFar)
 	{
-		fov *= 0.5f;
+		inFOV *= 0.5f;
 
-		float cosFov = cos(fov);
-		float sinFov = sin(fov);
-		float height = cosFov / sinFov;
-		float width = height / aspectRatio;
-		float range = zFar / (zFar - zNear);
+		float cosFov	= cos(inFOV);
+		float sinFov	= sin(inFOV);
+		float height	= cosFov / sinFov;
+		float width		= height / inAspectRatio;
+		float range		= inZFar / (inZFar - inZNear);
 
 		Matrix4 Result;
 
@@ -201,7 +201,7 @@ public:
 
 		Result._m30 = 0.0f;
 		Result._m31 = 0.0f;
-		Result._m32 = -range * zNear;
+		Result._m32 = -range * inZNear;
 		Result._m33 = 0.0f;
 
 		return Result;
