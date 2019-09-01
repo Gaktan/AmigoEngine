@@ -1,6 +1,6 @@
 #pragma once
 
-// Code between Begin and End are generated. Do not modify it
+// Code between Begin(X) and End(X) is generated. Do not modify it
 
 // BeginInclude
 	#include "shaders\generated\PixelShader_PixelShader_ps.generated.h"

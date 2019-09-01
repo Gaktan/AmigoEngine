@@ -145,22 +145,24 @@ namespace ShaderCompiler
 
 				// Shader code as header file or binary file
 				bool headerFile = true;
-				string exportOption = headerFile ? "Fh" : "Fo";
+				string exportOption = headerFile ? "/Fh" : "/Fo";
 				string extension = headerFile ? Config.GeneratedHeaderExtension : ".bin";
 				string variableName = headerFile ? "/Vng_" + header.Name : "";
-				string optimization = "Od";
+				string optimization = "/Od";
+				string debugInfo = "/Zi";
 
 				string shaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
 				string shaderOutputFile = Config.GeneratedFolderPath + shaderName + extension;
 
 
-				// 0: input file, 1: Entry point, 2: Profile, 3: optimization, 4: Export option 5: Output file, 6: Variable name for the header file, 
-				string args = @"{0} -Zi /E{1} /T{2} -{3} /{4}{5} {6} -nologo";
+				// 0: input file, 1: Entry point, 2: Profile, 3: optimization, 4: debug info, 5: Export option 6: Output file, 7: Variable name for the header file, 
+				string args = @"{0} /E{1} /T{2} {3} {4} {5}{6} {7} -nologo";
 				args = String.Format(args,
 					shaderFile.FullPath,
 					header.EntryPoint,
 					ShaderTypeToString(header.Type) + "_" + Config.ShaderModel,
 					optimization,
+					Config.EnableDebugInformation ? debugInfo : "",
 					exportOption,
 					shaderOutputFile,
 					variableName

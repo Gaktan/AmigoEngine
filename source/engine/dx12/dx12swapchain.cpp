@@ -36,7 +36,7 @@ bool CheckTearingSupport()
 }
 
 DX12SwapChain::DX12SwapChain(DX12Device& device, HWND hWnd, DX12CommandQueue* commandQueue, ui32 width, ui32 height)
-	: m_VSync(false)
+	: m_VSync(true)
 {
 	m_TearingSupported = CheckTearingSupport();
 

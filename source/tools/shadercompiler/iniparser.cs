@@ -15,6 +15,7 @@ namespace ShaderCompiler
 		public static string DatabasePath;
 		public static string GeneratedFolderPath;
 		public static string GeneratedHeaderExtension;
+		public static bool EnableDebugInformation;
 
 		public static string ShaderModel;
 
@@ -30,6 +31,7 @@ namespace ShaderCompiler
 			Console.WriteLine("ShaderSourcePath: " + ShaderSourcePath);
 			Console.WriteLine("DatabasePath: " + DatabasePath);
 			Console.WriteLine("GeneratedFolderPath: " + GeneratedFolderPath);
+			Console.WriteLine("EnableDebugInformation: " + EnableDebugInformation);
 		}
 	}
 
@@ -169,6 +171,11 @@ namespace ShaderCompiler
 
 			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];
 			Config.ShaderModel = Data["ShaderCompiler"]["ShaderModel"];
+			bool succes = Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
+			if (!succes)
+			{
+				Config.EnableDebugInformation = false;
+			}
 
 			Config.DebugPrint();
 		}
