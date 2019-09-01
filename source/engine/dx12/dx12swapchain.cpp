@@ -186,7 +186,8 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer)
 {
 	const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
-	inCommandList->OMSetRenderTargets(1, &rtv, false, &inDepthBuffer->GetCPUDescriptorHandle());
+	const D3D12_CPU_DESCRIPTOR_HANDLE cpu_descriptor_handle = inDepthBuffer->GetCPUDescriptorHandle();
+	inCommandList->OMSetRenderTargets(1, &rtv, false, &cpu_descriptor_handle);
 }
 
 ui32 DX12SwapChain::GetCurrentBackBufferIndex()

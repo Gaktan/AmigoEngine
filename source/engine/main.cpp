@@ -171,7 +171,7 @@ void Update()
 		elapsed_seconds = 0.0;
 	}
 
-	float deltaMS = delta_time.count() * 1e-6;
+	float deltaMS = static_cast<float>(delta_time.count() * 1e-6);
 
 	OnUpdate(g_ClientWidth, g_ClientHeight, deltaMS);
 }

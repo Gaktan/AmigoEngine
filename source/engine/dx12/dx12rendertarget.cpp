@@ -51,12 +51,15 @@ DX12DepthRenderTarget::DX12DepthRenderTarget(
 	optimized_clear_value.Format		= inDepthFormat;
 	optimized_clear_value.DepthStencil	= { inClearValue, 0 };
 
+	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(inDepthFormat, inWidth, inHeight,
+																		   /*arraySize*/ 1, /*mipLevels*/ 0, /*sampleCount*/ 1, /*sampleQuality*/ 0,
+																		   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
+
 	ThrowIfFailed(inDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Tex2D(inDepthFormat, inWidth, inHeight,
-									  /*arraySize*/ 1, /*mipLevels*/ 0, /*sampleCount*/ 1, /*sampleQuality*/ 0,
-									  D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL),
+		&resource_desc,
 		D3D12_RESOURCE_STATE_DEPTH_WRITE,
 		&optimized_clear_value,
 		IID_PPV_ARGS(&m_Resource)

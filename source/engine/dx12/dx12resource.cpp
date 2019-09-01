@@ -14,11 +14,14 @@ DX12Resource::DX12Resource(
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
 {
+	D3D12_HEAP_PROPERTIES	heap_properties	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
+	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize, inFlags);
+
 	// Create a committed resource for the GPU resource in a default heap.
 	ThrowIfFailed(inDevice->CreateCommittedResource(
-		&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
-		&CD3DX12_RESOURCE_DESC::Buffer(inBufferSize, inFlags),
+		&resource_desc,
 		D3D12_RESOURCE_STATE_COPY_DEST,
 		nullptr,
 		IID_PPV_ARGS(&m_Resource)));
@@ -43,11 +46,14 @@ void DX12Resource::UpdateBufferResource(
 	// Create an committed resource for the upload.
 	if (inBufferData)
 	{
+		D3D12_HEAP_PROPERTIES	heap_properties	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
+		D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize);
+
 		// Create upload buffer on the CPU
 		ThrowIfFailed(inDevice->CreateCommittedResource(
-			&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
+			&heap_properties,
 			D3D12_HEAP_FLAG_NONE,
-			&CD3DX12_RESOURCE_DESC::Buffer(inBufferSize),
+			&resource_desc,
 			D3D12_RESOURCE_STATE_GENERIC_READ,
 			nullptr,
 			IID_PPV_ARGS(&m_IntermediateResource)));

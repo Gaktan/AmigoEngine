@@ -53,12 +53,16 @@ class AmigoEngine : Project
 		// Enable C++17
 		conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
 		
+		// Remove exception handling in std lib
+		conf.Defines.Add("_HAS_EXCEPTIONS=0");
+		
 		// DX12
 		conf.IncludePaths.Add(@"[project.RootPath]\external\d3d12\include");
 		//conf.LibraryPaths.Add(@"[project.BasePath]\lib");
 		conf.LibraryFiles.Add(@"D3DCompiler.lib");
 		conf.LibraryFiles.Add(@"D3D12.lib");
 		conf.LibraryFiles.Add(@"DXGI.lib");
+		conf.LibraryFiles.Add(@"dxguid.lib");
 
         // Add dependency to ShaderCompiler
         conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);
