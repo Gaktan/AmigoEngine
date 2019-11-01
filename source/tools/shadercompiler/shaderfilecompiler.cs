@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Text;
@@ -102,12 +103,9 @@ namespace ShaderCompiler
 				header.Defines		= new List<string>();
 
 				string defines = ReadTagFromHeader("Defines", str, lineNum, "");
-				foreach (string define in defines.Split(';'))
+				foreach (string define in defines.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries))
 				{
-					if (define.Length != 0)
-					{
-						header.Defines.Add("\"" + define + "\"");
-					}
+					header.Defines.Add(define);
 				}
 
 				return header;
@@ -117,7 +115,7 @@ namespace ShaderCompiler
 		private static List<HeaderInfo> ReadHeader(string fileContent)
 		{
 			// Example of a shader header:
-			// "// ShaderCompiler. Name: Test_01, EntryPoint: main, Type: PS"
+			// "// ShaderCompiler. Name: Test_01, EntryPoint: main, Type: PS, Defines: DEFINE1; DEFINE2 = 0"
 
 			List<HeaderInfo> headerInfos = new List<HeaderInfo>();
 
@@ -164,9 +162,13 @@ namespace ShaderCompiler
 				string debugInfo		= "/Zi";
 				string defines			= "";
 
-				foreach (string define in header.Defines)
+				ArrayList allDefines = new ArrayList();
+				allDefines.AddRange(Config.GlobalDefines);
+				allDefines.AddRange(header.Defines);
+
+				foreach (string define in allDefines)
 				{
-					defines += "-D" + define + " ";
+					defines += "-D\"" + define + "\" ";
 				}
 
 				string shaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);

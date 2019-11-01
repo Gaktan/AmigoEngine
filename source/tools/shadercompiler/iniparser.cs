@@ -9,15 +9,17 @@ namespace ShaderCompiler
 	{
 		// TODO: Fix this annoying warning
 #pragma warning disable CS0649
-		public static List<string> ShaderExtensions;
+		public static List<string>	ShaderExtensions;
 #pragma warning restore CS0649
-		public static string ShaderSourcePath;
-		public static string DatabasePath;
-		public static string GeneratedFolderPath;
-		public static string GeneratedHeaderExtension;
-		public static bool EnableDebugInformation;
+		public static string		ShaderSourcePath;
+		public static string		DatabasePath;
+		public static string		GeneratedFolderPath;
+		public static string		GeneratedHeaderExtension;
+		public static bool			EnableDebugInformation;
 
-		public static string ShaderModel;
+		public static string		ShaderModel;
+
+		public static List<string>  GlobalDefines;
 
 		public static void DebugPrint()
 		{
@@ -31,7 +33,13 @@ namespace ShaderCompiler
 			Console.WriteLine("ShaderSourcePath: " + ShaderSourcePath);
 			Console.WriteLine("DatabasePath: " + DatabasePath);
 			Console.WriteLine("GeneratedFolderPath: " + GeneratedFolderPath);
+			Console.WriteLine("GeneratedHeaderExtension: " + GeneratedHeaderExtension);
 			Console.WriteLine("EnableDebugInformation: " + EnableDebugInformation);
+
+			Console.WriteLine();
+
+			Console.WriteLine("ShaderModel: " + ShaderModel);
+			Console.WriteLine("GlobalDefines: " + String.Join(", ", GlobalDefines.ToArray()));
 		}
 	}
 
@@ -159,8 +167,9 @@ namespace ShaderCompiler
 
 		private static void FillConfig()
 		{
+			string[] separators = { "," };
 			Config.ShaderExtensions = new List<string>();
-			foreach (string extension in Data["ShaderCompiler"]["ShaderExtensions"].Split(','))
+			foreach (string extension in Data["ShaderCompiler"]["ShaderExtensions"].Split(separators, StringSplitOptions.RemoveEmptyEntries))
 			{
 				Config.ShaderExtensions.Add(extension.Trim());
 			}
@@ -175,6 +184,12 @@ namespace ShaderCompiler
 			if (!succes)
 			{
 				Config.EnableDebugInformation = false;
+			}
+
+			Config.GlobalDefines = new List<string>();
+			foreach (string define in Data["ShaderCompiler"]["GlobalDefines"].Split(separators, StringSplitOptions.RemoveEmptyEntries))
+			{
+				Config.GlobalDefines.Add(define.Trim());
 			}
 
 			Config.DebugPrint();
