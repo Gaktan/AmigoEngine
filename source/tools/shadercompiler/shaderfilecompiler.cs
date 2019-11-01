@@ -11,7 +11,7 @@ namespace ShaderCompiler
 		// Captures any line that starts with // ShaderCompiler and puts the content of the header in Group1
 		private static readonly string HeaderRegex = @"//\s*ShaderCompiler\.(.*)";
 		// Reads a single tag from a header and puts the result in Group1
-		private static readonly string HeaderTagRegex = @"\s*:\s*([a-z_][a-z0-9_]*)\s*,*";
+		private static readonly string HeaderTagRegex = @"\s*:\s*(.*?)\s*(,|$)";
 		// Captures anything between Begin{0} (Group1) and End{0} (Group3) in Group2
 		private static readonly string FindBeginEndRegex = @"(\/\/\s*Begin{0})([\s\S]*)(\/\/\s*End{0})";
 		// Captures the name of const unsigned char g_ array. Puts the result in Group1
@@ -73,7 +73,7 @@ namespace ShaderCompiler
 			private static string ReadTagFromHeader(string tag, string str, int lineNum, string defaultValue = null)
 			{
 				// (tag), {return}
-				// ShaderCompiler. (Name): {ShaderFileToTest_01}, (EntryPoint): {main}, (Type): {PS}
+				// ShaderCompiler. (Name): {ShaderFileToTest_01}, (EntryPoint): {main}, (Type): {PS}, (Defines): DEFINE1;DEFINE2=1;
 
 				string tagRegex = tag + HeaderTagRegex;
 
@@ -106,7 +106,7 @@ namespace ShaderCompiler
 				{
 					if (define.Length != 0)
 					{
-						header.Defines.Add(define);
+						header.Defines.Add("\"" + define + "\"");
 					}
 				}
 
