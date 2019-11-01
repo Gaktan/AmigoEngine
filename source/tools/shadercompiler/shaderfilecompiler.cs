@@ -141,6 +141,32 @@ namespace ShaderCompiler
 			return headerInfos;
 		}
 
+		private static string GenerateDefines(HeaderInfo header)
+		{
+			ArrayList allDefines = new ArrayList();
+			allDefines.AddRange(Config.GlobalDefines);
+
+			switch (header.Type)
+			{
+			case ShaderType.VertexShader:
+				allDefines.Add("VERTEX_SHADER");
+				break;
+			case ShaderType.PixelShader:
+				allDefines.Add("PIXEL_SHADER");
+				break;
+			}
+
+			allDefines.AddRange(header.Defines);
+
+			string defines = "";
+			foreach (string define in allDefines)
+			{
+				defines += "-D\"" + define + "\" ";
+			}
+
+			return defines;
+		}
+
 		// Processes all headers from a shader file and compiles every permutation
 		public static void Compile(ShaderFile shaderFile)
 		{
@@ -160,20 +186,9 @@ namespace ShaderCompiler
 				string variableName		= headerFile ? "/Vng_" + header.Name : "";
 				string optimization		= "/Od";
 				string debugInfo		= "/Zi";
-				string defines			= "";
-
-				ArrayList allDefines = new ArrayList();
-				allDefines.AddRange(Config.GlobalDefines);
-				allDefines.AddRange(header.Defines);
-
-				foreach (string define in allDefines)
-				{
-					defines += "-D\"" + define + "\" ";
-				}
-
-				string shaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
+				string defines			= GenerateDefines(header);
+				string shaderName		= shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
 				string shaderOutputFile = Config.GeneratedFolderPath + shaderName + extension;
-
 
 				// 0: input file, 1: Entry point, 2: Profile, 3: Optimization, 4: Debug info, 5: Export option 6: Output file, 7: Variable name for the header file, 8: Defines
 				string args = @"{0} /E{1} /T{2} {3} {4} {5}{6} {7} {8} -nologo";

@@ -1,3 +1,5 @@
+// I know this file looks disgusting, this is just for testing purposes.
+
 // Make sure the following fails (No shader name)
 /*
 ShaderCompiler.                          , EntryPoint: main, Type: PS
@@ -87,11 +89,16 @@ struct Array
 								[DEFINED]    : COLOR;
 };
 
+// Make sure PIXEL_SHADER is properly defined
+#ifdef PIXEL_SHADER
 float4 main()   : SV_Target
 {
 	return 0.0;
 }
+#endif
 
+// Make sure VERTEX_SHADER is properly defined
+#ifdef VERTEX_SHADER
 VertexOutput mainVS(VertexInput IN)
 {
 	VertexOutput OUT;
@@ -100,6 +107,7 @@ VertexOutput mainVS(VertexInput IN)
 
 	return OUT;
 }
+#endif
 
 #ifdef TEST22
 float4 TestingDefines()
@@ -117,7 +125,10 @@ float4 TestingDefines()
 }
 #endif// TEST22
 
+// Make sure PIXEL_SHADER is properly defined
+#ifdef PIXEL_SHADER
 float4 mainD() : SV_Target
 {
 	return TestingDefines();
 }
+#endif
