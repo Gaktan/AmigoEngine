@@ -61,10 +61,12 @@ namespace ShaderCompiler
 			public string Name;
 			public string EntryPoint;
 			public ShaderType Type;
+			public List<string> Defines;
 
 			public string DebugPrint()
 			{
-				return "Name: " + Name + ", EntryPoint: " + EntryPoint + ", Type: " + Type + ".";
+				string definesString = ", Defines:" + String.Join(", ", Defines.ToArray()) + ".";
+				return "Name: " + Name + ", EntryPoint: " + EntryPoint + ", Type: " + Type + (Defines.Count==0 ? "." : definesString);
 			}
 
 			// Returns the value of a tag from a given header string
@@ -94,9 +96,19 @@ namespace ShaderCompiler
 			public static HeaderInfo FromString(string str, int lineNum)
 			{
 				HeaderInfo header;
-				header.Name = ReadTagFromHeader("Name", str, lineNum);
-				header.EntryPoint = ReadTagFromHeader("EntryPoint", str, lineNum, "main");
-				header.Type = ShaderTypeFromString(ReadTagFromHeader("Type", str, lineNum, "ps"));
+				header.Name			= ReadTagFromHeader("Name", str, lineNum);
+				header.EntryPoint	= ReadTagFromHeader("EntryPoint", str, lineNum, "main");
+				header.Type			= ShaderTypeFromString(ReadTagFromHeader("Type", str, lineNum, "ps"));
+				header.Defines		= new List<string>();
+
+				string defines = ReadTagFromHeader("Defines", str, lineNum, "");
+				foreach (string define in defines.Split(';'))
+				{
+					if (define.Length != 0)
+					{
+						header.Defines.Add(define);
+					}
+				}
 
 				return header;
 			}
@@ -144,19 +156,25 @@ namespace ShaderCompiler
 				string DXC = GetDirectXCompilerDirectory();
 
 				// Shader code as header file or binary file
-				bool headerFile = true;
-				string exportOption = headerFile ? "/Fh" : "/Fo";
-				string extension = headerFile ? Config.GeneratedHeaderExtension : ".bin";
-				string variableName = headerFile ? "/Vng_" + header.Name : "";
-				string optimization = "/Od";
-				string debugInfo = "/Zi";
+				bool headerFile			= true;
+				string exportOption		= headerFile ? "/Fh" : "/Fo";
+				string extension		= headerFile ? Config.GeneratedHeaderExtension : ".bin";
+				string variableName		= headerFile ? "/Vng_" + header.Name : "";
+				string optimization		= "/Od";
+				string debugInfo		= "/Zi";
+				string defines			= "";
+
+				foreach (string define in header.Defines)
+				{
+					defines += "-D" + define + " ";
+				}
 
 				string shaderName = shaderFile.GetFileName() + "_" + header.Name + "_" + ShaderTypeToString(header.Type);
 				string shaderOutputFile = Config.GeneratedFolderPath + shaderName + extension;
 
 
-				// 0: input file, 1: Entry point, 2: Profile, 3: optimization, 4: debug info, 5: Export option 6: Output file, 7: Variable name for the header file, 
-				string args = @"{0} /E{1} /T{2} {3} {4} {5}{6} {7} -nologo";
+				// 0: input file, 1: Entry point, 2: Profile, 3: Optimization, 4: Debug info, 5: Export option 6: Output file, 7: Variable name for the header file, 8: Defines
+				string args = @"{0} /E{1} /T{2} {3} {4} {5}{6} {7} {8} -nologo";
 				args = String.Format(args,
 					shaderFile.FullPath,
 					header.EntryPoint,
@@ -165,15 +183,16 @@ namespace ShaderCompiler
 					Config.EnableDebugInformation ? debugInfo : "",
 					exportOption,
 					shaderOutputFile,
-					variableName
+					variableName,
+					defines
 					);
 
 				System.Diagnostics.Process process = System.Diagnostics.Process.Start(DXC);
-				process.StartInfo.RedirectStandardOutput = true;
-				process.StartInfo.RedirectStandardError = true;
-				process.StartInfo.UseShellExecute = false;
-				process.StartInfo.CreateNoWindow = true;
-				process.StartInfo.Arguments = args;
+				process.StartInfo.RedirectStandardOutput	= true;
+				process.StartInfo.RedirectStandardError		= true;
+				process.StartInfo.UseShellExecute			= false;
+				process.StartInfo.CreateNoWindow			= true;
+				process.StartInfo.Arguments					= args;
 
 				process.Start();
 
@@ -184,7 +203,8 @@ namespace ShaderCompiler
 
 				if (process.ExitCode != 0)
 				{
-					throw new Exception(process.StandardError.ReadToEnd());
+					string errorMessage = process.StandardError.ReadToEnd() + "Failed with commandline:\n" + DXC + " " + args + "\n\n";
+					throw new Exception(errorMessage);
 					//throw new Exception(process.StandardOutput.ReadToEnd());
 				}
 

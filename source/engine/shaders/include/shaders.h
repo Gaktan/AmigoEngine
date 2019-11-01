@@ -14,6 +14,9 @@
 	#include "shaders\generated\ShaderFileToTest_Test_18_ps.generated.h"
 	#include "shaders\generated\ShaderFileToTest_Test_19_vs.generated.h"
 	#include "shaders\generated\ShaderFileToTest_Test_20_vs.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_22_ps.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_23_ps.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_24_ps.generated.h"
 	#include "shaders\generated\VertexShader_VertexShader_vs.generated.h"
 // EndInclude
 
@@ -32,5 +35,8 @@
 	INIT_SHADER_BYTECODE(Test_18);
 	INIT_SHADER_BYTECODE(Test_19);
 	INIT_SHADER_BYTECODE(Test_20);
+	INIT_SHADER_BYTECODE(Test_22);
+	INIT_SHADER_BYTECODE(Test_23);
+	INIT_SHADER_BYTECODE(Test_24);
 	INIT_SHADER_BYTECODE(VertexShader);
 // EndShaderByteCode

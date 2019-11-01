@@ -165,13 +165,13 @@ namespace ShaderCompiler
 				Config.ShaderExtensions.Add(extension.Trim());
 			}
 
-			Config.ShaderSourcePath = ResolvePath(Data["ShaderCompiler"]["ShaderSourcePath"], true);
-			Config.DatabasePath = ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
-			Config.GeneratedFolderPath = ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
+			Config.ShaderSourcePath			= ResolvePath(Data["ShaderCompiler"]["ShaderSourcePath"], true);
+			Config.DatabasePath				= ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
+			Config.GeneratedFolderPath		= ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
 
 			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];
-			Config.ShaderModel = Data["ShaderCompiler"]["ShaderModel"];
-			bool succes = Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
+			Config.ShaderModel				= Data["ShaderCompiler"]["ShaderModel"];
+			bool succes						= Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
 			if (!succes)
 			{
 				Config.EnableDebugInformation = false;

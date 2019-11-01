@@ -1,12 +1,13 @@
-// Make sure the following fails
+// Make sure the following fails (No shader name)
 /*
 ShaderCompiler.                          , EntryPoint: main, Type: PS
 ShaderCompiler.                          , EntryPoint: main,         
 ShaderCompiler.                          ,                 , Type: PS
 ShaderCompiler.                          ,                 ,         
+ShaderCompiler. Name: Test_21, EntryPoint: mainD, Type: PS
 */
 
-// These are ok though
+// These are ok though (Type and Entry point not specified)
 // ShaderCompiler. Name: Test_10,                 , Type: PS
 // ShaderCompiler. Name: Test_11, EntryPoint: main,         
 // ShaderCompiler. Name: Test_12,                 ,         
@@ -18,6 +19,10 @@ ShaderCompiler.                          ,                 ,
 // ShaderCompiler. Name: Test_18, EntryPoint: main, Type: fragment
 // ShaderCompiler. Name: Test_19, EntryPoint: mainVS, Type: VS
 // ShaderCompiler. Name: Test_20, EntryPoint: mainVS, Type: vertex
+
+// ShaderCompiler. Name: Test_22, EntryPoint: mainD, Type: PS, Defines: TEST22
+// ShaderCompiler. Name: Test_23, EntryPoint: mainD, Type: PS, Defines: TEST23=1;TEST24=0
+// ShaderCompiler. Name: Test_24, EntryPoint: mainD, Type: PS, Defines: TEST23 = 0; TEST24=1
 
 
 struct X1234
@@ -94,4 +99,25 @@ VertexOutput mainVS(VertexInput IN)
 	OUT.Position = IN.Position * IN.Color;
 
 	return OUT;
+}
+
+#ifdef TEST22
+float4 TestingDefines()
+{
+	return 22.0;
+}
+#else //TEST22
+float4 TestingDefines()
+{
+#if TEST23
+	return 23.0;
+#elif TEST24
+	return 24.0;
+#endif
+}
+#endif// TEST22
+
+float4 mainD() : SV_Target
+{
+	return TestingDefines();
 }
