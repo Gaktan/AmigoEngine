@@ -232,8 +232,7 @@ namespace ShaderCompiler
 		// Will replace anything bewtween Begin{Pattern} and End{Pattern} with Replacement string
 		static void ReplaceHeaderFileContent(string Pattern, string Replacement)
 		{
-			// TODO: hardcoded for now
-			string shaderHeaderFile = Config.ShaderSourcePath + @"\include\shaders.h";
+			string shaderHeaderFile = Config.ShaderHeaderFile;
 
 			if (!File.Exists(shaderHeaderFile))
 			{

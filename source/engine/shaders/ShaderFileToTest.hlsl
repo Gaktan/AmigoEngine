@@ -9,7 +9,7 @@ ShaderCompiler.                          ,                 ,
 ShaderCompiler. Name: Test_21, EntryPoint: mainD, Type: PS
 */
 
-// These are ok though (Type and Entry point not specified)
+// These are ok though (Type, Entry point, and Defines not specified)
 // ShaderCompiler. Name: Test_10,                 , Type: PS
 // ShaderCompiler. Name: Test_11, EntryPoint: main,         
 // ShaderCompiler. Name: Test_12,                 ,         

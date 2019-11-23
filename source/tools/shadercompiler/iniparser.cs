@@ -12,6 +12,7 @@ namespace ShaderCompiler
 		public static List<string>	ShaderExtensions;
 #pragma warning restore CS0649
 		public static string		ShaderSourcePath;
+		public static string        ShaderHeaderFile;
 		public static string		DatabasePath;
 		public static string		GeneratedFolderPath;
 		public static string		GeneratedHeaderExtension;
@@ -23,6 +24,8 @@ namespace ShaderCompiler
 
 		public static void DebugPrint()
 		{
+			Console.WriteLine();
+
 			Console.Write("ShaderExtensions: ");
 			foreach (string extension in ShaderExtensions)
 			{
@@ -30,16 +33,16 @@ namespace ShaderCompiler
 			}
 			Console.WriteLine();
 
-			Console.WriteLine("ShaderSourcePath: " + ShaderSourcePath);
-			Console.WriteLine("DatabasePath: " + DatabasePath);
-			Console.WriteLine("GeneratedFolderPath: " + GeneratedFolderPath);
-			Console.WriteLine("GeneratedHeaderExtension: " + GeneratedHeaderExtension);
-			Console.WriteLine("EnableDebugInformation: " + EnableDebugInformation);
+			Console.WriteLine("ShaderSourcePath:			" + ShaderSourcePath);
+			Console.WriteLine("ShaderHeaderFile:			" + ShaderHeaderFile);
+			Console.WriteLine("DatabasePath:				" + DatabasePath);
+			Console.WriteLine("GeneratedFolderPath:			" + GeneratedFolderPath);
+			Console.WriteLine("GeneratedHeaderExtension:	" + GeneratedHeaderExtension);
+			Console.WriteLine("EnableDebugInformation:		" + EnableDebugInformation);
+			Console.WriteLine("ShaderModel:					" + ShaderModel);
+			Console.WriteLine("GlobalDefines:				" + String.Join(", ", GlobalDefines.ToArray()));
 
 			Console.WriteLine();
-
-			Console.WriteLine("ShaderModel: " + ShaderModel);
-			Console.WriteLine("GlobalDefines: " + String.Join(", ", GlobalDefines.ToArray()));
 		}
 	}
 
@@ -154,10 +157,10 @@ namespace ShaderCompiler
 			//DebugPrint();
 		}
 
-		private static string ResolvePath(string path, bool checkIfExists)
+		private static string ResolvePath(string path, bool mustExist)
 		{
 			string resolvedPath = Path.Combine(Arguments.RootFolder, path);
-			if (!File.Exists(resolvedPath) && !Directory.Exists(resolvedPath) && checkIfExists)
+			if (mustExist && !File.Exists(resolvedPath) && !Directory.Exists(resolvedPath))
 			{
 				throw new Exception("Path \"" + resolvedPath + "\" is not a file or a directory.");
 			}
@@ -175,6 +178,7 @@ namespace ShaderCompiler
 			}
 
 			Config.ShaderSourcePath			= ResolvePath(Data["ShaderCompiler"]["ShaderSourcePath"], true);
+			Config.ShaderHeaderFile			= ResolvePath(Data["ShaderCompiler"]["ShaderHeaderFile"], true);
 			Config.DatabasePath				= ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
 			Config.GeneratedFolderPath		= ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
 
@@ -192,7 +196,7 @@ namespace ShaderCompiler
 				Config.GlobalDefines.Add(define.Trim());
 			}
 
-			Config.DebugPrint();
+			//Config.DebugPrint();
 		}
 
 		public static void Parse()
