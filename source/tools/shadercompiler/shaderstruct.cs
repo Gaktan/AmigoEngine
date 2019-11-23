@@ -177,15 +177,18 @@ namespace ShaderCompiler
 			List<Struct> structs = new List<Struct>();
 
 			// For each structure in the code
-			foreach (string str in shaderFile.Content.Split(new[] { "struct" }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (string str in shaderFile.Content.Split(new[] { "struct" }, StringSplitOptions.None))
 			{
-				// TODO: Fix bug when we are processing an empty struct. Need to improve this splitting
-
 				// Need to remove those annoying \r\n
 				string text = Regex.Replace(str, "(\r\n|\n\r|\n|\r)", "\n");
 
 				// Get its name, should be specified right after the "struct Keyword"
 				Match nameMatch = identifierReg.Match(text);
+				if (!nameMatch.Success)
+				{
+					throw new Exception("Struct must have a name");
+				}
+
 				string name = nameMatch.Success ? nameMatch.Groups[1].ToString() : "GeneratedStructName";
 
 				Struct s = new Struct(name);

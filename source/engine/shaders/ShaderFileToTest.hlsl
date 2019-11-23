@@ -48,6 +48,11 @@ struct VertexOutput
     float4 Position : SV_Position;
 };
 
+struct{} emptyStruct;
+
+struct EmptyStruct
+{
+};
 
 // Nameless2 no space
 struct{nointerpolation float4 Nameless2Position:POSITION;float4 Nameless2Color;}Nameless2;

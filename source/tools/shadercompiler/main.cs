@@ -26,7 +26,7 @@ namespace ShaderCompiler
 
 				Console.WriteLine("\t\t=== Finished compiling Shaders with SUCCESS ===\n\n\n");
 			}
-			catch (Exception e)
+			catch (Exception e) when (!System.Diagnostics.Debugger.IsAttached)
 			{
 				Console.WriteLine("\n\n\n" + e.ToString() + "\n\n\n");
 				Console.WriteLine("\t\t=== Finished compiling Shaders with ERRORS ===\n\n\n");
