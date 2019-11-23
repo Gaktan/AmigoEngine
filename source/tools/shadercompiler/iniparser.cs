@@ -7,12 +7,9 @@ namespace ShaderCompiler
 {
 	class Config
 	{
-		// TODO: Fix this annoying warning
-#pragma warning disable CS0649
 		public static List<string>	ShaderExtensions;
-#pragma warning restore CS0649
 		public static string		ShaderSourcePath;
-		public static string        ShaderHeaderFile;
+		public static string		ShaderHeaderFile;
 		public static string		DatabasePath;
 		public static string		GeneratedFolderPath;
 		public static string		GeneratedHeaderExtension;
