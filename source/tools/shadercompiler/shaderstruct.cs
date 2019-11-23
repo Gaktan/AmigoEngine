@@ -74,6 +74,9 @@ namespace ShaderCompiler
 		public string Name;
 		public List<StructElement> Elements;
 
+		// Captures a single struct and its content between {}. Group1: Name, Group2: Content
+		private static readonly string StructRegex = @"struct\s+(.+)\s*\{([^}]*)\}";
+
 		public Struct(string name)
 		{
 			Name = name;
@@ -171,33 +174,27 @@ namespace ShaderCompiler
 
 		public static List<Struct> GetAllStructsFromShaderFile(ShaderFile shaderFile)
 		{
-			Regex identifierReg = new Regex(@"^\s*([a-z_][a-z0-9_]*)\s*", RegexOptions.IgnoreCase);
-			Regex structReg = new Regex("{.+?}", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+			Regex structReg = new Regex(StructRegex, RegexOptions.Multiline);
+			MatchCollection matches = structReg.Matches(shaderFile.Content);
 
 			List<Struct> structs = new List<Struct>();
 
 			// For each structure in the code
-			foreach (string str in shaderFile.Content.Split(new[] { "struct" }, StringSplitOptions.RemoveEmptyEntries))
+			foreach (Match match in matches)
 			{
-				// TODO: Fix bug when we are processing an empty struct. Need to improve this splitting
+				string name		= match.Groups[1].ToString().Trim();
+				string content	= match.Groups[2].ToString();
 
-				// Need to remove those annoying \r\n
-				string text = Regex.Replace(str, "(\r\n|\n\r|\n|\r)", "\n");
-
-				// Get its name, should be specified right after the "struct Keyword"
-				Match nameMatch = identifierReg.Match(text);
-				string name = nameMatch.Success ? nameMatch.Groups[1].ToString() : "GeneratedStructName";
+				if (name.Length == 0)
+				{
+					// Structs should have a name. If they don't, it's probably a mistake. Make sure we catch this.
+					throw new Exception("Nameless structs not allowed. Culprit:\n" + content);
+				}
 
 				Struct s = new Struct(name);
 
-				// Get everything between brackets {}
-				text = structReg.Match(text).ToString();
-
-				// Remove brackets, newlines, tabs
-				text = new Regex(@"\t|\n|{|}", RegexOptions.IgnoreCase).Replace(text, " ");
-
 				// For each element separated by a semi-colon ;
-				foreach (string e in text.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries))
+				foreach (string e in content.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries))
 				{
 					s.AddStructElement(e.Trim());
 				}

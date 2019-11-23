@@ -49,24 +49,6 @@ struct VertexOutput
 };
 
 
-// Nameless2 no space
-struct{nointerpolation float4 Nameless2Position:POSITION;float4 Nameless2Color;}Nameless2;
-
-// Nameless3 weird spaces
-struct		              {		    
-nointerpolation                              
-				float4
-Nameless3Position
-			:
-		 POSITION
-	   ;
-	  float4 
-		Nameless3Color
-		;
-} Nameless3
-;
-
-
 struct Interpolators
 {
 	nointerpolation float4 Color    : COLOR;
