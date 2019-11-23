@@ -18,10 +18,10 @@ namespace ShaderCompiler
 		// Captures the name of const unsigned char g_ array. Puts the result in Group1
 		private static readonly string ByteArrayNameFromGeneratedHeaderFileRegex = @"const\s*unsigned\s*char\s*g_(.*)\[\]";
 
-		// TODO: This is actually in the Windows SDK folder. Use this instead?
 		private static string GetDirectXCompilerDirectory()
 		{
-			return @"..\..\external\DirectXShaderCompiler\bin\dxc.exe";
+			// Hardcoding path to Windows Kits. No clue if we can detect it or not. Version must match sharpmake project.
+			return @"C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x64\dxc.exe";
 		}
 
 		enum ShaderType
