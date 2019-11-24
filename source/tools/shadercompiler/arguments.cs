@@ -10,6 +10,7 @@ namespace ShaderCompiler
 			Build,
 			Clean,
 			Rebuild,
+			Test,
 			Unknown
 		};
 
@@ -23,7 +24,7 @@ namespace ShaderCompiler
 		}
 		public static bool IsClean()
 		{
-			return Operation == OperationType.Clean || Operation == OperationType.Rebuild;
+			return Operation == OperationType.Clean || Operation == OperationType.Rebuild || Operation == OperationType.Test;
 		}
 
 		private static bool ParseOperation(string operationString)
@@ -46,6 +47,10 @@ namespace ShaderCompiler
 			case "-rebuild":
 				success = true;
 				operationType = OperationType.Rebuild;
+				break;
+			case "-test":
+				success = true;
+				operationType = OperationType.Test;
 				break;
 			}
 
@@ -118,7 +123,7 @@ namespace ShaderCompiler
 		{
 			Console.WriteLine("Usage:");
 			Console.WriteLine("ShaderCompiler.exe <Operation> -c <ConfigFile> -r <RootFolder>\n");
-			PrintUsage("Operation", "Operation to be performed by the ShaderCompiler. Can be \"-Build\" (default), \"-Clean\" or \"-Rebuild\".");
+			PrintUsage("Operation", "Operation to be performed by the ShaderCompiler. Can be \"-Build\" (default), \"-Clean\", \"-Rebuild\", or \"-Test\".");
 			PrintUsage("ConfigFile", "INI file used for configuration. Optional. Relative to the executable location.");
 			PrintUsage("RootFolder", "ShaderCompiler will run from this folder. Default is workspace directory");
 

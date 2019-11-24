@@ -69,5 +69,13 @@ namespace ShaderCompiler
 
 			throw new EnumException("Invalid enum description \"" + description + "\"");
 		}
+
+		public static void ForEach<T>(Action<T> action)
+		{
+			foreach (T t in (T[]) Enum.GetValues(typeof(T)))
+			{
+				action(t);
+			}
+		}
 	}
 }

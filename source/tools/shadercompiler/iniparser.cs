@@ -20,23 +20,44 @@ namespace ShaderCompiler
 
 		public static List<string>  GlobalDefines;
 
+		private static bool Throw(string exception, bool throws)
+		{
+			if (throws)
+			{
+				throw new Exception(exception);
+			}
+
+			return false;
+		}
+
+		// Make sure the current config is valid
+		public static bool Verify(bool throws)
+		{
+			//Config.DebugPrint();
+
+			if (Config.Compiler == Compiler.FXC)
+			{
+				if (Config.ShaderModel > ShaderModel._5_1)
+				{
+					return Throw("FXC doesn't support shader model beyond 5.1", throws);
+				}
+			}
+
+			return true;
+		}
+
 		public static void DebugPrint()
 		{
 			Console.WriteLine();
 
-			Console.Write("ShaderExtensions: ");
-			foreach (string extension in ShaderExtensions)
-			{
-				Console.Write(extension + ", ");
-			}
-			Console.WriteLine();
-
+			Console.WriteLine("ShaderExtensions:			" + String.Join(", ", ShaderExtensions.ToArray()));
 			Console.WriteLine("ShaderSourcePath:			" + ShaderSourcePath);
 			Console.WriteLine("ShaderHFile:					" + ShaderHFile);
 			Console.WriteLine("DatabasePath:				" + DatabasePath);
 			Console.WriteLine("GeneratedFolderPath:			" + GeneratedFolderPath);
 			Console.WriteLine("GeneratedHeaderExtension:	" + GeneratedHeaderExtension);
 			Console.WriteLine("EnableDebugInformation:		" + EnableDebugInformation);
+			Console.WriteLine("Compiler:					" + Compiler);
 			Console.WriteLine("ShaderModel:					" + ShaderModel);
 			Console.WriteLine("GlobalDefines:				" + String.Join(", ", GlobalDefines.ToArray()));
 
@@ -166,28 +187,10 @@ namespace ShaderCompiler
 			return resolvedPath;
 		}
 
-		// Make sure the current config is valid
-		private static void VerifyConfig()
-		{
-			//Config.DebugPrint();
-
-			if (Config.Compiler == Compiler.FXC)
-			{
-				if (Config.ShaderModel > ShaderModel._5_1)
-				{
-					throw new Exception("FXC doesn't support shader model beyond 5.1");
-				}
-			}
-		}
-
-		private void Try()
-		{
-
-		}
-
 		private static void FillConfig()
 		{
 			string[] separators = { "," };
+
 			Config.ShaderExtensions = new List<string>();
 			foreach (string extension in Data["ShaderCompiler"]["ShaderExtensions"].Split(separators, StringSplitOptions.RemoveEmptyEntries))
 			{
@@ -198,9 +201,9 @@ namespace ShaderCompiler
 			Config.ShaderHFile				= ResolvePath(Data["ShaderCompiler"]["ShaderHFile"], true);
 			Config.DatabasePath				= ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
 			Config.GeneratedFolderPath		= ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
-
 			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];
 
+			// EnableDebugInformation
 			bool succes						= Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
 			if (!succes)
 			{
@@ -228,7 +231,7 @@ namespace ShaderCompiler
 				Config.GlobalDefines.Add(define.Trim());
 			}
 
-			VerifyConfig();
+			Config.Verify(throws : true);
 		}
 
 		public static void Parse()

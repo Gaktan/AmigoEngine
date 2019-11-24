@@ -74,6 +74,13 @@ namespace ShaderCompiler
 			string defines			= GenerateDefines(header, Config.ShaderModel);
 			string nologo			= CreateCommand("nologo");
 
+			// Don't output to file in Test. This should just output the shader code in the console
+			if (Arguments.Operation == Arguments.OperationType.Test)
+			{
+				variableName = "";
+				outputFile = "";
+			}
+
 			string args = CombineCommands(inputFile, outputFile, entryPoint, profile, optimization, debugInfo, variableName, defines, nologo);
 
 			string compilerExe = GetCompilerPath();

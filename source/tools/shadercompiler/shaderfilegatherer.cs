@@ -186,6 +186,29 @@ namespace ShaderCompiler
 			WriteDataBase();
 		}
 
+		public static void BuildForTest()
+		{
+			// Go through all the files and create Shaderfiles
+			ProcessFolder(Config.ShaderSourcePath);
+
+			ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
+
+			// Iterate all Compiler/ShaderModel combinations
+			EnumUtils.ForEach<Compiler>((compiler) =>
+			{
+				EnumUtils.ForEach<ShaderModel>((shaderModel) =>
+				{
+					Config.Compiler		= compiler;
+					Config.ShaderModel	= shaderModel;
+
+					if (Config.Verify(throws : false))
+					{
+						fileParser.ProcessAllFiles();
+					}
+				});
+			});
+		}
+
 		public static void Clean()
 		{
 			// The DB is in the generated folder but delete it just in case
@@ -212,6 +235,10 @@ namespace ShaderCompiler
 			if (Arguments.IsBuild())
 			{
 				Build();
+			}
+			else if (Arguments.Operation == Arguments.OperationType.Test)
+			{
+				BuildForTest();
 			}
 		}
 	}
