@@ -169,7 +169,7 @@ namespace ShaderCompiler
 			fileParser.ProcessAllFiles();
 
 			// Generate \shaders\include\shaders.h
-			ShaderCompiler.GenerateShaderHeaderFile();
+			ShaderCompiler.GenerateShaderHFile();
 
 			// TODO: Compile only the files that need recompiling
 			//List<ShaderFile> shaderFiles = GetShaderFilesThatNeedToCompile();
