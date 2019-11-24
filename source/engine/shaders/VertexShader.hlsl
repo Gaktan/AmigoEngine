@@ -6,7 +6,7 @@ struct ModelViewProjection
 };
 
 // TODO: Make this a little nicer.
-#if SHADER_MODEL > 5
+#if SHADER_MODEL > 50
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
 #else
 cbuffer ModelViewProjectionCB : register(b0)
