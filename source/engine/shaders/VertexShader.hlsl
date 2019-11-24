@@ -5,7 +5,15 @@ struct ModelViewProjection
     float4x4 MVP;
 };
 
+// TODO: Make this a little nicer.
+#if SHADER_MODEL > 5
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
+#else
+cbuffer ModelViewProjectionCB : register(b0)
+{
+	ModelViewProjection ModelViewProjectionCB;
+}
+#endif
 
 struct VertexPosColor
 {

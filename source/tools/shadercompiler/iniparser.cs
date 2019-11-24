@@ -15,7 +15,8 @@ namespace ShaderCompiler
 		public static string		GeneratedHeaderExtension;
 		public static bool			EnableDebugInformation;
 
-		public static string		ShaderModel;
+		public static Compiler		Compiler;
+		public static ShaderModel	ShaderModel;
 
 		public static List<string>  GlobalDefines;
 
@@ -165,6 +166,25 @@ namespace ShaderCompiler
 			return resolvedPath;
 		}
 
+		// Make sure the current config is valid
+		private static void VerifyConfig()
+		{
+			//Config.DebugPrint();
+
+			if (Config.Compiler == Compiler.FXC)
+			{
+				if (Config.ShaderModel > ShaderModel._5_1)
+				{
+					throw new Exception("FXC doesn't support shader model beyond 5.1");
+				}
+			}
+		}
+
+		private void Try()
+		{
+
+		}
+
 		private static void FillConfig()
 		{
 			string[] separators = { "," };
@@ -180,11 +200,26 @@ namespace ShaderCompiler
 			Config.GeneratedFolderPath		= ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
 
 			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];
-			Config.ShaderModel				= Data["ShaderCompiler"]["ShaderModel"];
+
 			bool succes						= Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
 			if (!succes)
 			{
 				Config.EnableDebugInformation = false;
+			}
+
+			// Weird setup, this is to make code smaller
+			string currentKey = "";
+			try
+			{
+				currentKey			= "Compiler";
+				Config.Compiler		= EnumUtils.FromDescription<Compiler>(Data["ShaderCompiler"][currentKey]);
+
+				currentKey			= "ShaderModel";
+				Config.ShaderModel	= EnumUtils.FromDescription<ShaderModel>(Data["ShaderCompiler"][currentKey]);
+			}
+			catch (EnumException e)
+			{
+				throw new Exception(e.Message + " when parsing config file. Key=" + currentKey);
 			}
 
 			Config.GlobalDefines = new List<string>();
@@ -193,7 +228,7 @@ namespace ShaderCompiler
 				Config.GlobalDefines.Add(define.Trim());
 			}
 
-			//Config.DebugPrint();
+			VerifyConfig();
 		}
 
 		public static void Parse()

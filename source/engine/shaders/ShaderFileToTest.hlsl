@@ -17,10 +17,7 @@ ShaderCompiler. Name: Test_21, EntryPoint: mainD, Type: PS
 //		 ShaderCompiler.				 Name:		  Test_14		 ,				 EntryPoint				 :				  main,				 Type		 :			PS			 
 //ShaderCompiler.Name:Test_15,EntryPoint:main,Type:PS
 // ShaderCompiler. Name: Test_16, EntryPoint: main, Type: PS
-// ShaderCompiler. Name: Test_17, EntryPoint: main, Type: PiXeL
-// ShaderCompiler. Name: Test_18, EntryPoint: main, Type: fragment
 // ShaderCompiler. Name: Test_19, EntryPoint: mainVS, Type: VS
-// ShaderCompiler. Name: Test_20, EntryPoint: mainVS, Type: vertex
 
 // ShaderCompiler. Name: Test_22, EntryPoint: mainD, Type: PS, Defines: TEST22
 // ShaderCompiler. Name: Test_23, EntryPoint: mainD, Type: PS, Defines: TEST23=1;TEST24=0
@@ -36,6 +33,16 @@ struct ModelViewProjection
 {
     float4x4 MVP;
 };
+
+// Make sure shader model is defined properly
+#if SHADER_MODEL > 50
+ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
+#else
+cbuffer name_doesnt_matter : register(b0)
+{
+	ModelViewProjection ModelViewProjectionCB;
+}
+#endif
 
 struct VertexInput
 {
@@ -85,7 +92,8 @@ VertexOutput mainVS(VertexInput IN)
 {
 	VertexOutput OUT;
 
-	OUT.Position = IN.Position * IN.Color;
+	// This is bullshit code just to make sure it compiles
+	OUT.Position = mul(ModelViewProjectionCB.MVP, IN.Position * IN.Color);
 
 	return OUT;
 }

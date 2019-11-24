@@ -1,6 +1,6 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -9,36 +9,58 @@ namespace ShaderCompiler
 {
 	enum ShaderType
 	{
+		[Description("VS")]
 		VertexShader,
+		[Description("PS")]
 		PixelShader
 	};
 
-	static class ShaderTypeMethods
+	enum ShaderModel
 	{
-		public static ShaderType FromString(string str)
-		{
-			switch (str.ToLower())
-			{
-			case "vs":
-			case "vertex":
-				return ShaderType.VertexShader;
-			case "ps":
-			case "pixel":
-			case "fragment":
-			default:
-				return ShaderType.PixelShader;
-			}
-		}
+		[Description("5_0")]
+		_5_0,
+		[Description("5_1")]
+		_5_1,
+		[Description("6_0")]
+		_6_0,
+		[Description("6_1")]
+		_6_1,
+		[Description("6_2")]
+		_6_2,
+		[Description("6_3")]
+		_6_3,
+		[Description("6_4")]
+		_6_4
+	};
 
-		public static string ToString(ShaderType shaderType)
+	enum Compiler
+	{
+		FXC,
+		DXC
+	};
+
+	static class ShaderModelMethods
+	{
+		public static float ToInt(ShaderModel shaderModel)
 		{
-			switch (shaderType)
+			switch (shaderModel)
 			{
-			case ShaderType.VertexShader:
-				return "vs";
-			case ShaderType.PixelShader:
+			case ShaderModel._5_0:
+				return 50;
+			case ShaderModel._5_1:
+				return 51;
+			case ShaderModel._6_0:
+				return 60;
+			case ShaderModel._6_1:
+				return 61;
+			case ShaderModel._6_2:
+				return 62;
+			case ShaderModel._6_3:
+				return 63;
+			case ShaderModel._6_4:
+				return 64;
 			default:
-				return "ps";
+				throw new Exception("Invalid ShaderModel \"" + shaderModel + "\"");
 			}
 		}
 	};
@@ -98,7 +120,7 @@ namespace ShaderCompiler
 			HeaderInfo header;
 			header.Name			= ReadTagFromHeader("Name", str);
 			header.EntryPoint	= ReadTagFromHeader("EntryPoint", str, "main");
-			header.Type			= ShaderTypeMethods.FromString(ReadTagFromHeader("Type", str, "ps"));
+			header.Type			= EnumUtils.FromDescription<ShaderType>(ReadTagFromHeader("Type", str, "ps"));
 			header.Defines		= new List<string>();
 
 			string defines = ReadTagFromHeader("Defines", str, "");
@@ -117,8 +139,8 @@ namespace ShaderCompiler
 		private static readonly string HeaderRegex = @"//\s*ShaderCompiler\.(.*)";
 		// Captures anything between Begin{0} (Group1) and End{0} (Group3) in Group2
 		private static readonly string FindBeginEndRegex = @"(\/\/\s*Begin{0})([\s\S]*)(\/\/\s*End{0})";
-		// Captures the name of const unsigned char g_ array. Puts the result in Group1
-		private static readonly string ByteArrayNameFromGeneratedHeaderFileRegex = @"const\s*unsigned\s*char\s*g_(.*)\[\]";
+		// Captures the name of "const unsigned char" (or "const BYTE" in the case of FXC) g_ array. Puts the result in Group4
+		private static readonly string ByteArrayNameFromGeneratedHeaderFileRegex = @"const\s*((unsigned\s*char)|(BYTE))\s*g_(.*)\[\]";
 
 		private static List<HeaderInfo> ReadHeader(ShaderFile shaderFile)
 		{
@@ -159,11 +181,24 @@ namespace ShaderCompiler
 		// Processes all headers from a shader file and compiles every permutation
 		public static void Compile(ShaderFile shaderFile)
 		{
-			List<HeaderInfo> headers = ReadHeader(shaderFile);
+			ShaderCompilerDX shaderCompiler;
 
+			switch (Config.Compiler)
+			{
+			case Compiler.FXC:
+				shaderCompiler = new ShaderCompilerFXC();
+				break;
+			case Compiler.DXC:
+				shaderCompiler = new ShaderCompilerDXC();
+				break;
+			default:
+				throw new Exception("Uknown compiler \"" + Config.Compiler + "\"");
+			}
+
+			List<HeaderInfo> headers = ReadHeader(shaderFile);
 			foreach (HeaderInfo header in headers)
 			{
-				ShaderCompilerDX.Compile(header, shaderFile);
+				shaderCompiler.Compile(header, shaderFile);
 			}
 		}
 
@@ -221,7 +256,7 @@ namespace ShaderCompiler
 					throw new Exception("Given header file (" + fileStr + ") does not contain a Byte array. Something is seriously wrong.");
 				}
 
-				string ByteArrayName = byteArrayNameMatch.Groups[1].ToString();
+				string ByteArrayName = byteArrayNameMatch.Groups[4].ToString();
 
 				shaderByteCodeBuilder.AppendLine("\tINIT_SHADER_BYTECODE(" + ByteArrayName + ");");
 				includeBuilder.AppendLine("\t#include \"shaders\\generated\\" + Path.GetFileName(fileStr) + "\"");

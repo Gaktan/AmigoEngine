@@ -3,21 +3,18 @@
 // Code between Begin(X) and End(X) is generated. Do not modify it
 
 // BeginInclude
-	#include "shaders\generated\PixelShader_PixelShader_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_10_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_11_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_12_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_14_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_15_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_16_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_17_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_18_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_19_vs.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_20_vs.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_22_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_23_ps.generated.h"
-	#include "shaders\generated\ShaderFileToTest_Test_24_ps.generated.h"
-	#include "shaders\generated\VertexShader_VertexShader_vs.generated.h"
+	#include "shaders\generated\PixelShader_PixelShader_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_10_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_11_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_12_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_14_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_15_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_16_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_19_VS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_22_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_23_PS.generated.h"
+	#include "shaders\generated\ShaderFileToTest_Test_24_PS.generated.h"
+	#include "shaders\generated\VertexShader_VertexShader_VS.generated.h"
 // EndInclude
 
 #define GET_SHADER_BYTECODE(__name) SHADER_BYTECODE_ ## __name
@@ -31,10 +28,7 @@
 	INIT_SHADER_BYTECODE(Test_14);
 	INIT_SHADER_BYTECODE(Test_15);
 	INIT_SHADER_BYTECODE(Test_16);
-	INIT_SHADER_BYTECODE(Test_17);
-	INIT_SHADER_BYTECODE(Test_18);
 	INIT_SHADER_BYTECODE(Test_19);
-	INIT_SHADER_BYTECODE(Test_20);
 	INIT_SHADER_BYTECODE(Test_22);
 	INIT_SHADER_BYTECODE(Test_23);
 	INIT_SHADER_BYTECODE(Test_24);
