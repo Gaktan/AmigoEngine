@@ -29,8 +29,6 @@ namespace ShaderCompiler
 		_6_2,
 		[Description("6_3")]
 		_6_3,
-		[Description("6_4")]
-		_6_4
 	};
 
 	enum Compiler
@@ -57,8 +55,6 @@ namespace ShaderCompiler
 				return 62;
 			case ShaderModel._6_3:
 				return 63;
-			case ShaderModel._6_4:
-				return 64;
 			default:
 				throw new Exception("Invalid ShaderModel \"" + shaderModel + "\"");
 			}
