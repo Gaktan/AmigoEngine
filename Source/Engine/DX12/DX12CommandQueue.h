@@ -14,7 +14,7 @@ protected:
 	ID3D12CommandQueue*			m_CommandQueue;
 
 	DX12Fence					m_Fence;
-	ui32						m_CurrentIndex;
+	uint32						m_CurrentIndex;
 
 	struct CommandListEntry
 	{
@@ -34,11 +34,11 @@ public:
 
 	// Execute a command list.
 	// Returns the fence value to wait for for this command list.
-	ui64 ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList);
+	uint64 ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList);
 
-	ui64 Signal();
-	bool IsFenceComplete(ui64 fenceValue) const;
-	void WaitForFenceValue(ui64 fenceValue) const;
+	uint64 Signal();
+	bool IsFenceComplete(uint64 fenceValue) const;
+	void WaitForFenceValue(uint64 fenceValue) const;
 	void Flush();
 
 	ID3D12CommandQueue* GetD3D12CommandQueue() const;

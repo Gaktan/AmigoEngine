@@ -34,14 +34,14 @@ public:
 	DX12VertexBuffer(
 		ID3D12Device* inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
-		size_t inBufferSize, const void* inBufferData, ui32 inStride,
+		size_t inBufferSize, const void* inBufferData, uint32 inStride,
 		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	virtual ~DX12VertexBuffer()
 	{
 	}
 
-	void SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList, ui32 inStartSlot, ui32 inNumViews) const;
+	void SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList, uint32 inStartSlot, uint32 inNumViews) const;
 };
 
 class DX12IndexBuffer : public DX12Resource

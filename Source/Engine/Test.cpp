@@ -86,7 +86,7 @@ void ResizeDepthBuffer(DX12Device& inDevice, int inWidth, int inHeight)
 	m_DepthBuffer = new DX12DepthRenderTarget(inDevice.m_Device, inWidth, inHeight);
 }
 
-bool LoadContent(DX12Device& inDevice, ui32 inWidth, ui32 inHeight)
+bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 {
 	{
 		m_ScissorRect	= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
@@ -197,7 +197,7 @@ void UnloadContent(DX12Device& inDevice)
 	m_ContentLoaded = false;
 }
 
-void OnResize(DX12Device& inDevice, ui32 inWidth, ui32 inHeight)
+void OnResize(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 {
 	//if (inWidth != GetClientWidth() || inHeight != GetClientHeight())
 	//if (inWidth != 800 || inHeight != 600)
@@ -212,7 +212,7 @@ void OnResize(DX12Device& inDevice, ui32 inWidth, ui32 inHeight)
 
 float TTT = 0.0f;
 
-void OnUpdate(ui32 inWidth, ui32 inHeight, float inDeltaT)
+void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 {
 	TTT += inDeltaT;
 

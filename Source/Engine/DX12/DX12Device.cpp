@@ -33,7 +33,7 @@ DX12Device::~DX12Device()
 	m_Device->Release();
 }
 
-void DX12Device::Init(HWND inWindowHandle, ui32 inClientWidth, ui32 inClientHeight)
+void DX12Device::Init(HWND inWindowHandle, uint32 inClientWidth, uint32 inClientHeight)
 {
 	EnableDebugLayer();
 	EnableGPUBasedValidation();

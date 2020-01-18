@@ -4,7 +4,7 @@
 #include <exception>
 #include <cassert>
 
-void ThrowIfFailed(ui32 inResult)
+void ThrowIfFailed(uint32 inResult)
 {
 	if (inResult != 0)
 	{

@@ -24,7 +24,7 @@ protected:
 public:
 	DX12Device();
 	~DX12Device();
-	void Init(HWND inWindowHandle, ui32 inClientWidth, ui32 inClientHeight);
+	void Init(HWND inWindowHandle, uint32 inClientWidth, uint32 inClientHeight);
 	void Flush();
 	void Present(ID3D12GraphicsCommandList2* inCommandList);
 

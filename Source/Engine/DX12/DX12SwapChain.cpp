@@ -35,13 +35,13 @@ bool CheckTearingSupport()
 	return allow_tearing;
 }
 
-DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, ui32 inWidth, ui32 inHeight)
+DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight)
 	: m_VSync(true)
 {
 	m_TearingSupported = CheckTearingSupport();
 
 	IDXGIFactory4* dxgi_factory4;
-	ui32 create_factory_flags = 0;
+	uint32 create_factory_flags = 0;
 #if defined(_DEBUG)
 	create_factory_flags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
@@ -105,7 +105,7 @@ DX12SwapChain::~DX12SwapChain()
 	m_SwapChain->Release();
 }
 
-void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, ui32 inClientWidth, ui32 inClientHeight, bool inFirstCall/* = false*/)
+void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall/* = false*/)
 {
 	if (!inFirstCall)
 	{
@@ -129,7 +129,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, ui32 inClientW
 		m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 	}
 
-	i32 rtvDescriptorSize = inDevice.m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	uint32 rtvDescriptorSize = inDevice.m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
@@ -174,8 +174,8 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 
 	m_FrameFenceValues[m_CurrentBackBufferIndex] = inCommandQueue->ExecuteCommandList(inCommandList);
 
-	ui32 sync_interval = m_VSync ? 1 : 0;
-	ui32 present_flags = m_TearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
+	uint32 sync_interval = m_VSync ? 1 : 0;
+	uint32 present_flags = m_TearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
 	ThrowIfFailed(m_SwapChain->Present(sync_interval, present_flags));
 
 	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
@@ -190,7 +190,7 @@ void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, c
 	inCommandList->OMSetRenderTargets(1, &rtv, false, &cpu_descriptor_handle);
 }
 
-ui32 DX12SwapChain::GetCurrentBackBufferIndex()
+uint32 DX12SwapChain::GetCurrentBackBufferIndex()
 {
 	return m_CurrentBackBufferIndex;
 }

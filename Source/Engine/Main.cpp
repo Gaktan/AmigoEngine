@@ -16,8 +16,8 @@ HWND g_hWnd;
 // Window rectangle (used to toggle fullscreen state).
 RECT g_WindowRect;
 
-ui32 g_ClientWidth	= 1280;
-ui32 g_ClientHeight = 720;
+uint32 g_ClientWidth	= 1280;
+uint32 g_ClientHeight	= 720;
 
 // By default, use windowed mode.
 // Can be toggled with the Alt+Enter or F11
@@ -57,7 +57,7 @@ void RegisterWindowClass(HINSTANCE inIstance, const wchar_t* inWindowClassName)
 #endif
 
 HWND CreateWindow(const wchar_t* inWindowClassName, HINSTANCE inInstance,
-				  const wchar_t* inWindowTitle, ui32 inWidth, ui32 inHeight)
+				  const wchar_t* inWindowTitle, uint32 inWidth, uint32 inHeight)
 {
 	int screen_width	= ::GetSystemMetrics(SM_CXSCREEN);
 	int screen_height	= ::GetSystemMetrics(SM_CYSCREEN);
@@ -149,7 +149,7 @@ void SetFullscreen(bool inFullscreen)
 
 void Update()
 {
-	static ui64 frame_counter		= 0;
+	static uint64 frame_counter		= 0;
 	static double elapsed_seconds	= 0.0;
 	static std::chrono::high_resolution_clock clock;
 	static auto t0					= clock.now();

@@ -1,6 +1,6 @@
 #pragma once
 
-constexpr ui32 NUM_BUFFERED_FRAMES = 3;
+constexpr uint32 NUM_BUFFERED_FRAMES = 3;
 
 #include <d3d12.h>
 #include <dxgi1_6.h>
@@ -16,23 +16,23 @@ protected:
 
 	ID3D12Resource*			m_BackBuffers[NUM_BUFFERED_FRAMES];
 	ID3D12DescriptorHeap*	m_RTVDescriptorHeap;
-	ui32					m_RTVDescriptorSize;
+	uint32					m_RTVDescriptorSize;
 
-	ui32					m_CurrentBackBufferIndex;
-	ui64					m_FrameFenceValues[NUM_BUFFERED_FRAMES] = {};
+	uint32					m_CurrentBackBufferIndex;
+	uint64					m_FrameFenceValues[NUM_BUFFERED_FRAMES] = {};
 
 	bool					m_VSync;
 	bool					m_TearingSupported;
 
 public:
-	DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, ui32 inWidth, ui32 inHeight);
+	DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight);
 	virtual ~DX12SwapChain();
 
-	void UpdateRenderTargetViews(DX12Device& inDevice, ui32 inClientWidth, ui32 inClientHeight, bool inFirstCall = false);
+	void UpdateRenderTargetViews(DX12Device& inDevice, uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall = false);
 	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList);
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 
 	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer);
 
-	ui32 GetCurrentBackBufferIndex();
+	uint32 GetCurrentBackBufferIndex();
 };

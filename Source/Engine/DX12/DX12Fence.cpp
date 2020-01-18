@@ -21,15 +21,15 @@ DX12Fence::~DX12Fence()
 	::CloseHandle(m_FenceEvent);
 }
 
-ui64 DX12Fence::Signal(ID3D12CommandQueue* inCommandQueue)
+uint64 DX12Fence::Signal(ID3D12CommandQueue* inCommandQueue)
 {
-	ui64 fence_value_for_signal = ++m_FenceValue;
+	uint64 fence_value_for_signal = ++m_FenceValue;
 	ThrowIfFailed(inCommandQueue->Signal(m_Fence, fence_value_for_signal));
 
 	return fence_value_for_signal;
 }
 
-void DX12Fence::WaitForFenceValue(ui64 inFenceValue, std::chrono::milliseconds inDuration/* = std::chrono::milliseconds::max()*/) const
+void DX12Fence::WaitForFenceValue(uint64 inFenceValue, std::chrono::milliseconds inDuration/* = std::chrono::milliseconds::max()*/) const
 {
 	if (m_Fence->GetCompletedValue() < inFenceValue)
 	{
@@ -38,7 +38,7 @@ void DX12Fence::WaitForFenceValue(ui64 inFenceValue, std::chrono::milliseconds i
 	}
 }
 
-bool DX12Fence::IsFenceComplete(ui64 inFenceValue) const
+bool DX12Fence::IsFenceComplete(uint64 inFenceValue) const
 {
 	return m_Fence->GetCompletedValue() >= inFenceValue;
 }

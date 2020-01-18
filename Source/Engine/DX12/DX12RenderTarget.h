@@ -10,7 +10,7 @@ public:
 	DX12RenderTarget(
 		ID3D12Device* device,
 		ID3D12GraphicsCommandList2* commandList,
-		ui32 width, ui32 height, DXGI_FORMAT format,
+		uint32 width, uint32 height, DXGI_FORMAT format,
 		D3D12_RESOURCE_FLAGS flags = D3D12_RESOURCE_FLAG_NONE);
 
 	DX12RenderTarget();
@@ -29,7 +29,7 @@ protected:
 public:
 	DX12DepthRenderTarget(
 		ID3D12Device* inDevice,
-		ui32 inWidth, ui32 inHeight, float inClearValue = 1.0f, DXGI_FORMAT inDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
+		uint32 inWidth, uint32 inHeight, float inClearValue = 1.0f, DXGI_FORMAT inDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 
 	virtual ~DX12DepthRenderTarget();
 

@@ -38,12 +38,12 @@ uint64_t DX12CommandQueue::Signal()
 	return m_Fence.Signal(m_CommandQueue);
 }
 
-bool DX12CommandQueue::IsFenceComplete(ui64 inFenceValue) const
+bool DX12CommandQueue::IsFenceComplete(uint64 inFenceValue) const
 {
 	return m_Fence.IsFenceComplete(inFenceValue);
 }
 
-void DX12CommandQueue::WaitForFenceValue(ui64 inFenceValue) const
+void DX12CommandQueue::WaitForFenceValue(uint64 inFenceValue) const
 {
 	m_Fence.WaitForFenceValue(inFenceValue);
 }
@@ -108,7 +108,7 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device* inDevic
 
 // Execute a command list.
 // Returns the fence value to wait for for this command list.
-ui64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList)
+uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList)
 {
 	inCommandList->Close();
 
