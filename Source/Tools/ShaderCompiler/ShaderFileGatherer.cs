@@ -171,6 +171,9 @@ namespace ShaderCompiler
 			// Generate \Shaders\include\Shaders.h
 			ShaderCompiler.GenerateShaderHFile();
 
+			// Generate \Shaders\include\ConstantBuffers.h
+			ShaderCompiler.GenerateConstantBufferHFile(fileParser.Structs);
+
 			// TODO: Compile only the files that need recompiling
 			//List<ShaderFile> shaderFiles = GetShaderFilesThatNeedToCompile();
 			//foreach(ShaderFile f in shaderFiles)

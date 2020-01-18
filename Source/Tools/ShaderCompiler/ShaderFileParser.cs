@@ -7,7 +7,7 @@ namespace ShaderCompiler
 	class ShaderFileParser
 	{
 		protected List<ShaderFile>	ShaderFiles;
-		protected List<Struct>		Structs;
+		public List<Struct>			Structs;
 
 
 		public ShaderFileParser(List<ShaderFile> shaderFiles)
@@ -40,14 +40,13 @@ namespace ShaderCompiler
 				throw new Exception("Multiple structs have the same Name. Probably shouldn't allow it.");
 			}
 
-			DebugPrint();
+			//DebugPrint();
 		}
 
 		void DebugPrint()
 		{
 			foreach(Struct s in Structs)
 			{
-				Console.WriteLine("\n");
 				s.DebugPrint();
 			}
 		}

@@ -10,6 +10,7 @@ namespace ShaderCompiler
 		public static List<string>	ShaderExtensions;
 		public static string		ShaderSourcePath;
 		public static string		ShaderHFile;
+		public static string		ConstantBufferHFile;
 		public static string		DatabasePath;
 		public static string		GeneratedFolderPath;
 		public static string		GeneratedHeaderExtension;
@@ -53,6 +54,7 @@ namespace ShaderCompiler
 			Console.WriteLine("ShaderExtensions:			" + String.Join(", ", ShaderExtensions.ToArray()));
 			Console.WriteLine("ShaderSourcePath:			" + ShaderSourcePath);
 			Console.WriteLine("ShaderHFile:					" + ShaderHFile);
+			Console.WriteLine("ConstantBufferHFile:			" + ConstantBufferHFile);
 			Console.WriteLine("DatabasePath:				" + DatabasePath);
 			Console.WriteLine("GeneratedFolderPath:			" + GeneratedFolderPath);
 			Console.WriteLine("GeneratedHeaderExtension:	" + GeneratedHeaderExtension);
@@ -199,6 +201,7 @@ namespace ShaderCompiler
 
 			Config.ShaderSourcePath			= ResolvePath(Data["ShaderCompiler"]["ShaderSourcePath"], true);
 			Config.ShaderHFile				= ResolvePath(Data["ShaderCompiler"]["ShaderHFile"], true);
+			Config.ConstantBufferHFile		= ResolvePath(Data["ShaderCompiler"]["ConstantBufferHFile"], true);
 			Config.DatabasePath				= ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
 			Config.GeneratedFolderPath		= ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
 			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];

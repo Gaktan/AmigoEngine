@@ -34,6 +34,13 @@ struct ModelViewProjection
     float4x4 MVP;
 };
 
+#define SEVEN 7
+
+struct MultipleArrays
+{
+	int3 i3[1][2][3][4][6][7];
+};
+
 // Make sure shader model is defined properly
 #if SHADER_MODEL > 50
 ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);

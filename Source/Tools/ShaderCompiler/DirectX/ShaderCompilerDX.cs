@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace ShaderCompiler
 {
@@ -84,11 +85,12 @@ namespace ShaderCompiler
 			string args = CombineCommands(inputFile, outputFile, entryPoint, profile, optimization, debugInfo, variableName, defines, nologo);
 
 			string compilerExe = GetCompilerPath();
-			System.Diagnostics.Process process = System.Diagnostics.Process.Start(compilerExe);
+			Process process = Process.Start(compilerExe);
 			process.StartInfo.RedirectStandardOutput	= true;
 			process.StartInfo.RedirectStandardError		= true;
 			process.StartInfo.UseShellExecute			= false;
 			process.StartInfo.CreateNoWindow			= true;
+			process.StartInfo.WindowStyle				= ProcessWindowStyle.Hidden;
 			process.StartInfo.Arguments					= args;
 
 			process.Start();

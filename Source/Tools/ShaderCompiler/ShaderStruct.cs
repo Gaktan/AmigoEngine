@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using System.Text.RegularExpressions;
 
 namespace ShaderCompiler
@@ -7,64 +8,99 @@ namespace ShaderCompiler
 	class StructElement
 	{
 		public string Interpolation;
-		public string Type;
-		public string Name;
+		public string BaseTypeName;
+		public string VariableName;
 		public string Semantic;
-		public string Array;
+		public int NumCol = 1;
+		public int NumRows = 1;
+		public string ArrayString;
+
+		private static readonly string[] AllScalarTypes =
+		{
+			"bool",
+			"int",
+			"uint",
+			"dword",
+			"half",
+			"float",
+			"double",
+		};
+
+		private static readonly string[] AllInterpolations =
+		{
+			"linear",
+			"centroid",
+			"nointerpolation",
+			"noperspective",
+			"sample",
+		};
 
 		private static readonly string VariableNameRegex = @"([a-z_][a-z0-9_]*)";
-		private static readonly string InterpolationRegex = "(linear|centroid|nointerpolation|noperspective|sample)";
+		private static readonly string InterpolationRegex = "(" + string.Join("|", AllInterpolations) + ")";
 		private static readonly string TypeNameRegex =
 			@"\s*" +										//	Match spaces, if any
 			VariableNameRegex +								// GROUP 1: Full type
 			@"\s+" +										//	There should be at least one space character between type and name
 			VariableNameRegex +								// GROUP 2: Variable name
 			@"\s*" +										//	There may or may not be any space before square brackets []
-			@"(\[([0-9]+|" + VariableNameRegex + @")\])?"	// GROUP 3: [Array], Group 4: (Number + Text), Group 5 (Text only). Only use GROUP 4
+			@"((\[[\d]*\])*)?"								// Group 3: All arrays (ArrayString), GROUP 4: A single array. Only use GROUP 3
 		;
 		private static readonly string SemanticRegex = ".*:[ \t]*([a-z_][a-z0-9_]*);?";
 
+		// Decompose TypeName into Group 1: (BaseTypeName), Group 2: (NumCol), Group 4: (NumRows)
+		private static readonly string TypeNameDecompose = "(" + string.Join("|", AllScalarTypes) + @")([1-4]|)(x([1-4])|)$";
+
 		public StructElement(string shaderCode)
 		{
+			int current_pos = 0;
 			// Find interpolator, if any
 			Regex interpolReg = new Regex(InterpolationRegex, RegexOptions.None);
-			Interpolation = interpolReg.Match(shaderCode).ToString();
+			Interpolation = interpolReg.Match(shaderCode, current_pos).ToString();
 			if (Interpolation.Length > 0)
 			{
-				shaderCode = shaderCode.Replace(Interpolation, "");
-			}
-			else
-			{
-				Interpolation = "";
+				current_pos += Interpolation.Length;
 			}
 
-			// Find Type, Name, Array (if any)
+			// Find Type, Name, ArrayCount (if any)
 			Regex typeReg = new Regex(TypeNameRegex, RegexOptions.IgnoreCase);
-			Match typeMatch = typeReg.Match(shaderCode);
+			Match typeMatch = typeReg.Match(shaderCode, current_pos);
 			if (typeMatch.Success)
 			{
-				Type = typeMatch.Groups[1].ToString();
-				Name = typeMatch.Groups[2].ToString();
-				Array = typeMatch.Groups[4].ToString();
+				BaseTypeName = typeMatch.Groups[1].ToString();
+				VariableName = typeMatch.Groups[2].ToString();
+				ArrayString = typeMatch.Groups[3].ToString();
 
-				shaderCode = shaderCode.Replace(Type, "");
+				current_pos += typeMatch.Length;
 			}
 			else
 			{
 				throw new Exception("Missing or incorrect type argument in structure.");
 			}
 
+			// Find NumCol and NumRows (if any)
+			Regex decomposeReg = new Regex(TypeNameDecompose, RegexOptions.None);
+			Match decomposeMatch = decomposeReg.Match(BaseTypeName);
+			if (decomposeMatch.Success)
+			{
+				// Decompose TypeName into Group 1: (BaseTypeName), Group 2: (NumCol), Group 4: (NumRows)
+				BaseTypeName = decomposeMatch.Groups[1].ToString();
+				if(!int.TryParse(decomposeMatch.Groups[2].ToString(), out NumCol))
+				{
+					NumCol = 1;
+				}
+				if (!int.TryParse(decomposeMatch.Groups[4].ToString(), out NumRows))
+				{
+					NumRows = 1;
+				}
+			}
+
 			// Find Semantic, if any
 			Regex semanticReg = new Regex(SemanticRegex, RegexOptions.IgnoreCase);
-			Match semanticMatch = semanticReg.Match(shaderCode);
+			Match semanticMatch = semanticReg.Match(shaderCode, current_pos);
 			if (semanticMatch.Success)
 			{
 				// Get the result from Group1 directly
 				Semantic = semanticMatch.Groups[1].ToString();
-			}
-			else
-			{
-				Semantic = "";
 			}
 		}
 	}
@@ -73,6 +109,7 @@ namespace ShaderCompiler
 	{
 		public string Name;
 		public List<StructElement> Elements;
+		public bool IsConstantBuffer;
 
 		// Captures a single struct and its content between {}. Group1: Name, Group2: Content
 		private static readonly string StructRegex = @"struct\s+(.+)\s*\{([^}]*)\}";
@@ -89,6 +126,21 @@ namespace ShaderCompiler
 			{
 				Elements.Add(new StructElement(shaderCode));
 			}
+		}
+
+		public void DetectStructType()
+		{
+			foreach (StructElement se in Elements)
+			{
+				// At least one semantic or interpolation means we are definitely sure this is not a constant buffer
+				if (se.Semantic != null || se.Interpolation != null)
+				{
+					IsConstantBuffer = false;
+					return;
+				}
+			}
+
+			IsConstantBuffer = true;
 		}
 
 		public override bool Equals(object obj)
@@ -108,29 +160,35 @@ namespace ShaderCompiler
 
 		public void DebugPrint()
 		{
-			Console.Write(PrintAsConstantBuffer());
-			Console.WriteLine(PrintAsVertexLayout());
+			if (IsConstantBuffer)
+			{
+				Console.Write(PrintAsConstantBuffer());
+			}
+			else
+			{
+				Console.Write(PrintAsVertexLayout());
+			}
 		}
 
 		public string PrintAsConstantBuffer()
 		{
-			string ret = "struct " + Name + "\n{\n";
+			StringBuilder ret = new StringBuilder("struct " + Name + Environment.NewLine + "{");
 
 			foreach (StructElement se in Elements)
 			{
-				string line = "\t" + se.Type + " " + se.Name + (se.Array != "" ? "[" + se.Array + "]" : "") + ";";
-				// One tab is 4 spaces/characters. One line should be 32 char max
-				int numTabs = (32 - line.Length) / 4;
-				numTabs = Math.Max(numTabs, 1);
-				string tabs = new string('\t', numTabs);
+				// If we have a semantic then, this is not an actual Constant Buffer
+				if (se.Semantic != null)
+				{
+					return null;
+				}
+				string engine_type = EngineConversionDX.StructElementToEngineType(se);
 
-				string comment = @"\\ " + (se.Semantic != "" ? "(:" + se.Semantic + ")" : "") + " TODO: Change this " + se.Type + " to the equivalent CPP type.\n";
-
-				ret += line + tabs + comment;
+				ret.AppendLine();
+				ret.Append("\t" + engine_type);
 			}
 
-			ret += "};\n";
-			return ret;
+			ret.AppendLine(Environment.NewLine + "};");
+			return ret.ToString();
 		}
 
 		public string PrintAsVertexLayout()
@@ -197,7 +255,11 @@ namespace ShaderCompiler
 				foreach (string e in content.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries))
 				{
 					s.AddStructElement(e.Trim());
+
 				}
+
+				// Flag if struct is a constant buffer or not
+				s.DetectStructType();
 
 				structs.Add(s);
 			}

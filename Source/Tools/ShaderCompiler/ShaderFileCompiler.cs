@@ -198,34 +198,32 @@ namespace ShaderCompiler
 			}
 		}
 
-		// Will replace anything bewtween Begin{Pattern} and End{Pattern} with Replacement string
-		static void ReplaceHFileContent(string Pattern, string Replacement)
+		// Will replace anything in the input file bewtween Begin{inPattern} and End{inPattern} with inReplacement string
+		static void ReplaceFileContent(string inFile, string inPattern, string inReplacement)
 		{
-			string shaderHFile = Config.ShaderHFile;
-
-			if (!File.Exists(shaderHFile))
+			if (!File.Exists(inFile))
 			{
-				throw new Exception("File (" + shaderHFile + ") does not exist.");
+				throw new Exception("File (" + inFile + ") does not exist.");
 			}
 
-			string headerFileContent = File.ReadAllText(shaderHFile);
+			string file_content = File.ReadAllText(inFile);
 
-			string regexPattern = string.Format(FindBeginEndRegex, Pattern);
+			string regexPattern = string.Format(FindBeginEndRegex, inPattern);
 
 			Regex regex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
-			Match regMatch = regex.Match(headerFileContent);
+			Match regMatch = regex.Match(file_content);
 			if (!regMatch.Success)
 			{
-				throw new Exception("BeginShaderByteCode or EndShaderByteCode were not found in file (" + shaderHFile + ")");
+				throw new Exception("BeginShaderByteCode or EndShaderByteCode were not found in file (" + inFile + ")");
 			}
 
-			string newFileContent = regex.Replace(headerFileContent, "$1" + Environment.NewLine + Replacement + "$3");
+			string hew_file_content = regex.Replace(file_content, "$1" + Environment.NewLine + inReplacement + "$3");
 
 			// Before overwritting the file, check if the content is actually different.
 			// This will prevent recompiling if the content was not actually changed.
-			if (headerFileContent != newFileContent)
+			if (file_content != hew_file_content)
 			{
-				File.WriteAllText(shaderHFile, newFileContent);
+				File.WriteAllText(inFile, hew_file_content);
 			}
 		}
 
@@ -258,8 +256,23 @@ namespace ShaderCompiler
 				includeBuilder.AppendLine("\t#include \"Shaders\\generated\\" + Path.GetFileName(fileStr) + "\"");
 			}
 
-			ReplaceHFileContent("Include", includeBuilder.ToString());
-			ReplaceHFileContent("ShaderByteCode", shaderByteCodeBuilder.ToString());
+			ReplaceFileContent(Config.ShaderHFile, "Include", includeBuilder.ToString());
+			ReplaceFileContent(Config.ShaderHFile, "ShaderByteCode", shaderByteCodeBuilder.ToString());
+		}
+
+		public static void GenerateConstantBufferHFile(List<Struct> inStructs)
+		{
+			StringBuilder constantBuffersBuilder = new StringBuilder();
+			foreach (Struct sr in inStructs)
+			{
+				string constant_buffer = sr.PrintAsConstantBuffer();
+				if (constant_buffer != null)
+					constantBuffersBuilder.AppendLine(constant_buffer);
+			}
+
+			string constant_buffer_string = constantBuffersBuilder.ToString().TrimEnd() + Environment.NewLine;
+
+			ReplaceFileContent(Config.ConstantBufferHFile, "ConstantBuffer", constant_buffer_string);
 		}
 	}
 }
