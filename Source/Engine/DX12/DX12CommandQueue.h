@@ -1,9 +1,9 @@
 #pragma once
 
 #include "DX12/DX12Device.h"
-#include "DX12/dx12fence.h"
+#include "DX12/DX12Fence.h"
 // For NUM_BUFFERED_FRAMES
-#include "DX12/dx12swapchain.h"
+#include "DX12/DX12SwapChain.h"
 
 #include <queue>
 

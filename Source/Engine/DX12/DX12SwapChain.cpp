@@ -1,5 +1,5 @@
 #include "Engine.h"
-#include "dx12swapchain.h"
+#include "DX12SwapChain.h"
 
 #include "DX12Device.h"
 #include "D3dx12.h"

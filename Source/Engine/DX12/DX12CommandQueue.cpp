@@ -2,7 +2,7 @@
 #include "DX12CommandQueue.h"
 
 #include "DX12/DX12Device.h"
-#include "DX12/dx12swapchain.h"
+#include "DX12/DX12SwapChain.h"
 
 DX12CommandQueue::DX12CommandQueue(DX12Device* inDevice, D3D12_COMMAND_LIST_TYPE inType)
 	: m_CommandListType(inType)

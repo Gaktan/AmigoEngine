@@ -6,7 +6,7 @@
 #include <WinDef.h>
 
 #include "DX12/DX12Device.h"
-#include "DX12/dx12swapchain.h"
+#include "DX12/DX12SwapChain.h"
 
 #include <algorithm>
 #include <chrono>

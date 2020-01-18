@@ -1,5 +1,5 @@
 #pragma once
 
-#include "datatypes.h"
-#include "math/math.h"
+#include "DataTypes.h"
+#include "Math/Math.h"
 #include "Utils/Exceptions.h"
