@@ -1,4 +1,4 @@
 [submodule "external/Sharpmake"]
-	path = external/Sharpmake
+	path = External/Sharpmake
 	url = https://github.com/ubisoftinc/Sharpmake
 	ignore = dirty

@@ -5,8 +5,8 @@ git submodule update
 git submodule update --recursive --remote
 
 rem Compile SharpMake and deploy it
-cd external\Sharpmake\
+cd External\Sharpmake\
 call bootstrap-sharpmake.bat
 call CompileSharpmake.bat Sharpmake.Application/Sharpmake.Application.csproj Release AnyCPU
-py deploy_binaries.py --config Release --target-dir=..\..\tools\Sharpmake\
+py deploy_binaries.py --config Release --target-dir=..\..\Tools\Sharpmake\
 cd ..\..\
