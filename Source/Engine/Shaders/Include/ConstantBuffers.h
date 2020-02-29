@@ -9,6 +9,8 @@ using Vector3f = float[3];
 
 // Code between Begin(X) and End(X) is generated. Do not modify it
 
+namespace ConstantBuffer
+{
 // BeginConstantBuffer
 struct X1234
 {
@@ -18,7 +20,7 @@ struct X1234
 	Vector4f x4;
 };
 
-struct ModelViewProjection
+struct ModelViewProjection2
 {
 	float MVP[4][4];
 };
@@ -36,5 +38,7 @@ struct InsideStruct
 struct ModelViewProjection
 {
 	float MVP[4][4];
+	Vector4f ColorMul;
 };
 // EndConstantBuffer
+}

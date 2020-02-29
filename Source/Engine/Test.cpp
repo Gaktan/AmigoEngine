@@ -14,6 +14,7 @@
 #include "DX12/DX12RenderTarget.h"
 #include "DX12/DX12CommandQueue.h"
 
+#include "Shaders/Include/ConstantBuffers.h"
 #include "Shaders/Include/Shaders.h"
 
 
@@ -21,6 +22,8 @@
 DX12VertexBuffer* m_VertexBuffer;
 // Index buffer for the cube.
 DX12IndexBuffer* m_IndexBuffer;
+// Constant Buffer for the vertex shader
+DX12ConstantBuffer* m_ConstantBuffer;
 
 // Depth buffer.
 DX12DepthRenderTarget* m_DepthBuffer = nullptr;
@@ -36,9 +39,10 @@ D3D12_RECT m_ScissorRect;
 
 float m_FOV;
 
-Matrix4f m_ModelMatrix;
-Matrix4f m_ViewMatrix;
-Matrix4f m_ProjectionMatrix;
+Matrix4f	m_ModelMatrix;
+Matrix4f	m_ViewMatrix;
+Matrix4f	m_ProjectionMatrix;
+float		m_ColorMul;
 
 bool m_ContentLoaded;
 
@@ -106,9 +110,12 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	// Upload vertex buffer data.
+	// Create vertex/index buffer data.
 	m_VertexBuffer	= new DX12VertexBuffer(dx12_device, command_list, _countof(g_Vertices) * sizeof(VertexPosColor), g_Vertices, sizeof(VertexPosColor));
 	m_IndexBuffer	= new DX12IndexBuffer(dx12_device, command_list, _countof(g_Indicies) * sizeof(WORD), g_Indicies);
+
+	// Create Constant Buffer View
+	m_ConstantBuffer = new DX12ConstantBuffer(dx12_device, command_list, sizeof(ConstantBuffer::ModelViewProjection), nullptr);
 
 	// Create the depth buffer.
 	ResizeDepthBuffer(inDevice, inWidth, inHeight);
@@ -129,9 +136,9 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-	// A single 32-bit constant root parameter that is used by the vertex shader.
+	// A single Constant Buffer View root parameter that is used by the vertex shader.
 	CD3DX12_ROOT_PARAMETER1 root_parameters[1];
-	root_parameters[0].InitAsConstants(sizeof(Matrix4f) / 4, 0, 0, D3D12_SHADER_VISIBILITY_VERTEX);
+	root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_desc;
 	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 0, nullptr, rootSignatureFlags);
@@ -233,6 +240,8 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	// Update the projection matrix.
 	float aspect_ratio = inWidth / static_cast<float>(inHeight);
 	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
+
+	m_ColorMul = Math::Abs(Math::Sin(TTT*0.001));
 }
 
 void OnRender(DX12Device& inDevice)
@@ -262,7 +271,12 @@ void OnRender(DX12Device& inDevice)
 	Matrix4f mvp_matrix = m_ModelMatrix.Mul(m_ViewMatrix);
 	mvp_matrix			= mvp_matrix.Mul(m_ProjectionMatrix);
 
-	command_list->SetGraphicsRoot32BitConstants(0, sizeof(Matrix4f) / 4, &mvp_matrix, 0);
+	// Upload Constant Buffer to GPU
+	ConstantBuffer::ModelViewProjection mvp;
+	memcpy(&mvp.MVP[0], &mvp_matrix, sizeof(ConstantBuffer::ModelViewProjection));
+	mvp.ColorMul = Vector4f(m_ColorMul);
+	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
+	m_ConstantBuffer->SetConstantBuffer(command_list, 0);
 
 	command_list->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
 

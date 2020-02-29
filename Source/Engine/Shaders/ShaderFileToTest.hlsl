@@ -29,7 +29,7 @@ struct X1234
     float1 x1; float2 x2;  float3 x3;   float4 x4;
 };
 
-struct ModelViewProjection
+struct ModelViewProjection2
 {
     float4x4 MVP;
 };
@@ -43,11 +43,11 @@ struct MultipleArrays
 
 // Make sure shader model is defined properly
 #if SHADER_MODEL > 50
-ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
+ConstantBuffer<ModelViewProjection2> ModelViewProjectionCB : register(b0);
 #else
 cbuffer name_doesnt_matter : register(b0)
 {
-	ModelViewProjection ModelViewProjectionCB;
+	ModelViewProjection2 ModelViewProjectionCB;
 }
 #endif
 
