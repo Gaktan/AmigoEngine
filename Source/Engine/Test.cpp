@@ -196,6 +196,7 @@ void UnloadContent(DX12Device& inDevice)
 
 	delete m_VertexBuffer;
 	delete m_IndexBuffer;
+	delete m_ConstantBuffer;
 
 	delete m_DepthBuffer;
 	m_RootSignature->Release();
