@@ -88,8 +88,7 @@ namespace ShaderCompiler
 		public static void ParseLine(string line)
 		{
 			// Is this line a comment?
-			Regex commentReg = new Regex(CommentRegex);
-			Match commentMatch = commentReg.Match(line);
+			Match commentMatch = Regex.Match(line, CommentRegex);
 			if (commentMatch.Success)
 			{
 				// Ignore it
@@ -97,8 +96,7 @@ namespace ShaderCompiler
 			}
 
 			// Is this line empty?
-			Regex emptyLineReg = new Regex(EmptyLineRegex);
-			Match emptyLineMatch = emptyLineReg.Match(line);
+			Match emptyLineMatch = Regex.Match(line, EmptyLineRegex);
 			if (emptyLineMatch.Success)
 			{
 				// Ignore it
@@ -106,8 +104,7 @@ namespace ShaderCompiler
 			}
 
 			// Is this line a section?
-			Regex sectionReg = new Regex(SectionRegex);
-			Match sectionMatch = sectionReg.Match(line);
+			Match sectionMatch = Regex.Match(line, SectionRegex);
 			if (sectionMatch.Success)
 			{
 				// Add the section to the data
@@ -122,8 +119,7 @@ namespace ShaderCompiler
 			}
 
 			// Is this line a key?
-			Regex keyReg = new Regex(KeyRegex);
-			Match keyMatch = keyReg.Match(line);
+			Match keyMatch = Regex.Match(line, KeyRegex);
 			if (keyMatch.Success)
 			{
 				// Add the key and its value to the current section

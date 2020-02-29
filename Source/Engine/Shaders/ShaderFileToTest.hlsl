@@ -1,4 +1,5 @@
-// I know this file looks disgusting, this is just for testing purposes.
+// I know this file looks disgusting, this is just for testing purposes. 
+// And to make sure we handle white spaces properly
 
 // Make sure the following fails (No shader name)
 /*
@@ -38,7 +39,8 @@ struct ModelViewProjection2
 
 struct MultipleArrays
 {
-	int3 i3[1][2][3][4][6][7];
+	int3 i3[1][2] [3]	[4 ] [ 6 ]	[SEVEN];
+	float4x4 x4		[1] [2* SEVEN-1];
 };
 
 // Make sure shader model is defined properly
@@ -82,7 +84,8 @@ struct Array
 	float4 _m[4];
 	X1234 p   [12];
 	nointerpolation float4 Color	 
-								[DEFINED]    : COLOR;
+								[DEFINED]    : COLOR			
+		;
 };
 
 // Make sure PIXEL_SHADER is properly defined

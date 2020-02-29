@@ -7,6 +7,10 @@
 using Vector2f = float[2];
 using Vector3f = float[3];
 
+// TODO: Defines are tricky because we souldn't allow to generate the same structure with different define values
+// This case is fine because it's a constant, but think of a define from a Shader Header.
+#define SEVEN 7
+
 // Code between Begin(X) and End(X) is generated. Do not modify it
 
 namespace ConstantBuffer
@@ -27,7 +31,8 @@ struct ModelViewProjection2
 
 struct MultipleArrays
 {
-	int32 i3[1][2][3][4][6][7][3];
+	int32 i3[1][2] [3]	[4 ] [ 6 ]	[SEVEN][3];
+	float x4[1] [2* SEVEN-1][4][4];
 };
 
 struct InsideStruct

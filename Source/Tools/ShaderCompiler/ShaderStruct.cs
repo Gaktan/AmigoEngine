@@ -43,11 +43,12 @@ namespace ShaderCompiler
 			@"\s+" +										//	There should be at least one space character between type and name
 			VariableNameRegex +								// GROUP 2: Variable name
 			@"\s*" +										//	There may or may not be any space before square brackets []
-			@"((\[[\d]*\])*)?"								// Group 3: All arrays (ArrayString), GROUP 4: A single array. Only use GROUP 3
+			@"((\[.*\])*)?"									// Group 3: All arrays (ArrayString), GROUP 4: A single array. Only use GROUP 3
 		;
-		private static readonly string SemanticRegex = ".*:[ \t]*([a-z_][a-z0-9_]*);?";
+		private static readonly string SemanticRegex = @".*:\s*([a-z_][a-z0-9_]*);?";
 
 		// Decompose TypeName into Group 1: (BaseTypeName), Group 2: (NumCol), Group 4: (NumRows)
+		// e.g. "float3x2" -> (float)(3)(2); "float" -> (float)()(); "float4" -> (float)(4)()
 		private static readonly string TypeNameDecompose = "(" + string.Join("|", AllScalarTypes) + @")([1-4]|)(x([1-4])|)$";
 
 		public StructElement(string shaderCode)
@@ -78,8 +79,7 @@ namespace ShaderCompiler
 			}
 
 			// Find NumCol and NumRows (if any)
-			Regex decomposeReg = new Regex(TypeNameDecompose, RegexOptions.None);
-			Match decomposeMatch = decomposeReg.Match(BaseTypeName);
+			Match decomposeMatch = Regex.Match(BaseTypeName, TypeNameDecompose, RegexOptions.None);
 			if (decomposeMatch.Success)
 			{
 				// Decompose TypeName into Group 1: (BaseTypeName), Group 2: (NumCol), Group 4: (NumRows)
@@ -232,8 +232,7 @@ namespace ShaderCompiler
 
 		public static List<Struct> GetAllStructsFromShaderFile(ShaderFile shaderFile)
 		{
-			Regex structReg = new Regex(StructRegex, RegexOptions.Multiline);
-			MatchCollection matches = structReg.Matches(shaderFile.Content);
+			MatchCollection matches = Regex.Matches(shaderFile.Content, StructRegex, RegexOptions.Multiline);
 
 			List<Struct> structs = new List<Struct>();
 

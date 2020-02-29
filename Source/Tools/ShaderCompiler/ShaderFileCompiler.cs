@@ -94,7 +94,6 @@ namespace ShaderCompiler
 			// ShaderCompiler. (Name): {ShaderFileToTest_01}, (EntryPoint): {main}, (Type): {PS}, (Defines): DEFINE1;DEFINE2=1;
 
 			string tagRegex = tag + HeaderTagRegex;
-
 			Regex tagReg = new Regex(tagRegex, RegexOptions.IgnoreCase);
 			Match tagMatch = tagReg.Match(str);
 			if (tagMatch.Success)
@@ -152,8 +151,7 @@ namespace ShaderCompiler
 				int lineNum = 1;
 				while ((line = reader.ReadLine()) != null)
 				{
-					Regex headerReg = new Regex(HeaderRegex, RegexOptions.IgnoreCase);
-					Match headerMatch = headerReg.Match(line);
+					Match headerMatch = Regex.Match(line, HeaderRegex, RegexOptions.IgnoreCase);
 					if (headerMatch.Success)
 					{
 						try
@@ -209,7 +207,6 @@ namespace ShaderCompiler
 			string file_content = File.ReadAllText(inFile);
 
 			string regexPattern = string.Format(FindBeginEndRegex, inPattern);
-
 			Regex regex = new Regex(regexPattern, RegexOptions.IgnoreCase | RegexOptions.Multiline);
 			Match regMatch = regex.Match(file_content);
 			if (!regMatch.Success)
@@ -243,8 +240,7 @@ namespace ShaderCompiler
 				string GeneratedFileContent = File.ReadAllText(fileStr);
 
 				// Look for the byte array containing the shader code
-				Regex byteArrayNameReg = new Regex(ByteArrayNameFromGeneratedHeaderFileRegex, RegexOptions.IgnoreCase);
-				Match byteArrayNameMatch = byteArrayNameReg.Match(GeneratedFileContent);
+				Match byteArrayNameMatch = Regex.Match(GeneratedFileContent, ByteArrayNameFromGeneratedHeaderFileRegex, RegexOptions.IgnoreCase);
 				if (!byteArrayNameMatch.Success)
 				{
 					throw new Exception("Given header file (" + fileStr + ") does not contain a Byte array. Something is seriously wrong.");
