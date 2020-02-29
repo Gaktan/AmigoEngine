@@ -11,6 +11,9 @@ class ShaderCompiler : CSharpProject
 		RootPath = @"[project.SharpmakeCsPath]\..\..\..\";
 		SourceRootPath = @"[project.RootPath]\Source\Tools\[project.Name]";
 
+		// Add Embedded Resources
+		AdditionalEmbeddedResource.Add(@"[project.SourceRootPath]\Resources\DefaultConfig.ini");
+
 		AddTargets(new Target(
 			Platform.win64,
 			DevEnv.vs2017,
@@ -20,9 +23,7 @@ class ShaderCompiler : CSharpProject
 			BuildSystem.MSBuild,
 			DotNetFramework.v4_5));
 
-        // Copy defaultconfig.ini to the output directory
-        AdditionalNoneCopyIfNewer.Add(@"[project.SourceRootPath]\Resources\\DefaultConfig.ini");
-        //PreserveLinkFolderPaths = true;
+		//PreserveLinkFolderPaths = true;
 	}
 	
 	[Configure()]
@@ -32,16 +33,16 @@ class ShaderCompiler : CSharpProject
 		conf.ProjectFileName = @"[project.Name]";
 		conf.IntermediatePath = @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]\[project.Name]";
 		conf.TargetPath = @"[project.RootPath]\Tools\[project.Name]";
-		
+
 		conf.Options.Add(Sharpmake.Options.CSharp.TreatWarningsAsErrors.Enabled);
 		
-        // Make this project an Executable without console
+		// Make this project an Executable without console
 		conf.Output = Project.Configuration.OutputType.DotNetWindowsApp;
-        
-        // TODO: Create a filter "Tools" in the solution
-        //conf.SolutionFolder = conf.ProjectPath;
-        
-        // Add a C# reference, kind of wordy if you ask me
-        conf.DotNetReferences.Add(new DotNetReference("System", DotNetReference.ReferenceType.DotNet));
+		
+		// TODO: Create a filter "Tools" in the solution
+		//conf.SolutionFolder = conf.ProjectPath;
+		
+		// Add a C# reference, kind of wordy if you ask me
+		conf.DotNetReferences.Add(new DotNetReference("System", DotNetReference.ReferenceType.DotNet));
 	}
 }

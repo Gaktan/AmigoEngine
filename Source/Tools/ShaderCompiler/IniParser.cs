@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace ShaderCompiler
@@ -78,7 +79,7 @@ namespace ShaderCompiler
 		// Captures an empty line
 		private static readonly string EmptyLineRegex = @"^\s*$";
 
-		private static readonly string PathToDefaultIni = @"Resources\defaultconfig.ini";
+		private static readonly string DefaultIniResource = "ShaderCompiler.Resources.DefaultConfig.ini";
 
 		// 2D Hashmap containing: <SectionName, <key, value>>
 		public static Dictionary<string, Dictionary<string, string>> Data;
@@ -159,11 +160,10 @@ namespace ShaderCompiler
 			}
 		}
 
-		public static void ParseIniFile(string filePath)
+		public static void ParseIniFile(string fileContent)
 		{
 			// Reset current key
 			CurrentSectionKey = "";
-			string fileContent = File.ReadAllText(filePath);
 
 			// For each line
 			using (StringReader reader = new StringReader(fileContent))
@@ -241,16 +241,15 @@ namespace ShaderCompiler
 		{
 			Data = new Dictionary<string, Dictionary<string, string>>();
 
-			string pathToExe = System.Reflection.Assembly.GetEntryAssembly().Location;
-			string pathToDefaultIniFile = Path.GetDirectoryName(pathToExe) + @"\" + PathToDefaultIni;
+			Assembly assembly = Assembly.GetExecutingAssembly();
 
-			if (!File.Exists(pathToDefaultIniFile))
+			using (Stream stream = assembly.GetManifestResourceStream(DefaultIniResource))
+			using (StreamReader sr = new StreamReader(stream))
 			{
-				throw new Exception("Could not locate default INI file. Looking for \"" + pathToDefaultIniFile + "\"");
+				string fileContent = sr.ReadToEnd();
+				// Parse default file first to fill the data with default values
+				ParseIniFile(fileContent);
 			}
-
-			// Parse default file first to fill the data with default values
-			ParseIniFile(pathToDefaultIniFile);
 
 			// Parse user ini file
 			if (Arguments.ConfigFile != null)
@@ -261,7 +260,8 @@ namespace ShaderCompiler
 					throw new Exception("Could not locate user INI file. Looking for \"" + Arguments.ConfigFile + "\"");
 				}
 
-				ParseIniFile(Arguments.ConfigFile);
+				string fileContent = File.ReadAllText(Arguments.ConfigFile);
+				ParseIniFile(fileContent);
 			}
 
 			// Fill Config class with settings from the INI file(s) we just parsed
