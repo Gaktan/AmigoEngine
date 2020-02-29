@@ -14,14 +14,14 @@
 #include "DX12/DX12RenderTarget.h"
 #include "DX12/DX12CommandQueue.h"
 
+#include "Gfx/Mesh.h"
+
 #include "Shaders/Include/ConstantBuffers.h"
 #include "Shaders/Include/Shaders.h"
 
+// Mesh for the cube
+Mesh* m_CubeMesh;
 
-// Vertex buffer for the cube.
-DX12VertexBuffer* m_VertexBuffer;
-// Index buffer for the cube.
-DX12IndexBuffer* m_IndexBuffer;
 // Constant Buffer for the vertex shader
 DX12ConstantBuffer* m_ConstantBuffer;
 
@@ -65,7 +65,7 @@ static VertexPosColor g_Vertices[8] =
 	{ Vector4f( 1.0f, -1.0f,  1.0f), Vector4f(1.0f, 0.0f, 1.0f) }  // 7
 };
 
-static WORD g_Indicies[36] =
+static uint16 g_Indicies[36] =
 {
 	0, 1, 2, 0, 2, 3,
 	4, 6, 5, 4, 7, 6,
@@ -110,12 +110,15 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	// Create vertex/index buffer data.
-	m_VertexBuffer	= new DX12VertexBuffer(dx12_device, command_list, _countof(g_Vertices) * sizeof(VertexPosColor), g_Vertices, sizeof(VertexPosColor));
-	m_IndexBuffer	= new DX12IndexBuffer(dx12_device, command_list, _countof(g_Indicies) * sizeof(WORD), g_Indicies);
+	// Create Mesh
+	m_CubeMesh = new Mesh();
+	m_CubeMesh->Init(dx12_device, command_list, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+					 g_Vertices, _countof(g_Vertices) * sizeof(VertexPosColor), sizeof(VertexPosColor),
+					 g_Indicies, _countof(g_Indicies) * sizeof(uint16));
 
 	// Create Constant Buffer View
-	m_ConstantBuffer = new DX12ConstantBuffer(dx12_device, command_list, sizeof(ConstantBuffer::ModelViewProjection), nullptr);
+	m_ConstantBuffer = new DX12ConstantBuffer();
+	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, command_list, sizeof(ConstantBuffer::ModelViewProjection), nullptr);
 
 	// Create the depth buffer.
 	ResizeDepthBuffer(inDevice, inWidth, inHeight);
@@ -194,8 +197,7 @@ void UnloadContent(DX12Device& inDevice)
 	// Make sure the command queue has finished all commands before closing.
 	inDevice.Flush();
 
-	delete m_VertexBuffer;
-	delete m_IndexBuffer;
+	delete m_CubeMesh;
 	delete m_ConstantBuffer;
 
 	delete m_DepthBuffer;
@@ -242,7 +244,7 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	float aspect_ratio = inWidth / static_cast<float>(inHeight);
 	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
 
-	m_ColorMul = Math::Abs(Math::Sin(TTT*0.001));
+	m_ColorMul = Math::Abs(Math::Sin(TTT*0.001f));
 }
 
 void OnRender(DX12Device& inDevice)
@@ -259,9 +261,7 @@ void OnRender(DX12Device& inDevice)
 	command_list->SetPipelineState(m_PipelineState);
 	command_list->SetGraphicsRootSignature(m_RootSignature);
 
-	command_list->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	m_VertexBuffer->SetVertexBuffer(command_list, 0, 1);
-	m_IndexBuffer->SetIndexBuffer(command_list);
+	m_CubeMesh->Set(command_list);
 
 	command_list->RSSetViewports(1, &m_Viewport);
 	command_list->RSSetScissorRects(1, &m_ScissorRect);
