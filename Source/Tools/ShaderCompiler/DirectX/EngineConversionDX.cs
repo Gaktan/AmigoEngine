@@ -6,11 +6,11 @@ namespace ShaderCompiler
 	{
 		public static string StructElementToEngineType(StructElement inStructElement)
 		{
-			int num_col = inStructElement.NumCol;
-			int num_rows = inStructElement.NumRows;
-			string scalar_type = inStructElement.BaseTypeName;
-			string variable_name = inStructElement.VariableName;
-			string array_string = inStructElement.ArrayString;
+			int num_col				= inStructElement.NumCol;
+			int num_rows			= inStructElement.NumRows;
+			string scalar_type		= inStructElement.BaseTypeName;
+			string variable_name	= inStructElement.VariableName;
+			string array_string		= inStructElement.ArrayString;
 
 			Debug.Assert(num_col > 0 && num_col <= 4);
 			Debug.Assert(num_rows >= 0 && num_rows <= 4);
@@ -66,7 +66,7 @@ namespace ShaderCompiler
 						goto default;
 					}
 				default:
-					// Default is just an array
+					// Default is just a 2D array
 					array_string += "[" + num_col + "][" + num_rows + "]";
 					break;
 				}
