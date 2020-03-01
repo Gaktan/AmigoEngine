@@ -4,9 +4,9 @@
 #include "DX12/DX12Device.h"
 #include "DX12/DX12SwapChain.h"
 
-DX12CommandQueue::DX12CommandQueue(DX12Device* inDevice, D3D12_COMMAND_LIST_TYPE inType)
+DX12CommandQueue::DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE inType)
 	: m_CommandListType(inType)
-	, m_Fence(inDevice->m_Device)
+	, m_Fence(inDevice.m_Device)
 {
 	D3D12_COMMAND_QUEUE_DESC desc = {};
 	desc.Type		= inType;
@@ -14,7 +14,7 @@ DX12CommandQueue::DX12CommandQueue(DX12Device* inDevice, D3D12_COMMAND_LIST_TYPE
 	desc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE;
 	desc.NodeMask	= 0;
 
-	ThrowIfFailed(inDevice->m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_CommandQueue)));
+	ThrowIfFailed(inDevice.m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_CommandQueue)));
 }
 
 DX12CommandQueue::~DX12CommandQueue()
@@ -53,25 +53,25 @@ void DX12CommandQueue::Flush()
 	WaitForFenceValue(Signal());
 }
 
-ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device* inDevice) const
+ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device& inDevice) const
 {
 	ID3D12CommandAllocator* command_allocator;
-	ThrowIfFailed(inDevice->m_Device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&command_allocator)));
+	ThrowIfFailed(inDevice.m_Device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&command_allocator)));
 
 	return command_allocator;
 }
 
-ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device* inDevice, ID3D12CommandAllocator* inCommandAllocator) const
+ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device& inDevice, ID3D12CommandAllocator* inCommandAllocator) const
 {
 	ID3D12GraphicsCommandList2* command_list;
-	ThrowIfFailed(inDevice->m_Device->CreateCommandList(0, m_CommandListType, inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
+	ThrowIfFailed(inDevice.m_Device->CreateCommandList(0, m_CommandListType, inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
 
 	return command_list;
 }
 
-ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device* inDevice)
+ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device& inDevice)
 {
-	m_CurrentIndex = inDevice->m_SwapChain->GetCurrentBackBufferIndex();
+	m_CurrentIndex = inDevice.m_SwapChain->GetCurrentBackBufferIndex();
 
 	// No need for fences, a commandlist from 3 frames ago should already have been processed by the GPU
 	auto& entry = m_CommandListEntries[m_CurrentIndex];

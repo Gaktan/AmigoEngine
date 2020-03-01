@@ -14,9 +14,7 @@ class DX12SwapChain
 protected:
 	IDXGISwapChain4*		m_SwapChain;
 
-	ID3D12Resource*			m_BackBuffers[NUM_BUFFERED_FRAMES];
-	ID3D12DescriptorHeap*	m_RTVDescriptorHeap;
-	uint32					m_RTVDescriptorSize;
+	DX12RenderTarget*		m_BackBuffers[NUM_BUFFERED_FRAMES];
 
 	uint32					m_CurrentBackBufferIndex;
 	uint64					m_FrameFenceValues[NUM_BUFFERED_FRAMES] = {};
@@ -29,7 +27,7 @@ public:
 	virtual ~DX12SwapChain();
 
 	void UpdateRenderTargetViews(DX12Device& inDevice, uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall = false);
-	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList);
+	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 
 	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer);

@@ -26,11 +26,11 @@ protected:
 	CommandListEntry			m_CommandListEntries[NUM_BUFFERED_FRAMES];
 
 public:
-	DX12CommandQueue(DX12Device* inDevice, D3D12_COMMAND_LIST_TYPE inType);
+	DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE inType);
 	virtual ~DX12CommandQueue();
 
 	// Get an available command list from the command queue.
-	ID3D12GraphicsCommandList2* GetCommandList(DX12Device* inDevice);
+	ID3D12GraphicsCommandList2* GetCommandList(DX12Device& inDevice);
 
 	// Execute a command list.
 	// Returns the fence value to wait for for this command list.
@@ -44,6 +44,6 @@ public:
 	ID3D12CommandQueue* GetD3D12CommandQueue() const;
 
 protected:
-	ID3D12CommandAllocator*		CreateCommandAllocator(DX12Device* inDevice) const;
-	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device* inDevice, ID3D12CommandAllocator* inCommandAllocator) const;
+	ID3D12CommandAllocator*		CreateCommandAllocator(DX12Device& inDevice) const;
+	ID3D12GraphicsCommandList2* CreateCommandList(DX12Device& inDevice, ID3D12CommandAllocator* inCommandAllocator) const;
 };

@@ -41,7 +41,7 @@ public:
 
 	Matrix4(const Matrix4<T>& inOther)
 	{
-		memcpy(m, inOther.m, sizeof(T) * 4 * 4);
+		::memcpy(m, inOther.m, sizeof(T) * 4 * 4);
 	}
 
 	Matrix4(const Vector4<T>& inRow0, const Vector4<T>& inRow1, const Vector4<T>& inRow2, const Vector4<T>& inRow3)

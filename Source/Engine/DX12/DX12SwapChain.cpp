@@ -83,29 +83,21 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 
 	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors	= NUM_BUFFERED_FRAMES;
-	desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-	ThrowIfFailed(inDevice.m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_RTVDescriptorHeap)));
-	m_RTVDescriptorSize = inDevice.m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
 	bool first_call = true;
 	UpdateRenderTargetViews(inDevice, inWidth, inHeight, first_call);
 }
 
 DX12SwapChain::~DX12SwapChain()
 {
-	m_RTVDescriptorHeap->Release();
-
 	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
-		m_BackBuffers[i]->Release();
+		delete m_BackBuffers[i];
 	}
 
 	m_SwapChain->Release();
 }
 
-void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall/* = false*/)
+void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth, uint32 inHeight, bool inFirstCall/* = false*/)
 {
 	if (!inFirstCall)
 	{
@@ -117,59 +109,54 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inClien
 		{
 			// Any references to the back buffers must be released
 			// before the swap chain can be resized.
-			m_BackBuffers[i]->Release();
-			m_BackBuffers[i] = nullptr;
+			delete m_BackBuffers[i];
 			m_FrameFenceValues[i] = m_FrameFenceValues[m_CurrentBackBufferIndex];
 		}
 
 		DXGI_SWAP_CHAIN_DESC swap_chain_desc = {};
 		ThrowIfFailed(m_SwapChain->GetDesc(&swap_chain_desc));
-		ThrowIfFailed(m_SwapChain->ResizeBuffers(NUM_BUFFERED_FRAMES, inClientWidth, inClientHeight, swap_chain_desc.BufferDesc.Format, swap_chain_desc.Flags));
+		ThrowIfFailed(m_SwapChain->ResizeBuffers(NUM_BUFFERED_FRAMES, inWidth, inHeight, swap_chain_desc.BufferDesc.Format, swap_chain_desc.Flags));
 
 		m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 	}
 
-	uint32 rtvDescriptorSize = inDevice.m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(descriptor_heap.m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart());
-
+	const Vector4f clear_color = { 0.4f, 0.6f, 0.9f, 1.0f };
 	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
 		ID3D12Resource* back_buffer;
 		ThrowIfFailed(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
 
-		inDevice.m_Device->CreateRenderTargetView(back_buffer, nullptr, rtv_handle);
+		m_BackBuffers[i] = new DX12RenderTarget();
+		m_BackBuffers[i]->InitFromResource(inDevice, back_buffer, rtv_handle, clear_color);
 
-		m_BackBuffers[i] = back_buffer;
-
-		rtv_handle.Offset(rtvDescriptorSize);
+		rtv_handle.Offset(descriptor_heap.m_DescriptorIncrementSize);
 	}
 }
 
-void DX12SwapChain::ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList)
+void DX12SwapChain::ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) const
 {
 	auto back_buffer = m_BackBuffers[m_CurrentBackBufferIndex];
 
 	// Clear the render target.
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			back_buffer,
+			back_buffer->GetResource(),
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
 		inCommandList->ResourceBarrier(1, &barrier);
 
-		float clear_color[] = { 0.4f, 0.6f, 0.9f, 1.0f };
-		CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
-
-		inCommandList->ClearRenderTargetView(rtv, clear_color, 0, nullptr);
+		back_buffer->ClearBuffer(inCommandList);
 	}
 }
 
 void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12CommandQueue* inCommandQueue)
 {
-	auto backBuffer = m_BackBuffers[m_CurrentBackBufferIndex];
+	auto back_buffer = m_BackBuffers[m_CurrentBackBufferIndex];
 
-	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(back_buffer->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
 	inCommandList->ResourceBarrier(1, &barrier);
 
 	m_FrameFenceValues[m_CurrentBackBufferIndex] = inCommandQueue->ExecuteCommandList(inCommandList);
@@ -185,9 +172,10 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 
 void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer)
 {
-	const CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(m_RTVDescriptorHeap->GetCPUDescriptorHandleForHeapStart(), m_CurrentBackBufferIndex, m_RTVDescriptorSize);
-	const D3D12_CPU_DESCRIPTOR_HANDLE cpu_descriptor_handle = inDepthBuffer->GetCPUDescriptorHandle();
-	inCommandList->OMSetRenderTargets(1, &rtv, false, &cpu_descriptor_handle);
+	D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_BackBuffers[m_CurrentBackBufferIndex]->GetCPUDescriptorHandle();
+	D3D12_CPU_DESCRIPTOR_HANDLE dsv = inDepthBuffer->GetCPUDescriptorHandle();
+
+	inCommandList->OMSetRenderTargets(1, &rtv, false, &dsv);
 }
 
 uint32 DX12SwapChain::GetCurrentBackBufferIndex()

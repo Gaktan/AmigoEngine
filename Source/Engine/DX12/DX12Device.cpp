@@ -20,6 +20,9 @@ DX12Device::~DX12Device()
 
 	delete m_SwapChain;
 
+	m_RTVDescriptorHeap.m_DescriptorHeap->Release();
+	m_DSVDescriptorHeap.m_DescriptorHeap->Release();
+
 #if defined(_DEBUG)
 	ID3D12DebugDevice* debug_device = nullptr;
 	ThrowIfFailed(m_Device->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(&debug_device)));
@@ -33,7 +36,21 @@ DX12Device::~DX12Device()
 	m_Device->Release();
 }
 
-void DX12Device::Init(HWND inWindowHandle, uint32 inClientWidth, uint32 inClientHeight)
+DX12DescriptorHeap DX12Device::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inHeapType)
+{
+	DX12DescriptorHeap descriptor_heap;
+
+	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+	desc.NumDescriptors	= NUM_BUFFERED_FRAMES;
+	desc.Type			= inHeapType;
+	ThrowIfFailed(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptor_heap.m_DescriptorHeap)));
+
+	descriptor_heap.m_DescriptorIncrementSize = m_Device->GetDescriptorHandleIncrementSize(inHeapType);
+
+	return descriptor_heap;
+}
+
+void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 {
 	EnableDebugLayer();
 	EnableGPUBasedValidation();
@@ -44,11 +61,14 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inClientWidth, uint32 inClient
 		dxgi_adapter4->Release();
 	}
 
-	m_DirectCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_ComputeCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-	m_CopyCommandQueue = new DX12CommandQueue(this, D3D12_COMMAND_LIST_TYPE_COPY);
+	m_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	m_DSVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 
-	m_SwapChain = new DX12SwapChain(*this, inWindowHandle, *m_DirectCommandQueue, inClientWidth, inClientHeight);
+	m_DirectCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_ComputeCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_CopyCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COPY);
+
+	m_SwapChain = new DX12SwapChain(*this, inWindowHandle, *m_DirectCommandQueue, inWidth, inHeight);
 }
 
 void DX12Device::Flush()
@@ -206,4 +226,23 @@ DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) cons
 	}
 
 	return command_queue;
+}
+
+DX12DescriptorHeap DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const
+{
+	DX12DescriptorHeap descriptor_heap = {};
+	switch (inType)
+	{
+	case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:
+		descriptor_heap = m_RTVDescriptorHeap;
+		break;
+	case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
+		descriptor_heap = m_DSVDescriptorHeap;
+		break;
+	default:
+		Assert(false && "Unsuppported D3D12_DESCRIPTOR_HEAP_TYPE");
+		break;
+	}
+
+	return descriptor_heap;
 }

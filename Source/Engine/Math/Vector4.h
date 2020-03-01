@@ -57,6 +57,25 @@ public:
 		w = _w;
 	}
 
+	float X()
+	{
+		return x;
+	}
+
+	float Y()
+	{
+		return y;
+	}
+
+	float Z()
+	{
+		return z;
+	}
+
+	float W()
+	{
+		return w;
+	}
 
 	T& operator[](size_t inIndex)
 	{

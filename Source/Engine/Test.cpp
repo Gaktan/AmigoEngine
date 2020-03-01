@@ -75,19 +75,21 @@ static uint16 g_Indicies[36] =
 	4, 0, 3, 4, 3, 7
 };
 
-void ResizeDepthBuffer(DX12Device& inDevice, int inWidth, int inHeight)
+void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 {
 	// Flush any GPU commands that might be referencing the depth buffer.
 	inDevice.Flush();
 
-	// Resize screen dependent resources.
-	// Create a depth buffer
 	if (m_DepthBuffer)
 	{
 		delete m_DepthBuffer;
 	}
+	m_DepthBuffer = new DX12DepthRenderTarget();
 
-	m_DepthBuffer = new DX12DepthRenderTarget(inDevice.m_Device, inWidth, inHeight);
+	DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	CD3DX12_CPU_DESCRIPTOR_HANDLE dsv_handle(descriptor_heap.m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+
+	m_DepthBuffer->InitAsDepthStencilBuffer(inDevice, dsv_handle, inNewWidth, inNewHeight);
 }
 
 bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
@@ -101,7 +103,10 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 
 	auto dx12_device	= inDevice.m_Device;
 	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
-	auto command_list	= command_queue->GetCommandList(&inDevice);
+	auto command_list	= command_queue->GetCommandList(inDevice);
+
+	// Create the depth buffer
+	ResizeBuffers(inDevice, inWidth, inHeight);
 
 	// Create the vertex input layout
 	D3D12_INPUT_ELEMENT_DESC input_layout[] =
@@ -119,9 +124,6 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
 	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, command_list, sizeof(ConstantBuffer::ModelViewProjection), nullptr);
-
-	// Create the depth buffer.
-	ResizeDepthBuffer(inDevice, inWidth, inHeight);
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
@@ -216,7 +218,7 @@ void OnResize(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		inHeight	= Math::Max(256u, inHeight);
 		m_Viewport	= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
 
-		ResizeDepthBuffer(inDevice, inWidth, inHeight);
+		ResizeBuffers(inDevice, inWidth, inHeight);
 	}
 }
 
@@ -250,12 +252,12 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 void OnRender(DX12Device& inDevice)
 {
 	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto command_list	= command_queue->GetCommandList(&inDevice);
+	auto command_list	= command_queue->GetCommandList(inDevice);
 
 	// Clear the render targets.
 	{
 		inDevice.m_SwapChain->ClearBackBuffer(command_list);
-		m_DepthBuffer->ClearDepth(command_list);
+		m_DepthBuffer->ClearBuffer(command_list);
 	}
 
 	command_list->SetPipelineState(m_PipelineState);
@@ -274,7 +276,7 @@ void OnRender(DX12Device& inDevice)
 
 	// Upload Constant Buffer to GPU
 	ConstantBuffer::ModelViewProjection mvp;
-	memcpy(&mvp.MVP[0], &mvp_matrix, sizeof(ConstantBuffer::ModelViewProjection));
+	::memcpy(&mvp.MVP[0], &mvp_matrix, sizeof(ConstantBuffer::ModelViewProjection));
 	mvp.ColorMul = Vector4f(m_ColorMul);
 	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
 	m_ConstantBuffer->SetConstantBuffer(command_list, 0);

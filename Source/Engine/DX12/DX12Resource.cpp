@@ -67,6 +67,11 @@ void DX12Resource::UpdateBufferResource(
 	}
 }
 
+ID3D12Resource* DX12Resource::GetResource() const
+{
+	return m_Resource;
+}
+
 void DX12VertexBuffer::InitAsVertexBuffer(
 	ID3D12Device* inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
