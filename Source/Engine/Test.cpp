@@ -279,7 +279,7 @@ void OnRender(DX12Device& inDevice)
 
 	// Upload Constant Buffer to GPU
 	ConstantBuffer::ModelViewProjection mvp;
-	::memcpy(&mvp.MVP[0], &mvp_matrix, sizeof(ConstantBuffer::ModelViewProjection));
+	mvp.MVP = mvp_matrix;
 	mvp.ColorMul = Vec4(m_ColorMul);
 	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
 	m_ConstantBuffer->SetConstantBuffer(command_list, 0);

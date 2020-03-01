@@ -26,13 +26,13 @@ struct X1234
 
 struct ModelViewProjection2
 {
-	float MVP[4][4];
+	Mat4 MVP;
 };
 
 struct MultipleArrays
 {
 	int32 i3[1][2] [3]	[4 ] [ 6 ]	[SEVEN][3];
-	float x4[1] [2* SEVEN-1][4][4];
+	Mat4 x4[1] [2* SEVEN-1];
 };
 
 struct InsideStruct
@@ -42,7 +42,7 @@ struct InsideStruct
 
 struct ModelViewProjection
 {
-	float MVP[4][4];
+	Mat4 MVP;
 	Vec4 ColorMul;
 };
 // EndConstantBuffer
