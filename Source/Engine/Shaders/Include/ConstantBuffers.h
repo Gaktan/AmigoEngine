@@ -1,11 +1,11 @@
 #pragma once
 
 #include "Engine.h"
-#include "Math/Vector4.h"
+#include "Math/Vec4.h"
 
 // Dummy Vector types until we get them for real
-using Vector2f = float[2];
-using Vector3f = float[3];
+using Vec2 = float[2];
+using Vec3 = float[3];
 
 // TODO: Defines are tricky because we souldn't allow to generate the same structure with different define values
 // This case is fine because it's a constant, but think of a define from a Shader Header.
@@ -19,9 +19,9 @@ namespace ConstantBuffer
 struct X1234
 {
 	float x1;
-	Vector2f x2;
-	Vector3f x3;
-	Vector4f x4;
+	Vec2 x2;
+	Vec3 x3;
+	Vec4 x4;
 };
 
 struct ModelViewProjection2
@@ -43,7 +43,7 @@ struct InsideStruct
 struct ModelViewProjection
 {
 	float MVP[4][4];
-	Vector4f ColorMul;
+	Vec4 ColorMul;
 };
 // EndConstantBuffer
 }

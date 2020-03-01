@@ -6,8 +6,8 @@
 // based on this one
 
 #include "Math/Math.h"
-#include "Math/Vector4.h"
-#include "Math/Matrix4.h"
+#include "Math/Vec4.h"
+#include "Math/Mat4.h"
 
 #include "DX12/DX12Device.h"
 #include "DX12/DX12Resource.h"
@@ -39,30 +39,31 @@ D3D12_RECT m_ScissorRect;
 
 float m_FOV;
 
-Matrix4f	m_ModelMatrix;
-Matrix4f	m_ViewMatrix;
-Matrix4f	m_ProjectionMatrix;
-float		m_ColorMul;
+Mat4	m_ModelMatrix;
+Mat4	m_ViewMatrix;
+Mat4	m_ProjectionMatrix;
+float	m_ColorMul;
+IVec4	m_Color;
 
 bool m_ContentLoaded;
 
 // Vertex data for a colored cube.
 struct VertexPosColor
 {
-	Vector4f Position;
-	Vector4f Color;
+	Vec4 Position;
+	Vec4 Color;
 };
 
 static VertexPosColor g_Vertices[8] =
 {
-	{ Vector4f(-1.0f, -1.0f, -1.0f), Vector4f(0.0f, 0.0f, 0.0f) }, // 0
-	{ Vector4f(-1.0f,  1.0f, -1.0f), Vector4f(0.0f, 1.0f, 0.0f) }, // 1
-	{ Vector4f( 1.0f,  1.0f, -1.0f), Vector4f(1.0f, 1.0f, 0.0f) }, // 2
-	{ Vector4f( 1.0f, -1.0f, -1.0f), Vector4f(1.0f, 0.0f, 0.0f) }, // 3
-	{ Vector4f(-1.0f, -1.0f,  1.0f), Vector4f(0.0f, 0.0f, 1.0f) }, // 4
-	{ Vector4f(-1.0f,  1.0f,  1.0f), Vector4f(0.0f, 1.0f, 1.0f) }, // 5
-	{ Vector4f( 1.0f,  1.0f,  1.0f), Vector4f(1.0f, 1.0f, 1.0f) }, // 6
-	{ Vector4f( 1.0f, -1.0f,  1.0f), Vector4f(1.0f, 0.0f, 1.0f) }  // 7
+	{ Vec4(-1.0f, -1.0f, -1.0f), Vec4(0.0f, 0.0f, 0.0f) }, // 0
+	{ Vec4(-1.0f,  1.0f, -1.0f), Vec4(0.0f, 1.0f, 0.0f) }, // 1
+	{ Vec4( 1.0f,  1.0f, -1.0f), Vec4(1.0f, 1.0f, 0.0f) }, // 2
+	{ Vec4( 1.0f, -1.0f, -1.0f), Vec4(1.0f, 0.0f, 0.0f) }, // 3
+	{ Vec4(-1.0f, -1.0f,  1.0f), Vec4(0.0f, 0.0f, 1.0f) }, // 4
+	{ Vec4(-1.0f,  1.0f,  1.0f), Vec4(0.0f, 1.0f, 1.0f) }, // 5
+	{ Vec4( 1.0f,  1.0f,  1.0f), Vec4(1.0f, 1.0f, 1.0f) }, // 6
+	{ Vec4( 1.0f, -1.0f,  1.0f), Vec4(1.0f, 0.0f, 1.0f) }  // 7
 };
 
 static uint16 g_Indicies[36] =
@@ -123,7 +124,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
-	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, command_list, sizeof(ConstantBuffer::ModelViewProjection), nullptr);
+	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, sizeof(ConstantBuffer::ModelViewProjection));
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
@@ -230,23 +231,25 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 
 	// Update the model matrix.
 	float angle = TTT * 0.1f;
-	const Vector4f rotation_axis(0, 1, 1, 0);
-	m_ModelMatrix = Matrix4f::CreateRotationMatrix(rotation_axis, Math::ToRadians(angle));
+	const Vec4 rotation_axis(0, 1, 1, 0);
+	m_ModelMatrix = Mat4::CreateRotationMatrix(rotation_axis, Math::ToRadians(angle));
 
-	Vector4f position(0, 0, Math::Sin(angle*0.01f));
+	Vec4 position(0, 0, Math::Sin(angle*0.01f));
 	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
 
 	// Update the view matrix.
-	const Vector4f eye_position(0, -10, 0, 1);
-	const Vector4f focus_point(0, 0, 0, 1);
-	const Vector4f up_direction(0, 0, 1, 0);
-	m_ViewMatrix = Matrix4f::CreateLookAtMatrix(eye_position, focus_point, up_direction);
+	const Vec4 eye_position(0, -10, 0, 1);
+	const Vec4 focus_point(0, 0, 0, 1);
+	const Vec4 up_direction(0, 0, 1, 0);
+	m_ViewMatrix = Mat4::CreateLookAtMatrix(eye_position, focus_point, up_direction);
 
 	// Update the projection matrix.
 	float aspect_ratio = inWidth / static_cast<float>(inHeight);
-	m_ProjectionMatrix = Matrix4f::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
+	m_ProjectionMatrix = Mat4::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
 
 	m_ColorMul = Math::Abs(Math::Sin(TTT*0.001f));
+
+	m_Color = (int32) Math::Abs(Math::Sin(TTT*0.002f + 0.5f)) * 255;
 }
 
 void OnRender(DX12Device& inDevice)
@@ -271,13 +274,13 @@ void OnRender(DX12Device& inDevice)
 	inDevice.m_SwapChain->SetRenderTarget(command_list, m_DepthBuffer);
 
 	// Update the MVP matrix
-	Matrix4f mvp_matrix = m_ModelMatrix.Mul(m_ViewMatrix);
+	Mat4 mvp_matrix		= m_ModelMatrix.Mul(m_ViewMatrix);
 	mvp_matrix			= mvp_matrix.Mul(m_ProjectionMatrix);
 
 	// Upload Constant Buffer to GPU
 	ConstantBuffer::ModelViewProjection mvp;
 	::memcpy(&mvp.MVP[0], &mvp_matrix, sizeof(ConstantBuffer::ModelViewProjection));
-	mvp.ColorMul = Vector4f(m_ColorMul);
+	mvp.ColorMul = Vec4(m_ColorMul);
 	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
 	m_ConstantBuffer->SetConstantBuffer(command_list, 0);
 

@@ -122,9 +122,7 @@ void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* inCommandList) 
 
 void DX12ConstantBuffer::InitAsConstantBuffer(
 	ID3D12Device* inDevice,
-	ID3D12GraphicsCommandList2* inCommandList,
-	size_t inBufferSize, const void* inBufferData,
-	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
+	size_t inBufferSize)
 {
 	D3D12_HEAP_PROPERTIES	heap_properties	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize);

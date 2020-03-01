@@ -72,9 +72,7 @@ public:
 
 	void InitAsConstantBuffer(
 		ID3D12Device* inDevice,
-		ID3D12GraphicsCommandList2* inCommandList,
-		size_t inBufferSize, const void* inBufferData,
-		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
+		size_t inBufferSize);
 
 	virtual void UpdateBufferResource(
 		ID3D12Device* inDevice,

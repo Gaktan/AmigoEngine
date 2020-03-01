@@ -19,8 +19,8 @@ protected:
 	uint32					m_CurrentBackBufferIndex;
 	uint64					m_FrameFenceValues[NUM_BUFFERED_FRAMES] = {};
 
-	bool					m_VSync;
-	bool					m_TearingSupported;
+	bool					m_VSync				= true;
+	bool					m_TearingSupported	= false;
 
 public:
 	DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight);

@@ -6,7 +6,7 @@
 void DX12RenderTarget::InitAsRenderTarget(
 	DX12Device& inDevice,
 	D3D12_CPU_DESCRIPTOR_HANDLE inDescriptorHandle,
-	uint32 inWidth, uint32 inHeight, Vector4f inClearValue/* = 1.0f*/,
+	uint32 inWidth, uint32 inHeight, Vec4 inClearValue/* = 1.0f*/,
 	DXGI_FORMAT inFormat/* = DXGI_FORMAT_UNKNOWN*/)
 {
 	m_ClearValue		= inClearValue;
@@ -16,7 +16,7 @@ void DX12RenderTarget::InitAsRenderTarget(
 	// Create a depth buffer with fast clear
 	D3D12_CLEAR_VALUE optimized_clear_value = {};
 	optimized_clear_value.Format		= m_Format;
-	::memcpy(optimized_clear_value.Color, &m_ClearValue[0], sizeof(Vector4f));
+	::memcpy(optimized_clear_value.Color, &m_ClearValue[0], sizeof(Vec4));
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, inWidth, inHeight,
@@ -46,7 +46,7 @@ void DX12RenderTarget::InitFromResource(
 	DX12Device& inDevice,
 	ID3D12Resource* inResource,
 	D3D12_CPU_DESCRIPTOR_HANDLE inDescriptorHandle,
-	Vector4f inClearValue/* = 1.0f*/,
+	Vec4 inClearValue/* = 1.0f*/,
 	DXGI_FORMAT inFormat/* = DXGI_FORMAT_D24_UNORM_S8_UINT*/)
 {
 	m_ClearValue		= inClearValue;

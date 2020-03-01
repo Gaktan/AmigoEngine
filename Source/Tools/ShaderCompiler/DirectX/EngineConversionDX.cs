@@ -41,7 +41,7 @@ namespace ShaderCompiler
 				switch (scalar_type)
 				{
 				case "float":
-					engine_type = "Vector" + num_col + "f";
+					engine_type = "Vec" + num_col;
 					break;
 				default:
 					// Default is just an array

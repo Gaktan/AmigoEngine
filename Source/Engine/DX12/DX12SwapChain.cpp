@@ -36,7 +36,6 @@ bool CheckTearingSupport()
 }
 
 DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight)
-	: m_VSync(true)
 {
 	m_TearingSupported = CheckTearingSupport();
 
@@ -123,7 +122,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 	DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(descriptor_heap.m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-	const Vector4f clear_color = { 0.4f, 0.6f, 0.9f, 1.0f };
+	const Vec4 clear_color = { 0.4f, 0.6f, 0.9f, 1.0f };
 	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
 		ID3D12Resource* back_buffer;

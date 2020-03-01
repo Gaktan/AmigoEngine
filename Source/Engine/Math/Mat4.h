@@ -1,15 +1,16 @@
 #pragma once
 
+#include "Math/Vec4.h"
+
 // nonstandard extension used: nameless struct/union
 #pragma warning(disable : 4201)
 
-template <typename T>
-class Matrix4
+class Mat4
 {
 protected:
 	union
 	{
-		Vector4<T> r[4];
+		Vec4 r[4];
 		float m[4][4];
 		struct
 		{
@@ -20,12 +21,12 @@ protected:
 		};
 	};
 
-	static Matrix4<T> s_Zero;
-	static Matrix4<T> s_Identity;
+	static Mat4 s_Zero;
+	static Mat4 s_Identity;
 
 public:
 
-	Matrix4(bool inIdentity = false)
+	Mat4(bool inIdentity = false)
 	{
 		if (inIdentity)
 		{
@@ -39,12 +40,12 @@ public:
 #endif
 	}
 
-	Matrix4(const Matrix4<T>& inOther)
+	Mat4(const Mat4& inOther)
 	{
-		::memcpy(m, inOther.m, sizeof(T) * 4 * 4);
+		::memcpy(m, inOther.m, sizeof(float) * 4 * 4);
 	}
 
-	Matrix4(const Vector4<T>& inRow0, const Vector4<T>& inRow1, const Vector4<T>& inRow2, const Vector4<T>& inRow3)
+	Mat4(const Vec4& inRow0, const Vec4& inRow1, const Vec4& inRow2, const Vec4& inRow3)
 	{
 		r[0] = inRow0;
 		r[1] = inRow1;
@@ -52,19 +53,19 @@ public:
 		r[3] = inRow3;
 	}
 
-	T* operator[](size_t inRow)
+	Vec4* operator[](size_t inRow)
 	{
 		return &r[inRow];
 	}
 
-	const T* operator[](size_t inRow) const
+	const Vec4* operator[](size_t inRow) const
 	{
 		return &r[inRow];
 	}
 
-	Matrix4<T> Mul(const Matrix4<T>& inOther) const
+	Mat4 Mul(const Mat4& inOther) const
 	{
-		Matrix4<T> ret;
+		Mat4 ret;
 
 		float x = m[0][0];
 		float y = m[0][1];
@@ -107,30 +108,30 @@ public:
 		return ret;
 	}
 
-	Matrix4<T> Tanslate(const Vector4<T>& inPosition) const
+	Mat4 Tanslate(const Vec4& inPosition) const
 	{
-		Matrix4<T> ret(*this);
+		Mat4 ret(*this);
 
-		ret._m30 += inPosition.x;
-		ret._m31 += inPosition.y;
-		ret._m32 += inPosition.z;
+		ret._m30 += inPosition.X();
+		ret._m31 += inPosition.Y();
+		ret._m32 += inPosition.Z();
 
 		return ret;
 	}
 
-	static Matrix4<T> CreateRotationMatrix(const Vector4f& inAxis, float inAngle)
+	static Mat4 CreateRotationMatrix(const Vec4& inAxis, float inAngle)
 	{
-		Matrix4<T> ret(true);
+		Mat4 ret(true);
 
-		const Vector4f rotationAxis = Vector4f::Normalize(inAxis);
+		const Vec4 rotationAxis = Vec4::Normalize(inAxis);
 
 		float s = sin(inAngle);
 		float c = cos(inAngle);
 		float t = 1.0f - c;
 
-		float x = rotationAxis.x;
-		float y = rotationAxis.y;
-		float z = rotationAxis.z;
+		float x = rotationAxis.X();
+		float y = rotationAxis.Y();
+		float z = rotationAxis.Z();
 
 		ret._m00 = t * x*x + c;
 		ret._m01 = t * y*x + (s * z);
@@ -147,32 +148,32 @@ public:
 		return ret;
 	}
 
-	static Matrix4<T> CreateLookAtMatrix(const Vector4f& inEye, const Vector4f& inFocus, const Vector4f& inUpVector = { 0, 0, 1 })
+	static Mat4 CreateLookAtMatrix(const Vec4& inEye, const Vec4& inFocus, const Vec4& inUpVector = { 0, 0, 1 })
 	{
-		Vector4f forward	= Vector4f::Normalize(inFocus - inEye);
-		Vector4f right		= Vector4f::Cross(Vector4f::Normalize(inUpVector), forward);
-		Vector4f up			= Vector4f::Cross(forward, right);
+		Vec4 forward	= Vec4::Normalize(inFocus - inEye);
+		Vec4 right		= Vec4::Cross(Vec4::Normalize(inUpVector), forward);
+		Vec4 up			= Vec4::Cross(forward, right);
 
-		Matrix4<T> ret(true);
+		Mat4 ret(true);
 
-		ret._m00 = right.x;
-		ret._m01 = right.y;
-		ret._m02 = right.z;
-		ret._m10 = up.x;
-		ret._m11 = up.y;
-		ret._m12 = up.z;
-		ret._m20 = forward.x;
-		ret._m21 = forward.y;
-		ret._m22 = forward.z;
+		ret._m00 = right.X();
+		ret._m01 = right.Y();
+		ret._m02 = right.Z();
+		ret._m10 = up.X();
+		ret._m11 = up.Y();
+		ret._m12 = up.Z();
+		ret._m20 = forward.Z();
+		ret._m21 = forward.Y();
+		ret._m22 = forward.Z();
 
-		ret._m30 = 0.0f - Vector4f::Dot(right, inEye);
-		ret._m31 = 0.0f - Vector4f::Dot(up, inEye);
-		ret._m32 = 0.0f - Vector4f::Dot(forward, inEye);
+		ret._m30 = 0.0f - Vec4::Dot(right, inEye);
+		ret._m31 = 0.0f - Vec4::Dot(up, inEye);
+		ret._m32 = 0.0f - Vec4::Dot(forward, inEye);
 
 		return ret;
 	}
 
-	static Matrix4<T> CreatePerspectiveMatrix(float inFOV, float inAspectRatio, float inZNear, float inZFar)
+	static Mat4 CreatePerspectiveMatrix(float inFOV, float inAspectRatio, float inZNear, float inZFar)
 	{
 		inFOV *= 0.5f;
 
@@ -182,7 +183,7 @@ public:
 		float width		= height / inAspectRatio;
 		float range		= inZFar / (inZFar - inZNear);
 
-		Matrix4 Result;
+		Mat4 Result;
 
 		Result._m00 = width;
 		Result._m01 = 0.0f;
@@ -207,9 +208,9 @@ public:
 		return Result;
 	}
 
-	Matrix4<T> Transpose() const
+	Mat4 Transpose() const
 	{
-		Matrix4<T> ret;
+		Mat4 ret;
 
 		for (int i = 0; i < 4; i++)
 		{
@@ -225,10 +226,15 @@ public:
 
 #pragma warning(default : 4201)
 
-typedef Matrix4<float> Matrix4f;
+Mat4 Mat4::s_Zero		= 
+{
+	{ 0.0f, 0.0f, 0.0f, 0.0f },
+	{ 0.0f, 0.0f, 0.0f, 0.0f },
+	{ 0.0f, 0.0f, 0.0f, 0.0f },
+	{ 0.0f, 0.0f, 0.0f, 0.0f }
+};
 
-Matrix4f Matrix4f::s_Zero		= { 0.0f };
-Matrix4f Matrix4f::s_Identity	=
+Mat4 Mat4::s_Identity	=
 {
 	{ 1.0f, 0.0f, 0.0f, 0.0f },
 	{ 0.0f, 1.0f, 0.0f, 0.0f },
