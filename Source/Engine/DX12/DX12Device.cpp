@@ -222,7 +222,7 @@ DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) cons
 		command_queue = m_CopyCommandQueue;
 		break;
 	default:
-		Assert(false && "Invalid command queue type.");
+		Assert(false, "Invalid command queue type.");
 	}
 
 	return command_queue;
@@ -240,7 +240,7 @@ DX12DescriptorHeap DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inTy
 		descriptor_heap = m_DSVDescriptorHeap;
 		break;
 	default:
-		Assert(false && "Unsuppported D3D12_DESCRIPTOR_HEAP_TYPE");
+		Assert(false, "Unsuppported D3D12_DESCRIPTOR_HEAP_TYPE");
 		break;
 	}
 

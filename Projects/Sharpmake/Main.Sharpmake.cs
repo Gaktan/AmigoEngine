@@ -42,6 +42,10 @@ class AmigoEngine : Project
 		
 		conf.PrecompHeader = @"[project.Name].h";
 		conf.PrecompSource = @"[project.Name].cpp";
+		
+		// Set default Working directory
+		conf.VcxprojUserFile = new Sharpmake.Project.Configuration.VcxprojUserFileSettings();
+		conf.VcxprojUserFile.LocalDebuggerWorkingDirectory = "$(SolutionDir)";
 	}
 	
 	[Configure(Platform.win64)]
@@ -53,12 +57,14 @@ class AmigoEngine : Project
 		// Enable C++17
 		conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
 		
-		// Remove exception handling in std lib
-		conf.Defines.Add("_HAS_EXCEPTIONS=0");
-		
+		// Exception handling in std lib
+		if (target.Optimization == Optimization.Debug)
+			conf.Defines.Add("_HAS_EXCEPTIONS=1");
+		else
+			conf.Defines.Add("_HAS_EXCEPTIONS=0");
+
 		// DX12
 		conf.IncludePaths.Add(@"[project.RootPath]\External\D3D12\Include");
-		//conf.LibraryPaths.Add(@"[project.BasePath]\lib");
 		conf.LibraryFiles.Add(@"D3DCompiler.lib");
 		conf.LibraryFiles.Add(@"D3D12.lib");
 		conf.LibraryFiles.Add(@"DXGI.lib");

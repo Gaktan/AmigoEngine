@@ -1,6 +1,8 @@
 #include "Engine.h"
 #include "Test.h"
 
+#include <iostream>
+
 // This file will be used to prototype.
 // Once a feature is complete, we can create additional files
 // based on this one
@@ -15,6 +17,7 @@
 #include "DX12/DX12CommandQueue.h"
 
 #include "Gfx/Mesh.h"
+#include "Gfx/MeshLoader.h"
 
 #include "Shaders/Include/ConstantBuffers.h"
 #include "Shaders/Include/Shaders.h"
@@ -101,6 +104,9 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		m_FOV			= 45.0f;
 		m_ContentLoaded = false;
 	}
+
+	MeshLoader::Init();
+	MeshLoader::LoadFromFile("Data\\Cornell_fake2.obj");
 
 	auto dx12_device	= inDevice.m_Device;
 	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.

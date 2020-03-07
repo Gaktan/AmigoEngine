@@ -2,9 +2,6 @@
 
 #define NOMINMAX
 
-#include <Windows.h>
-#include <WinDef.h>
-
 #include "DX12/DX12Device.h"
 #include "DX12/DX12SwapChain.h"
 
@@ -87,7 +84,7 @@ HWND CreateWindow(const wchar_t* inWindowClassName, HINSTANCE inInstance,
 		nullptr
 	);
 
-	Assert(h_window && "Failed to create window");
+	Assert(h_window, "Failed to create window");
 
 	return h_window;
 }
@@ -162,10 +159,8 @@ void Update()
 	elapsed_seconds += delta_time.count() * 1e-9;
 	if (elapsed_seconds > 1.0)
 	{
-		char buffer[500];
 		auto fps = frame_counter / elapsed_seconds;
-		sprintf_s(buffer, 500, "FPS: %f\n", fps);
-		OutputDebugString(buffer);
+		Trace("FPS: %f", fps);
 
 		frame_counter = 0;
 		elapsed_seconds = 0.0;

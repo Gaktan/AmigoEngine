@@ -4,7 +4,7 @@
 HANDLE CreateEventHandle()
 {
 	HANDLE fence_event = ::CreateEvent(NULL, FALSE, FALSE, NULL);
-	Assert(fence_event && "Failed to create fence event.");
+	Assert(fence_event, "Failed to create fence event.");
 
 	return fence_event;
 }
