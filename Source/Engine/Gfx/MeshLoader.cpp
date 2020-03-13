@@ -72,6 +72,8 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 	{
 		ProcessLine(line);
 	}
+
+	// Blender exports meshes in Right Hand Coordinates. DX12 uses Left Hand. We need to flip the winding order
 	ReverseWinding();
 }
 
