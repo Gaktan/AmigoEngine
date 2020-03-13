@@ -42,7 +42,9 @@ struct InsideStruct
 
 struct ModelViewProjection
 {
-	Mat4 MVP;
+	Mat4 Model;
+	Mat4 View;
+	Mat4 Projection;
 	Vec4 ColorMul;
 };
 // EndConstantBuffer

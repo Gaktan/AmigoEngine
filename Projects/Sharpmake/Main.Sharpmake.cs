@@ -58,10 +58,7 @@ class AmigoEngine : Project
 		conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
 		
 		// Exception handling in std lib
-		if (target.Optimization == Optimization.Debug)
-			conf.Defines.Add("_HAS_EXCEPTIONS=1");
-		else
-			conf.Defines.Add("_HAS_EXCEPTIONS=0");
+		conf.Defines.Add("_HAS_EXCEPTIONS=0");
 
 		// DX12
 		conf.IncludePaths.Add(@"[project.RootPath]\External\D3D12\Include");

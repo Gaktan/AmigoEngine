@@ -150,6 +150,19 @@ Vector4<T> Vector4<T>::operator - (const Vector4<T>& inOther) const
 }
 
 template <typename T>
+Vector4<T> Vector4<T>::operator - () const
+{
+	Vector4<T> ret(*this);
+
+	ret.X() = -ret.X();
+	ret.Y() = -ret.Y();
+	ret.Z() = -ret.Z();
+	ret.W() = -ret.W();
+
+	return ret;
+}
+
+template <typename T>
 Vector4<T> Vector4<T>::operator * (T x) const
 {
 	Vector4<T> ret(*this);

@@ -22,8 +22,8 @@
 #include "Shaders/Include/ConstantBuffers.h"
 #include "Shaders/Include/Shaders.h"
 
-// Mesh for the cube
-Mesh* m_CubeMesh;
+// Mesh for the scene
+Mesh* m_SceneMesh;
 
 // Constant Buffer for the vertex shader
 DX12ConstantBuffer* m_ConstantBuffer;
@@ -49,35 +49,6 @@ float	m_ColorMul;
 IVec4	m_Color;
 
 bool m_ContentLoaded;
-
-// Vertex data for a colored cube.
-struct VertexPosColor
-{
-	Vec4 Position;
-	Vec4 Color;
-};
-
-static VertexPosColor g_Vertices[8] =
-{
-	{ Vec4(-1.0f, -1.0f, -1.0f), Vec4(0.0f, 0.0f, 0.0f) }, // 0
-	{ Vec4(-1.0f,  1.0f, -1.0f), Vec4(0.0f, 1.0f, 0.0f) }, // 1
-	{ Vec4( 1.0f,  1.0f, -1.0f), Vec4(1.0f, 1.0f, 0.0f) }, // 2
-	{ Vec4( 1.0f, -1.0f, -1.0f), Vec4(1.0f, 0.0f, 0.0f) }, // 3
-	{ Vec4(-1.0f, -1.0f,  1.0f), Vec4(0.0f, 0.0f, 1.0f) }, // 4
-	{ Vec4(-1.0f,  1.0f,  1.0f), Vec4(0.0f, 1.0f, 1.0f) }, // 5
-	{ Vec4( 1.0f,  1.0f,  1.0f), Vec4(1.0f, 1.0f, 1.0f) }, // 6
-	{ Vec4( 1.0f, -1.0f,  1.0f), Vec4(1.0f, 0.0f, 1.0f) }  // 7
-};
-
-static uint16 g_Indicies[36] =
-{
-	0, 1, 2, 0, 2, 3,
-	4, 6, 5, 4, 7, 6,
-	4, 5, 1, 4, 1, 0,
-	3, 2, 6, 3, 6, 7,
-	1, 5, 6, 1, 6, 2,
-	4, 0, 3, 4, 3, 7
-};
 
 void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 {
@@ -106,7 +77,6 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	}
 
 	MeshLoader::Init();
-	MeshLoader::LoadFromFile("Data\\Cornell_fake2.obj");
 
 	auto dx12_device	= inDevice.m_Device;
 	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
@@ -118,15 +88,15 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Create the vertex input layout
 	D3D12_INPUT_ELEMENT_DESC input_layout[] =
 	{
-		{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		// Based on VertexPosUVNormal
+		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	// Create Mesh
-	m_CubeMesh = new Mesh();
-	m_CubeMesh->Init(dx12_device, command_list, D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-					 g_Vertices, _countof(g_Vertices) * sizeof(VertexPosColor), sizeof(VertexPosColor),
-					 g_Indicies, _countof(g_Indicies) * sizeof(uint16));
+	MeshLoader mesh_loader;
+	mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
+	m_SceneMesh = mesh_loader.CreateMeshObject(dx12_device, command_list);
 
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
@@ -173,6 +143,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		CD3DX12_PIPELINE_STATE_STREAM_PS						m_PixelShader;
 		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT		m_DSVFormat;
 		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS		m_RTVFormats;
+		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER				m_Rasterizer;
 	} pipeline_state_stream;
 
 	D3D12_RT_FORMAT_ARRAY rtv_formats = {};
@@ -206,7 +177,7 @@ void UnloadContent(DX12Device& inDevice)
 	// Make sure the command queue has finished all commands before closing.
 	inDevice.Flush();
 
-	delete m_CubeMesh;
+	delete m_SceneMesh;
 	delete m_ConstantBuffer;
 
 	delete m_DepthBuffer;
@@ -237,16 +208,20 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 
 	// Update the model matrix.
 	float angle = TTT * 0.1f;
-	const Vec4 rotation_axis(0, 1, 1, 0);
-	m_ModelMatrix = Mat4::CreateRotationMatrix(rotation_axis, Math::ToRadians(angle));
+	const Vec4 rotation_axis(0, 1, 0, 0);
+	m_ModelMatrix = Mat4::CreateRotationMatrix(rotation_axis, Math::ToRadians(180.0f));
 
-	Vec4 position(0, 0, Math::Sin(angle*0.01f));
+	Vec4 position(0, Math::Sin(angle*0.01f) - 3.0f, 0);
 	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
 
+	float radius = 10.0f;
+	float x = Math::Cos(angle * 0.005f) * radius;
+	float y = Math::Sin(angle * 0.005f) * radius;
+
 	// Update the view matrix.
-	const Vec4 eye_position(0, -10, 0, 1);
-	const Vec4 focus_point(0, 0, 0, 1);
-	const Vec4 up_direction(0, 0, 1, 0);
+	const Vec4 eye_position(10, 3, y, 0);
+	const Vec4 focus_point(0, 0, 0, 0);
+	const Vec4 up_direction(0, 1, 0, 0);
 	m_ViewMatrix = Mat4::CreateLookAtMatrix(eye_position, focus_point, up_direction);
 
 	// Update the projection matrix.
@@ -272,25 +247,26 @@ void OnRender(DX12Device& inDevice)
 	command_list->SetPipelineState(m_PipelineState);
 	command_list->SetGraphicsRootSignature(m_RootSignature);
 
-	m_CubeMesh->Set(command_list);
+	m_SceneMesh->Set(command_list);
 
 	command_list->RSSetViewports(1, &m_Viewport);
 	command_list->RSSetScissorRects(1, &m_ScissorRect);
 
 	inDevice.m_SwapChain->SetRenderTarget(command_list, m_DepthBuffer);
 
-	// Update the MVP matrix
-	Mat4 mvp_matrix		= m_ModelMatrix.Mul(m_ViewMatrix);
-	mvp_matrix			= mvp_matrix.Mul(m_ProjectionMatrix);
+	// TODO: Pre multiply matrix
+	ConstantBuffer::ModelViewProjection mvp;
+	mvp.Model		= m_ModelMatrix;
+	mvp.View		= m_ViewMatrix;
+	mvp.Projection	= m_ProjectionMatrix;
+
+	mvp.ColorMul = Vec4(m_ColorMul);
 
 	// Upload Constant Buffer to GPU
-	ConstantBuffer::ModelViewProjection mvp;
-	mvp.MVP = mvp_matrix;
-	mvp.ColorMul = Vec4(m_ColorMul);
 	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
 	m_ConstantBuffer->SetConstantBuffer(command_list, 0);
 
-	command_list->DrawIndexedInstanced(_countof(g_Indicies), 1, 0, 0, 0);
+	command_list->DrawIndexedInstanced(m_SceneMesh->GetNumIndices(), 1, 0, 0, 0);
 
 	// Present
 	inDevice.Present(command_list);

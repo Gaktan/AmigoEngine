@@ -31,6 +31,7 @@ public:
 	Vector4<T> operator + (const Vector4<T>& inOther) const;
 	Vector4<T> operator - (T x) const;
 	Vector4<T> operator - (const Vector4<T>& inOther) const;
+	Vector4<T> operator - () const;
 	Vector4<T> operator * (T x) const;
 	Vector4<T> operator / (T x) const;
 

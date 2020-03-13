@@ -1,7 +1,12 @@
 #pragma once
 
-#include <string>
 #include <map>
+#include <string>
+#include <vector>
+
+#include "Math/Vec4.h"
+
+#include "Gfx/Mesh.h"
 
 enum class OBJKeyword
 {
@@ -34,13 +39,27 @@ enum class OBJKeyword
 class MeshLoader
 {
 protected:
-	static std::map<std::string, OBJKeyword> s_OBJKeywords;
+	std::vector<Vec4>				m_AllPositions;
+	std::vector<Vec4>				m_AllNormals;
+	std::vector<Vec4>				m_AllUVCoords;
+	std::vector<VertexPosUVNormal>	m_VertexData;
+	std::vector<uint16>				m_IndexData;
+	std::map<std::string, uint16>	m_IndexMap;
 
 public:
-	static void Init();
-	static void LoadFromFile(const std::string& inFile);
+	void	LoadFromFile(const std::string& inFile);
+	Mesh*	CreateMeshObject(ID3D12Device* inDevice, ID3D12GraphicsCommandList2* inCommandList);
 
 private:
-	static void ProcessLine(const std::string& inLine);
+	void	ProcessLine(const std::string& inLine);
+	void	ProcessTriangle(const std::vector<std::string>& inFaceElements);
+	void	ReverseWinding();
+
+	// Static members
+protected:
+	static std::map<std::string, OBJKeyword> s_OBJKeywords;
+
 	static OBJKeyword GetKeywordFromString(const std::string& inStr);
+public:
+	static void Init();
 };

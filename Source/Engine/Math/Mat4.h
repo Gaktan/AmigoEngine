@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Math/Math.h"
 #include "Math/Vec4.h"
 
 // nonstandard extension used: nameless struct/union
@@ -148,7 +149,7 @@ public:
 		return ret;
 	}
 
-	static Mat4 CreateLookAtMatrix(const Vec4& inEye, const Vec4& inFocus, const Vec4& inUpVector = { 0, 0, 1 })
+	static Mat4 CreateLookAtMatrix(const Vec4& inEye, const Vec4& inFocus, const Vec4& inUpVector = { 0, 1, 0 })
 	{
 		Vec4 forward	= Vec4::Normalize(inFocus - inEye);
 		Vec4 right		= Vec4::Cross(Vec4::Normalize(inUpVector), forward);
@@ -157,18 +158,18 @@ public:
 		Mat4 ret(true);
 
 		ret._m00 = right.X();
-		ret._m01 = right.Y();
-		ret._m02 = right.Z();
-		ret._m10 = up.X();
+		ret._m10 = right.Y();
+		ret._m20 = right.Z();
+		ret._m01 = up.X();
 		ret._m11 = up.Y();
-		ret._m12 = up.Z();
-		ret._m20 = forward.Z();
-		ret._m21 = forward.Y();
+		ret._m21 = up.Z();
+		ret._m02 = forward.X();
+		ret._m12 = forward.Y();
 		ret._m22 = forward.Z();
 
-		ret._m30 = 0.0f - Vec4::Dot(right, inEye);
-		ret._m31 = 0.0f - Vec4::Dot(up, inEye);
-		ret._m32 = 0.0f - Vec4::Dot(forward, inEye);
+		ret._m30 = -Vec4::Dot(right, inEye);
+		ret._m31 = -Vec4::Dot(up, inEye);
+		ret._m32 = -Vec4::Dot(forward, inEye);
 
 		return ret;
 	}
@@ -177,8 +178,8 @@ public:
 	{
 		inFOV *= 0.5f;
 
-		float cosFov	= cos(inFOV);
-		float sinFov	= sin(inFOV);
+		float cosFov	= Math::Cos(inFOV);
+		float sinFov	= Math::Sin(inFOV);
 		float height	= cosFov / sinFov;
 		float width		= height / inAspectRatio;
 		float range		= inZFar / (inZFar - inZNear);

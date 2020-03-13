@@ -70,4 +70,14 @@ namespace Math
 	{
 		return ::sinf(a);
 	}
+
+	inline float Cos(float a)
+	{
+		return ::cosf(a);
+	}
+
+	inline float Tan(float a)
+	{
+		return ::tanf(a);
+	}
 }
