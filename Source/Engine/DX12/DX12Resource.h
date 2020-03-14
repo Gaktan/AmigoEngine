@@ -1,6 +1,7 @@
 #pragma once
 
 #include <d3d12.h>
+#include <string>
 
 class DX12Resource
 {
@@ -23,6 +24,9 @@ public:
 		size_t inBufferSize = 0, const void* inBufferData = nullptr);
 
 	ID3D12Resource* GetResource() const;
+
+protected:
+	static void SetResourceName(ID3D12Resource* inResource, const std::string& inName);
 };
 
 class DX12VertexBuffer : public DX12Resource

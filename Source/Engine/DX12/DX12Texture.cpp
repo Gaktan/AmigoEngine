@@ -80,13 +80,14 @@ void DX12Texture::UpdateBufferResource(
 
 	D3D12_SUBRESOURCE_DATA subresource_data = {};
 	subresource_data.pData		= inBufferData;
-	subresource_data.RowPitch	= m_Width * 4; // TODO! Change this based on format!!
+	subresource_data.RowPitch	= m_Width * 4; // TODO: Change this based on format!!
 	subresource_data.SlicePitch	= m_Width * m_Height * 4;
 
 	UpdateSubresources(inCommandList,
 						m_Resource, m_IntermediateResource,
 						0, 0, 1, &subresource_data);
 
+	SetResourceName(m_IntermediateResource, "DX12Texture::UpdateBufferResource");
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUDescriptorHandle() const

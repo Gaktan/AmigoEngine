@@ -22,6 +22,8 @@ void DX12Resource::InitAsResource(
 		IID_PPV_ARGS(&m_Resource)));
 
 	UpdateBufferResource(inDevice, inCommandList, inBufferSize, inBufferData);
+
+	SetResourceName(m_Resource, "DX12Resource::InitAsResource");
 }
 
 DX12Resource::~DX12Resource()
@@ -54,6 +56,8 @@ void DX12Resource::UpdateBufferResource(
 				D3D12_RESOURCE_STATE_GENERIC_READ,
 				nullptr,
 				IID_PPV_ARGS(&m_IntermediateResource)));
+
+			SetResourceName(m_IntermediateResource, "DX12Resource::UpdateBufferResource");
 		}
 
 		D3D12_SUBRESOURCE_DATA subresource_data = {};
@@ -70,6 +74,14 @@ void DX12Resource::UpdateBufferResource(
 ID3D12Resource* DX12Resource::GetResource() const
 {
 	return m_Resource;
+}
+
+void DX12Resource::SetResourceName(ID3D12Resource* inResource, const std::string& inName)
+{
+	static int resource_number = 0;
+	std::string narrow_string = inName + std::to_string(resource_number++);
+	std::wstring wide_string = std::wstring(narrow_string.begin(), narrow_string.end());
+	inResource->SetName(wide_string.c_str());
 }
 
 void DX12VertexBuffer::InitAsVertexBuffer(
@@ -89,6 +101,8 @@ void DX12VertexBuffer::InitAsVertexBuffer(
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER);
 
 	inCommandList->ResourceBarrier(1, &barrier);
+
+	SetResourceName(m_Resource, "DX12VertexBuffer::InitAsVertexBuffer");
 }
 
 void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList, uint32 inStartSlot) const
@@ -113,6 +127,8 @@ void DX12IndexBuffer::InitAsIndexBuffer(
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_INDEX_BUFFER);
 
 	inCommandList->ResourceBarrier(1, &barrier);
+
+	SetResourceName(m_Resource, "DX12IndexBuffer::InitAsIndexBuffer");
 }
 
 void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* inCommandList) const
@@ -135,6 +151,8 @@ void DX12ConstantBuffer::InitAsConstantBuffer(
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
 		IID_PPV_ARGS(&m_Resource)));
+
+	SetResourceName(m_Resource, "DX12ConstantBuffer::InitAsConstantBuffer");
 }
 
 void DX12ConstantBuffer::UpdateBufferResource(

@@ -214,6 +214,8 @@ void UnloadContent(DX12Device& inDevice)
 	m_RootSignature->Release();
 	m_PipelineState->Release();
 
+	delete m_DummyTexture;
+
 	m_ContentLoaded = false;
 }
 

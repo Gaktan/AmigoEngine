@@ -40,6 +40,8 @@ void DX12RenderTarget::InitAsRenderTarget(
 	view_desc.Texture2D.PlaneSlice	= 0;
 
 	inDevice.m_Device->CreateRenderTargetView(m_Resource, &view_desc, m_DescriptorHandle);
+
+	SetResourceName(m_Resource, "DX12RenderTarget::InitAsRenderTarget");
 }
 
 void DX12RenderTarget::InitFromResource(
@@ -55,6 +57,8 @@ void DX12RenderTarget::InitFromResource(
 	m_Resource			= inResource;
 
 	inDevice.m_Device->CreateRenderTargetView(m_Resource, nullptr, m_DescriptorHandle);
+
+	SetResourceName(m_Resource, "DX12RenderTarget::InitFromResource");
 }
 
 void DX12RenderTarget::ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const
@@ -110,6 +114,8 @@ void DX12DepthRenderTarget::InitAsDepthStencilBuffer(
 	view_desc.Flags					= D3D12_DSV_FLAG_NONE;
 
 	inDevice.m_Device->CreateDepthStencilView(m_Resource, &view_desc, m_DescriptorHandle);
+
+	SetResourceName(m_Resource, "DX12DepthRenderTarget::InitAsDepthStencilBuffer");
 }
 
 void DX12DepthRenderTarget::ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const
