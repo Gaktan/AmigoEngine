@@ -6,6 +6,7 @@
 class DX12CommandQueue;
 class DX12SwapChain;
 class DX12DescriptorHeap;
+class DX12FreeListDescriptorHeap;
 
 class DX12Device
 {
@@ -23,9 +24,9 @@ protected:
 	DX12CommandQueue*		m_CopyCommandQueue;
 
 	// Descriptor heaps
-	DX12DescriptorHeap*		m_RTVDescriptorHeap;
-	DX12DescriptorHeap*		m_DSVDescriptorHeap;
-	DX12DescriptorHeap*		m_SRVDescriptorHeap;
+	DX12DescriptorHeap*				m_RTVDescriptorHeap;
+	DX12DescriptorHeap*				m_DSVDescriptorHeap;
+	DX12FreeListDescriptorHeap*		m_SRVDescriptorHeap;
 
 public:
 	DX12Device();

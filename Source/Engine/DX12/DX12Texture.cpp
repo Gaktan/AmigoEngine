@@ -5,20 +5,27 @@
 
 #include "D3dx12.h"
 
+DX12Texture::~DX12Texture()
+{
+	DX12FreeListDescriptorHeap* free_list_descriptor_heap = dynamic_cast<DX12FreeListDescriptorHeap*>(m_DescriptorHeap);
+	if (free_list_descriptor_heap)
+	{
+		free_list_descriptor_heap->ReleaseIndex(m_DescriptorHeapIndex);
+	}
+}
+
 void DX12Texture::InitAsTexture(
 	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
-	DX12DescriptorHeap& inDescriptorHeap,
+	DX12DescriptorHeap* inDescriptorHeap,
 	uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 	const void* inBufferData)
 {
 	m_Width					= inWidth;
 	m_Height				= inHeight;
 	m_Format				= inFormat;
-
-	uint32 heap_index	= inDescriptorHeap.GetFreeIndex();
-	m_CPUHandle			= inDescriptorHeap.GetCPUHandle(heap_index);
-	m_GPUHandle			= inDescriptorHeap.GetGPUHandle(heap_index);
+	m_DescriptorHeap		= inDescriptorHeap;
+	m_DescriptorHeapIndex	= m_DescriptorHeap->GetFreeIndex();
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, m_Width, m_Height, /*arraySize*/ 1, /*mipLevels*/ 1);
@@ -49,7 +56,7 @@ void DX12Texture::InitAsTexture(
 	view_desc.Texture2D.MostDetailedMip		= 0;
 	view_desc.Texture2D.ResourceMinLODClamp	= 0.0f;
 
-	inDevice.m_Device->CreateShaderResourceView(m_Resource, &view_desc, m_CPUHandle);
+	inDevice.m_Device->CreateShaderResourceView(m_Resource, &view_desc, GetCPUHandle());
 }
 
 void DX12Texture::UpdateBufferResource(
@@ -92,10 +99,10 @@ void DX12Texture::UpdateBufferResource(
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUHandle() const
 {
-	return m_CPUHandle;
+	return m_DescriptorHeap->GetCPUHandle(m_DescriptorHeapIndex);
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DX12Texture::GetGPUHandle() const
 {
-	return m_GPUHandle;
+	return m_DescriptorHeap->GetGPUHandle(m_DescriptorHeapIndex);
 }

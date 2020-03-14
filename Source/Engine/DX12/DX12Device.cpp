@@ -48,7 +48,7 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 
 	m_RTVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_BUFFERED_FRAMES);
 	m_DSVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, NUM_BUFFERED_FRAMES);
-	m_SRVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+	m_SRVDescriptorHeap = new DX12FreeListDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 	m_DirectCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_ComputeCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COMPUTE);

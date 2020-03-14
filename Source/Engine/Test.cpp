@@ -120,7 +120,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 
 		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		m_DummyTexture->InitAsTexture(inDevice, command_list, *descriptor_heap, dummy_width, dummy_height, dummy_format, dummy_data);
+		m_DummyTexture->InitAsTexture(inDevice, command_list, descriptor_heap, dummy_width, dummy_height, dummy_format, dummy_data);
 	}
 	
 

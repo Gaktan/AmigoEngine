@@ -56,6 +56,9 @@ class AmigoEngine : Project
 
 		// Enable C++17
 		conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
+		
+		// Enable RTTI
+		conf.Options.Add(Options.Vc.Compiler.RTTI.Enable);
 
 		// Exception handling in std lib
 		conf.Defines.Add("_HAS_EXCEPTIONS=0");
