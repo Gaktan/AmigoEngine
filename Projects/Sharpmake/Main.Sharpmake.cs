@@ -13,6 +13,10 @@ class AmigoEngine : Project
 		RootPath = @"[project.SharpmakeCsPath]\..\..";
 		SourceRootPath = @"[project.RootPath]\Source\Engine";
 
+		// Shader files
+		SourceFilesExtensions.Add(".hlsl");
+		SourceFilesExcludeRegex.Add(@".*\.generated\.h");
+
 		AddTargets(new Target(
 			Platform.win64,
 			DevEnv.vs2017,
@@ -22,41 +26,37 @@ class AmigoEngine : Project
 			BuildSystem.MSBuild,
 			DotNetFramework.v4_5));
 
-		// Shader files
-		ResourceFilesExtensions.Add(".hlsl");
-        SourceFilesExcludeRegex.Add(@".*\.generated\.h");
+		// if set to true, dependencies that the project uses will be copied to the output directory
+		DependenciesCopyLocal = DependenciesCopyLocalTypes.None;
+	}
 
-        // if set to true, dependencies that the project uses will be copied to the output directory
-        DependenciesCopyLocal = DependenciesCopyLocalTypes.None;
-    }
-	
 	[Configure()]
 	public void ConfigureAll(Configuration conf, Target target)
 	{
-		conf.ProjectPath = @"[project.RootPath]\Projects\[project.Name]\";
-		conf.ProjectFileName = @"[project.Name].[target.DevEnv].[target.Platform]";
-		conf.IntermediatePath = @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]";
-		conf.TargetPath = @"[project.RootPath]\Output\[target.Platform]";
-		
+		conf.ProjectPath		= @"[project.RootPath]\Projects\[project.Name]\";
+		conf.ProjectFileName	= @"[project.Name].[target.DevEnv].[target.Platform]";
+		conf.IntermediatePath	= @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]";
+		conf.TargetPath			= @"[project.RootPath]\Output\[target.Platform]";
+
 		conf.IncludePaths.Add(@"[project.SourceRootPath]\");
-		
+
 		conf.PrecompHeader = @"[project.Name].h";
 		conf.PrecompSource = @"[project.Name].cpp";
-		
+
 		// Set default Working directory
 		conf.VcxprojUserFile = new Sharpmake.Project.Configuration.VcxprojUserFileSettings();
 		conf.VcxprojUserFile.LocalDebuggerWorkingDirectory = "$(SolutionDir)";
 	}
-	
+
 	[Configure(Platform.win64)]
 	public void ConfigurePC(Configuration conf, Target target)
 	{
 		// Make this project an Executable
 		conf.Options.Add(Options.Vc.Linker.SubSystem.Application);
-		
+
 		// Enable C++17
 		conf.Options.Add(Options.Vc.Compiler.CppLanguageStandard.CPP17);
-		
+
 		// Exception handling in std lib
 		conf.Defines.Add("_HAS_EXCEPTIONS=0");
 
@@ -67,13 +67,13 @@ class AmigoEngine : Project
 		conf.LibraryFiles.Add(@"DXGI.lib");
 		conf.LibraryFiles.Add(@"dxguid.lib");
 
-        // Add dependency to ShaderCompiler
-        conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);
-        
-        // Compiler Shaders during Pre-Build event
-        conf.EventPreBuild.Add(@"""[project.RootPath]\Tools\ShaderCompiler\ShaderCompiler.exe"" -Rebuild -c Config.ini -r ""[project.SourceRootPath]\Shaders""");
+		// Add dependency to ShaderCompiler
+		conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);
+
+		// Compiler Shaders during Pre-Build event
+		conf.EventPreBuild.Add(@"""[project.RootPath]\Tools\ShaderCompiler\ShaderCompiler.exe"" -Rebuild -c Config.ini -r ""[project.SourceRootPath]\Shaders""");
 	}
-	
+
 	[Generate]
 	public class AmigoSolution : Solution
 	{
@@ -86,7 +86,7 @@ class AmigoEngine : Project
 				DevEnv.vs2017,
 				Optimization.Debug | Optimization.Release);
 			target.Framework = DotNetFramework.v4_5;
-			
+
 			AddTargets(target);
 		}
 
@@ -106,7 +106,7 @@ class AmigoEngine : Project
 			conf.AddProject<ShaderCompiler>(target);
 		}
 	}
-	
+
 	public static class Main
 	{
 		[Sharpmake.Main]
