@@ -100,7 +100,9 @@ namespace ShaderCompiler
 
 			process.WaitForExit();
 
-			if (process.ExitCode != 0)
+			shaderFile.DidCompile = (process.ExitCode == 0);
+
+			if (!shaderFile.DidCompile)
 			{
 				string errorMessage = process.StandardError.ReadToEnd() + "Failed with commandline:\n" + compilerExe + " " + args + "\n\n";
 				throw new Exception(errorMessage);

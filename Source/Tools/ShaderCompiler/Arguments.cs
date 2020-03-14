@@ -1,5 +1,7 @@
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Threading;
 
 namespace ShaderCompiler
 {
@@ -62,10 +64,12 @@ namespace ShaderCompiler
 		{
 			if (args.Length == 0)
 			{
-				Console.WriteLine("Expected arguments.", args.Length);
+				Console.WriteLine("Expected arguments.");
 				PrintUsage();
 				return false;
 			}
+
+			Console.WriteLine("Using arguments: {0}", string.Join(" ", args));
 
 			for (int i = 0; i < args.Length; i++)
 			{
@@ -91,6 +95,17 @@ namespace ShaderCompiler
 						Console.WriteLine(@"Given root folder '{0}' doesn't exist", RootFolder);
 						return false;
 					}
+					break;
+				}
+				case "-wait_for_debugger":
+				{
+					Console.WriteLine("Waiting for debugger to attach");
+					while (!Debugger.IsAttached)
+					{
+						Thread.Sleep(100);
+					}
+					Console.WriteLine("Debugger attached");
+					Debugger.Break();
 					break;
 				}
 				default:

@@ -9,27 +9,29 @@ namespace ShaderCompiler
 		protected List<ShaderFile>	ShaderFiles;
 		public List<Struct>			Structs;
 
-
 		public ShaderFileParser(List<ShaderFile> shaderFiles)
 		{
 			ShaderFiles = shaderFiles;
 			Structs = new List<Struct>();
 		}
 
-		public void Process(ShaderFile shaderFile)
+		public void ProcessSingleFile(ShaderFile inShaderFile)
 		{
 			// Get all structs
-			Structs.AddRange(Struct.GetAllStructsFromShaderFile(shaderFile));
+			Structs.AddRange(Struct.GetAllStructsFromShaderFile(inShaderFile));
 
 			// Compile
-			ShaderCompiler.Compile(shaderFile);
+			if (inShaderFile.ShouldCompile)
+			{
+				ShaderCompiler.Compile(inShaderFile);
+			}
 		}
 
-		public void ProcessAllFiles()
+		public void ProcessFiles()
 		{
 			foreach (ShaderFile shaderFile in ShaderFiles)
 			{
-				Process(shaderFile);
+				ProcessSingleFile(shaderFile);
 			}
 
 			// Find if it has any duplicates
@@ -45,7 +47,7 @@ namespace ShaderCompiler
 
 		void DebugPrint()
 		{
-			foreach(Struct s in Structs)
+			foreach (Struct s in Structs)
 			{
 				s.DebugPrint();
 			}

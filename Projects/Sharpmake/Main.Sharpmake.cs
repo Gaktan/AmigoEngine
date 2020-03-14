@@ -71,7 +71,7 @@ class AmigoEngine : Project
 		conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);
 
 		// Compiler Shaders during Pre-Build event
-		conf.EventPreBuild.Add(@"""[project.RootPath]\Tools\ShaderCompiler\ShaderCompiler.exe"" -Rebuild -c Config.ini -r ""[project.SourceRootPath]\Shaders""");
+		conf.EventPreBuild.Add(@"""[project.RootPath]\Tools\ShaderCompiler\ShaderCompiler.exe"" -Build -c Config.ini -r ""[project.SourceRootPath]\shaders""");
 	}
 
 	[Generate]
