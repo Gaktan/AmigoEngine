@@ -33,6 +33,9 @@ protected:
 	// DSV Descriptor Heap
 	DX12DescriptorHeap		m_DSVDescriptorHeap;
 
+	// SRV Descriptor Heap
+	DX12DescriptorHeap		m_SRVDescriptorHeap;
+
 public:
 	DX12Device();
 	~DX12Device();

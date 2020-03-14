@@ -22,6 +22,7 @@ DX12Device::~DX12Device()
 
 	m_RTVDescriptorHeap.m_DescriptorHeap->Release();
 	m_DSVDescriptorHeap.m_DescriptorHeap->Release();
+	m_SRVDescriptorHeap.m_DescriptorHeap->Release();
 
 #if defined(_DEBUG)
 	ID3D12DebugDevice* debug_device = nullptr;
@@ -63,6 +64,17 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 
 	m_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	m_DSVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	//m_SRVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	{
+		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
+		desc.NumDescriptors	= 1;
+		desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		desc.NodeMask		= 0;
+		desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
+		ThrowIfFailed(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_SRVDescriptorHeap.m_DescriptorHeap)));
+
+		m_SRVDescriptorHeap.m_DescriptorIncrementSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	}
 
 	m_DirectCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_ComputeCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
@@ -238,6 +250,9 @@ DX12DescriptorHeap DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inTy
 		break;
 	case D3D12_DESCRIPTOR_HEAP_TYPE_DSV:
 		descriptor_heap = m_DSVDescriptorHeap;
+		break;
+	case D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV:
+		descriptor_heap = m_SRVDescriptorHeap;
 		break;
 	default:
 		Assert(false, "Unsuppported D3D12_DESCRIPTOR_HEAP_TYPE");

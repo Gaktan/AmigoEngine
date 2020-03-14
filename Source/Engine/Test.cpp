@@ -15,6 +15,7 @@
 #include "DX12/DX12Resource.h"
 #include "DX12/DX12RenderTarget.h"
 #include "DX12/DX12CommandQueue.h"
+#include "DX12/DX12Texture.h"
 
 #include "Gfx/Mesh.h"
 #include "Gfx/MeshLoader.h"
@@ -23,19 +24,21 @@
 #include "Shaders/Include/Shaders.h"
 
 // Mesh for the scene
-Mesh* m_SceneMesh;
+Mesh* m_SceneMesh = nullptr;
 
 // Constant Buffer for the vertex shader
-DX12ConstantBuffer* m_ConstantBuffer;
+DX12ConstantBuffer* m_ConstantBuffer = nullptr;
 
 // Depth buffer.
 DX12DepthRenderTarget* m_DepthBuffer = nullptr;
 
 // Root signature
-ID3D12RootSignature* m_RootSignature;
+ID3D12RootSignature* m_RootSignature = nullptr;
 
 // Pipeline state object.
-ID3D12PipelineState* m_PipelineState;
+ID3D12PipelineState* m_PipelineState = nullptr;
+
+DX12Texture* m_DummyTexture = nullptr;
 
 D3D12_VIEWPORT m_Viewport;
 D3D12_RECT m_ScissorRect;
@@ -102,6 +105,24 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	m_ConstantBuffer = new DX12ConstantBuffer();
 	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, sizeof(ConstantBuffer::ModelViewProjection));
 
+	// Create texture
+	m_DummyTexture = new DX12Texture();
+	{
+		int dummy_width				= 2;
+		int dummy_height			= 2;
+		DXGI_FORMAT dummy_format	= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
+		uint32 dummy_data[2*2]
+		{
+			0xff0000ff, 0xff00ff00,
+			0xffff0000, 0xffffffff
+		};
+
+		DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+		m_DummyTexture->InitAsTexture(inDevice, command_list, descriptor_heap, dummy_width, dummy_height, dummy_format, dummy_data);
+	}
+	
+
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
 	feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
@@ -115,15 +136,23 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+
+	// Create a descriptor table with one entry in our descriptor heap
+	CD3DX12_DESCRIPTOR_RANGE1 range { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
 
 	// A single Constant Buffer View root parameter that is used by the vertex shader.
-	CD3DX12_ROOT_PARAMETER1 root_parameters[1];
-	root_parameters[0].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
+	CD3DX12_ROOT_PARAMETER1 root_parameters[2];
+	root_parameters[0].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_PIXEL);
+	root_parameters[1].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
+
+	// We don't use another descriptor heap for the sampler, instead we use a
+	// static sampler
+	CD3DX12_STATIC_SAMPLER_DESC samplers[1];
+	samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_desc;
-	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 0, nullptr, rootSignatureFlags);
+	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 1, samplers, rootSignatureFlags);
 
 	// Serialize the root signature.
 	ID3DBlob* root_signature_blob;
@@ -262,9 +291,18 @@ void OnRender(DX12Device& inDevice)
 
 	mvp.ColorMul = Vec4(m_ColorMul);
 
+	// Set texture
+
+	// Set the descriptor heap containing the texture srv
+	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).m_DescriptorHeap };
+	command_list->SetDescriptorHeaps(1, heaps);
+
+	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
+	command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUDescriptorHandle());
+
 	// Upload Constant Buffer to GPU
 	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
-	m_ConstantBuffer->SetConstantBuffer(command_list, 0);
+	m_ConstantBuffer->SetConstantBuffer(command_list, 1);
 
 	command_list->DrawIndexedInstanced(m_SceneMesh->GetNumIndices(), 1, 0, 0, 0);
 

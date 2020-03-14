@@ -20,7 +20,7 @@ void DX12RenderTarget::InitAsRenderTarget(
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, inWidth, inHeight,
-																		   /*arraySize*/ 1, /*mipLevels*/ 0, /*sampleCount*/ 1, /*sampleQuality*/ 0,
+																		   /*arraySize*/ 1, /*mipLevels*/ 1, /*sampleCount*/ 1, /*sampleQuality*/ 0,
 																		   D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
 	ThrowIfFailed(inDevice.m_Device->CreateCommittedResource(
@@ -90,7 +90,7 @@ void DX12DepthRenderTarget::InitAsDepthStencilBuffer(
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, inWidth, inHeight,
-																		   /*arraySize*/ 1, /*mipLevels*/ 0, /*sampleCount*/ 1, /*sampleQuality*/ 0,
+																		   /*arraySize*/ 1, /*mipLevels*/ 1, /*sampleCount*/ 1, /*sampleQuality*/ 0,
 																		   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
 	ThrowIfFailed(inDevice.m_Device->CreateCommittedResource(
