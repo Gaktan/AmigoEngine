@@ -1,5 +1,5 @@
 #include "Engine.h"
-#include "DX12Fence.h"
+#include "DX12/DX12Fence.h"
 
 HANDLE CreateEventHandle()
 {

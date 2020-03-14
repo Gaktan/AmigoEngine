@@ -1,5 +1,5 @@
 #include "Engine.h"
-#include "DX12Resource.h"
+#include "DX12/DX12Resource.h"
 
 #include "D3dx12.h"
 

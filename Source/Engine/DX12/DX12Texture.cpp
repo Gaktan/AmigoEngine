@@ -1,20 +1,24 @@
 #include "Engine.h"
-#include "DX12Texture.h"
+#include "DX12/DX12Texture.h"
+
+#include "DX12/DX12DescriptorHeap.h"
 
 #include "D3dx12.h"
 
 void DX12Texture::InitAsTexture(
 	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
-	const DX12DescriptorHeap& inDescriptorHeap,
+	DX12DescriptorHeap& inDescriptorHeap,
 	uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 	const void* inBufferData)
 {
 	m_Width					= inWidth;
 	m_Height				= inHeight;
 	m_Format				= inFormat;
-	m_CPUDescriptorHandle	= inDescriptorHeap.m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	m_GPUDescriptorHandle	= inDescriptorHeap.m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+
+	uint32 heap_index		= inDescriptorHeap.GetFreeIndex();
+	m_CPUDescriptorHandle	= inDescriptorHeap.GetCPUHandle(heap_index);
+	m_GPUDescriptorHandle	= inDescriptorHeap.GetGPUHandle(heap_index);
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, m_Width, m_Height, /*arraySize*/ 1, /*mipLevels*/ 1);

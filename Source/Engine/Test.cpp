@@ -12,6 +12,7 @@
 #include "Math/Mat4.h"
 
 #include "DX12/DX12Device.h"
+#include "DX12/DX12DescriptorHeap.h"
 #include "DX12/DX12Resource.h"
 #include "DX12/DX12RenderTarget.h"
 #include "DX12/DX12CommandQueue.h"
@@ -64,10 +65,10 @@ void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 	}
 	m_DepthBuffer = new DX12DepthRenderTarget();
 
-	DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE dsv_handle(descriptor_heap.m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	uint32 heap_index = descriptor_heap->GetFreeIndex();
 
-	m_DepthBuffer->InitAsDepthStencilBuffer(inDevice, dsv_handle, inNewWidth, inNewHeight);
+	m_DepthBuffer->InitAsDepthStencilBuffer(inDevice, descriptor_heap->GetCPUHandle(heap_index), inNewWidth, inNewHeight);
 }
 
 bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
@@ -117,9 +118,9 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 			0xffff0000, 0xffffffff
 		};
 
-		DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
-		m_DummyTexture->InitAsTexture(inDevice, command_list, descriptor_heap, dummy_width, dummy_height, dummy_format, dummy_data);
+		m_DummyTexture->InitAsTexture(inDevice, command_list, *descriptor_heap, dummy_width, dummy_height, dummy_format, dummy_data);
 	}
 	
 
@@ -294,7 +295,7 @@ void OnRender(DX12Device& inDevice)
 	// Set texture
 
 	// Set the descriptor heap containing the texture srv
-	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV).m_DescriptorHeap };
+	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
 	command_list->SetDescriptorHeaps(1, heaps);
 
 	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV

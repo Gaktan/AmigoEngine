@@ -21,7 +21,7 @@ public:
 	void InitAsTexture(
 		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
-		const DX12DescriptorHeap& inDescriptorHeap,
+		DX12DescriptorHeap& inDescriptorHeap,
 		uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 		const void* inBufferData);
 

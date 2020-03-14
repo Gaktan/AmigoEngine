@@ -1,11 +1,9 @@
 #include "Engine.h"
-#include "DX12Device.h"
+#include "DX12/DX12Device.h"
 
 #include "DX12/DX12CommandQueue.h"
+#include "DX12/DX12DescriptorHeap.h"
 
-#include <d3dcompiler.h>
-//#include <DirectXMath.h>
-//
 #include <D3dx12.h>
 
 DX12Device::DX12Device()
@@ -20,9 +18,9 @@ DX12Device::~DX12Device()
 
 	delete m_SwapChain;
 
-	m_RTVDescriptorHeap.m_DescriptorHeap->Release();
-	m_DSVDescriptorHeap.m_DescriptorHeap->Release();
-	m_SRVDescriptorHeap.m_DescriptorHeap->Release();
+	delete m_RTVDescriptorHeap;
+	delete m_DSVDescriptorHeap;
+	delete m_SRVDescriptorHeap;
 
 #if defined(_DEBUG)
 	ID3D12DebugDevice* debug_device = nullptr;
@@ -37,20 +35,6 @@ DX12Device::~DX12Device()
 	m_Device->Release();
 }
 
-DX12DescriptorHeap DX12Device::CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inHeapType)
-{
-	DX12DescriptorHeap descriptor_heap;
-
-	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-	desc.NumDescriptors	= NUM_BUFFERED_FRAMES;
-	desc.Type			= inHeapType;
-	ThrowIfFailed(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&descriptor_heap.m_DescriptorHeap)));
-
-	descriptor_heap.m_DescriptorIncrementSize = m_Device->GetDescriptorHandleIncrementSize(inHeapType);
-
-	return descriptor_heap;
-}
-
 void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 {
 	EnableDebugLayer();
@@ -62,19 +46,9 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 		dxgi_adapter4->Release();
 	}
 
-	m_RTVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	m_DSVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	//m_SRVDescriptorHeap = CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	{
-		D3D12_DESCRIPTOR_HEAP_DESC desc = {};
-		desc.NumDescriptors	= 1;
-		desc.Type			= D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		desc.NodeMask		= 0;
-		desc.Flags			= D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
-		ThrowIfFailed(m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_SRVDescriptorHeap.m_DescriptorHeap)));
-
-		m_SRVDescriptorHeap.m_DescriptorIncrementSize = m_Device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	}
+	m_RTVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_BUFFERED_FRAMES);
+	m_DSVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, NUM_BUFFERED_FRAMES);
+	m_SRVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 	m_DirectCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_ComputeCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
@@ -240,9 +214,9 @@ DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) cons
 	return command_queue;
 }
 
-DX12DescriptorHeap DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const
+DX12DescriptorHeap* DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const
 {
-	DX12DescriptorHeap descriptor_heap = {};
+	DX12DescriptorHeap* descriptor_heap = nullptr;
 	switch (inType)
 	{
 	case D3D12_DESCRIPTOR_HEAP_TYPE_RTV:

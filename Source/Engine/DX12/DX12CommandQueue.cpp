@@ -1,12 +1,12 @@
 #include "Engine.h"
-#include "DX12CommandQueue.h"
+#include "DX12/DX12CommandQueue.h"
 
 #include "DX12/DX12Device.h"
 #include "DX12/DX12SwapChain.h"
 
-DX12CommandQueue::DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE inType)
-	: m_CommandListType(inType)
-	, m_Fence(inDevice.m_Device)
+DX12CommandQueue::DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE inType) :
+	m_CommandListType(inType),
+	m_Fence(inDevice.m_Device)
 {
 	D3D12_COMMAND_QUEUE_DESC desc = {};
 	desc.Type		= inType;

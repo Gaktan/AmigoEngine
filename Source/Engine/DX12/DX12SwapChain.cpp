@@ -1,7 +1,9 @@
 #include "Engine.h"
-#include "DX12SwapChain.h"
+#include "DX12/DX12SwapChain.h"
 
-#include "DX12Device.h"
+#include "DX12/DX12DescriptorHeap.h"
+#include "DX12/DX12Device.h"
+
 #include "D3dx12.h"
 
 bool CheckTearingSupport()
@@ -119,8 +121,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 		m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
 	}
 
-	DX12DescriptorHeap descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-	CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle(descriptor_heap.m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart());
+	DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	const Vec4 clear_color = { 0.4f, 0.6f, 0.9f, 1.0f };
 	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
@@ -128,10 +129,10 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 		ID3D12Resource* back_buffer;
 		ThrowIfFailed(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
 
-		m_BackBuffers[i] = new DX12RenderTarget();
-		m_BackBuffers[i]->InitFromResource(inDevice, back_buffer, rtv_handle, clear_color);
+		uint32 heap_index = descriptor_heap->GetFreeIndex();
 
-		rtv_handle.Offset(descriptor_heap.m_DescriptorIncrementSize);
+		m_BackBuffers[i] = new DX12RenderTarget();
+		m_BackBuffers[i]->InitFromResource(inDevice, back_buffer, descriptor_heap->GetCPUHandle(heap_index), clear_color);
 	}
 }
 
