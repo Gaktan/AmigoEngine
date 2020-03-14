@@ -16,9 +16,9 @@ void DX12Texture::InitAsTexture(
 	m_Height				= inHeight;
 	m_Format				= inFormat;
 
-	uint32 heap_index		= inDescriptorHeap.GetFreeIndex();
-	m_CPUDescriptorHandle	= inDescriptorHeap.GetCPUHandle(heap_index);
-	m_GPUDescriptorHandle	= inDescriptorHeap.GetGPUHandle(heap_index);
+	uint32 heap_index	= inDescriptorHeap.GetFreeIndex();
+	m_CPUHandle			= inDescriptorHeap.GetCPUHandle(heap_index);
+	m_GPUHandle			= inDescriptorHeap.GetGPUHandle(heap_index);
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, m_Width, m_Height, /*arraySize*/ 1, /*mipLevels*/ 1);
@@ -49,7 +49,7 @@ void DX12Texture::InitAsTexture(
 	view_desc.Texture2D.MostDetailedMip		= 0;
 	view_desc.Texture2D.ResourceMinLODClamp	= 0.0f;
 
-	inDevice.m_Device->CreateShaderResourceView(m_Resource, &view_desc, m_CPUDescriptorHandle);
+	inDevice.m_Device->CreateShaderResourceView(m_Resource, &view_desc, m_CPUHandle);
 }
 
 void DX12Texture::UpdateBufferResource(
@@ -90,12 +90,12 @@ void DX12Texture::UpdateBufferResource(
 	SetResourceName(m_IntermediateResource, "DX12Texture::UpdateBufferResource");
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUDescriptorHandle() const
+D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUHandle() const
 {
-	return m_CPUDescriptorHandle;
+	return m_CPUHandle;
 }
 
-D3D12_GPU_DESCRIPTOR_HANDLE DX12Texture::GetGPUDescriptorHandle() const
+D3D12_GPU_DESCRIPTOR_HANDLE DX12Texture::GetGPUHandle() const
 {
-	return m_GPUDescriptorHandle;
+	return m_GPUHandle;
 }

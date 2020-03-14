@@ -301,7 +301,7 @@ void OnRender(DX12Device& inDevice)
 	command_list->SetDescriptorHeaps(1, heaps);
 
 	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-	command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUDescriptorHandle());
+	command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
 
 	// Upload Constant Buffer to GPU
 	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);

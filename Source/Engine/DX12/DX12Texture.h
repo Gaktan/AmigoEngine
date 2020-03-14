@@ -10,8 +10,8 @@ protected:
 	uint32						m_Width;
 	uint32						m_Height;
 	DXGI_FORMAT					m_Format;
-	D3D12_CPU_DESCRIPTOR_HANDLE	m_CPUDescriptorHandle;
-	D3D12_GPU_DESCRIPTOR_HANDLE	m_GPUDescriptorHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE	m_CPUHandle;
+	D3D12_GPU_DESCRIPTOR_HANDLE	m_GPUHandle;
 
 public:
 	virtual ~DX12Texture()
@@ -25,11 +25,12 @@ public:
 		uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 		const void* inBufferData);
 
+	D3D12_CPU_DESCRIPTOR_HANDLE		GetCPUHandle() const;
+	D3D12_GPU_DESCRIPTOR_HANDLE		GetGPUHandle() const;
+
+protected:
 	virtual void UpdateBufferResource(
 		ID3D12Device* inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr) override;
-
-	D3D12_CPU_DESCRIPTOR_HANDLE		GetCPUDescriptorHandle() const;
-	D3D12_GPU_DESCRIPTOR_HANDLE		GetGPUDescriptorHandle() const;
 };
