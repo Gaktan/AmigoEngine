@@ -187,16 +187,14 @@ void Resize(uint32_t inWwidth, uint32_t inHeight)
 	OnResize(g_Device, inWwidth, inHeight);
 }
 
-LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam)
 {
-	switch (message)
+	if (inMessage == WM_PAINT)
 	{
-	case WM_PAINT:
 		Update();
 		OnRender(g_Device);
-		break;
-	case WM_SYSKEYDOWN:
-	case WM_KEYDOWN:
+	}
+	else if (inMessage == WM_SYSKEYDOWN || inMessage == WM_KEYDOWN)
 	{
 		bool alt = (::GetAsyncKeyState(VK_MENU) & 0x8000) != 0;
 
@@ -214,13 +212,13 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-	break;
-	// The default window procedure will play a system notification sound 
-	// when pressing the Alt+Enter keyboard combination if this message is 
-	// not handled.
-	case WM_SYSCHAR:
-		break;
-	case WM_SIZE:
+	else if (inMessage == WM_SYSCHAR)
+	{
+		// The default window procedure will play a system notification sound 
+		// when pressing the Alt+Enter keyboard combination if this message is 
+		// not handled.
+	}
+	else if (inMessage == WM_SIZE)
 	{
 		RECT clientRect = {};
 		::GetClientRect(g_hWnd, &clientRect);
@@ -230,12 +228,14 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		Resize(width, height);
 	}
-	break;
-	case WM_DESTROY:
+	else if (inMessage == WM_DESTROY)
+	{
 		::PostQuitMessage(0);
-		break;
-	default:
-		return ::DefWindowProcW(hwnd, message, wParam, lParam);
+
+	}
+	else
+	{
+		return ::DefWindowProcW(hwnd, inMessage, wParam, lParam);
 	}
 
 	return 0;
