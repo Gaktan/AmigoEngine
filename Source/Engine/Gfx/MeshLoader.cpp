@@ -46,6 +46,14 @@ void MeshLoader::ReverseWinding()
 	{
 		it->Position.X() = (1.f - it->Position.X());
 	}
+
+	// Flip UV's Y axis
+	// Blender uses OpenGL coords. Origin is at the bottom left corner.
+	// Whereas DirectX's origin is at the top left corner
+	for (auto it = m_VertexData.begin(); it != m_VertexData.end(); ++it)
+	{
+		it->UV.Y() = (1.f - it->UV.Y());
+	}
 }
 
 void MeshLoader::Init()

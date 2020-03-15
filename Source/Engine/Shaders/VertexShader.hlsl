@@ -5,7 +5,6 @@ struct ModelViewProjection
     float4x4	Model;
 	float4x4	View;
 	float4x4	Projection;
-	float4		ColorMul;
 };
 
 // TODO: Make this a little nicer.
@@ -27,7 +26,6 @@ struct VertexPosUVNormal
 
 struct VertexShaderOutput
 {
-	float4 Color    : COLOR;
 	float2 UV		: TEXCOORD;
     float4 Position : SV_Position;
 };
@@ -41,7 +39,6 @@ VertexShaderOutput main(VertexPosUVNormal IN)
 
 	OUT.Position	= mul(mvp_matrix, float4(IN.Position.xyz, 1.0f));
 	OUT.Position	= res;
-	OUT.Color		= float4(IN.Normal.xyz, 1.0f) * ModelViewProjectionCB.ColorMul;
 	OUT.UV			= IN.UV.xy;
 
 	return OUT;

@@ -38,6 +38,7 @@ bool FileReader::ReadFile(const std::string& inFilename)
 	}
 
 	m_FileContent[size] = '\0';
+	m_ContentSize		= size;
 
 	return true;
 }
@@ -51,4 +52,9 @@ const char* FileReader::GetContentAsString() const
 const void* FileReader::GetContentAsBinary() const
 {
 	return (void*) m_FileContent;
+}
+
+uint64 FileReader::GetContentSize() const
+{
+	return m_ContentSize;
 }

@@ -5,7 +5,8 @@
 class FileReader
 {
 protected:
-	char* m_FileContent = nullptr;
+	char*	m_FileContent = nullptr;
+	uint64	m_ContentSize;
 
 public:
 	virtual ~FileReader();
@@ -14,4 +15,5 @@ public:
 
 	const char*		GetContentAsString() const;
 	const void*		GetContentAsBinary() const;
+	uint64			GetContentSize() const;
 };

@@ -45,7 +45,6 @@ struct ModelViewProjection
 	Mat4 Model;
 	Mat4 View;
 	Mat4 Projection;
-	Vec4 ColorMul;
 };
 // EndConstantBuffer
 }

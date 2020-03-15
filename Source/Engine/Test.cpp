@@ -20,6 +20,7 @@
 
 #include "Gfx/Mesh.h"
 #include "Gfx/MeshLoader.h"
+#include "Gfx/TextureLoader.h"
 
 #include "Shaders/Include/ConstantBuffers.h"
 #include "Shaders/Include/Shaders.h"
@@ -49,8 +50,6 @@ float m_FOV;
 Mat4	m_ModelMatrix;
 Mat4	m_ViewMatrix;
 Mat4	m_ProjectionMatrix;
-float	m_ColorMul;
-IVec4	m_Color;
 
 bool m_ContentLoaded;
 
@@ -81,6 +80,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	}
 
 	MeshLoader::Init();
+	TextureLoader::Init();
 
 	auto dx12_device	= inDevice.m_Device;
 	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
@@ -98,31 +98,19 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
+	// Load mesh
 	MeshLoader mesh_loader;
 	mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
 	m_SceneMesh = mesh_loader.CreateMeshObject(dx12_device, command_list);
 
+	// Load texture
+	TextureLoader texture_loader;
+	texture_loader.LoadFromFile("Data\\render_1024.png");
+	m_DummyTexture = texture_loader.CreateTexture(inDevice, command_list);
+
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
 	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, sizeof(ConstantBuffer::ModelViewProjection));
-
-	// Create texture
-	m_DummyTexture = new DX12Texture();
-	{
-		int dummy_width				= 2;
-		int dummy_height			= 2;
-		DXGI_FORMAT dummy_format	= DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
-		uint32 dummy_data[2*2]
-		{
-			0xff0000ff, 0xff00ff00,
-			0xffff0000, 0xffffffff
-		};
-
-		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-
-		m_DummyTexture->InitAsTexture(inDevice, command_list, descriptor_heap, dummy_width, dummy_height, dummy_format, dummy_data);
-	}
-	
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
@@ -259,10 +247,6 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	// Update the projection matrix.
 	float aspect_ratio = inWidth / static_cast<float>(inHeight);
 	m_ProjectionMatrix = Mat4::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
-
-	m_ColorMul = Math::Abs(Math::Sin(TTT*0.001f));
-
-	m_Color = (int32) Math::Abs(Math::Sin(TTT*0.002f + 0.5f)) * 255;
 }
 
 void OnRender(DX12Device& inDevice)
@@ -291,8 +275,6 @@ void OnRender(DX12Device& inDevice)
 	mvp.Model		= m_ModelMatrix;
 	mvp.View		= m_ViewMatrix;
 	mvp.Projection	= m_ProjectionMatrix;
-
-	mvp.ColorMul = Vec4(m_ColorMul);
 
 	// Set texture
 
