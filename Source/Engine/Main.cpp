@@ -179,6 +179,8 @@ void Resize(uint32_t inWwidth, uint32_t inHeight)
 		g_ClientWidth	= Math::Max(1u, inWwidth);
 		g_ClientHeight	= Math::Max(1u, inHeight);
 
+		g_Device.ResestDescriptorHeaps();
+
 		g_Device.m_SwapChain->UpdateRenderTargetViews(g_Device, g_ClientWidth, g_ClientHeight);
 	}
 

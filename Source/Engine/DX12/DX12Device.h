@@ -35,12 +35,13 @@ public:
 	void Flush();
 	void Present(ID3D12GraphicsCommandList2* inCommandList);
 
+	void ResestDescriptorHeaps();
+
 	DX12CommandQueue*	GetCommandQueue(D3D12_COMMAND_LIST_TYPE inType) const;
 	DX12DescriptorHeap*	GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const;
 
 protected:
 	ID3D12Device2* CreateDevice(IDXGIAdapter4* inAdapter);
-	DX12DescriptorHeap CreateDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inHeapType);
 
 	void EnableGPUBasedValidation();
 	void EnableDebugLayer();

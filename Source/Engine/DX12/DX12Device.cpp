@@ -46,8 +46,7 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 		dxgi_adapter4->Release();
 	}
 
-	m_RTVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_BUFFERED_FRAMES);
-	m_DSVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, NUM_BUFFERED_FRAMES);
+	ResestDescriptorHeaps();
 	m_SRVDescriptorHeap = new DX12FreeListDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
 	m_DirectCommandQueue = new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -67,6 +66,19 @@ void DX12Device::Flush()
 void DX12Device::Present(ID3D12GraphicsCommandList2* inCommandList)
 {
 	m_SwapChain->Present(inCommandList, m_DirectCommandQueue);
+}
+
+void DX12Device::ResestDescriptorHeaps()
+{
+	if (m_RTVDescriptorHeap == nullptr)
+	{
+		Assert(m_DSVDescriptorHeap == nullptr);
+		delete m_RTVDescriptorHeap;
+		delete m_DSVDescriptorHeap;
+	}
+
+	m_RTVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, NUM_BUFFERED_FRAMES);
+	m_DSVDescriptorHeap = new DX12DescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, NUM_BUFFERED_FRAMES);
 }
 
 ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
