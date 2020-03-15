@@ -60,6 +60,11 @@ class AmigoEngine : Project
 		// Enable RTTI
 		conf.Options.Add(Options.Vc.Compiler.RTTI.Enable);
 
+		if (target.Optimization == Optimization.Debug)
+			conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDebugDLL);
+		else
+			conf.Options.Add(Options.Vc.Compiler.RuntimeLibrary.MultiThreadedDLL);
+
 		// Exception handling in std lib
 		conf.Defines.Add("_HAS_EXCEPTIONS=0");
 
@@ -71,7 +76,8 @@ class AmigoEngine : Project
 		
 		// DirectXTex
 		conf.IncludePaths.Add(@"[project.RootPath]\External\DirectXTex");
-		conf.LibraryPaths.Add(@"[project.RootPath]\External\DirectXTex\DirectXTex\Bin\Desktop_2017\x64\Release");
+		string target_configuration = (target.Optimization == Optimization.Debug) ? "Debug" : "Release";
+		conf.LibraryPaths.Add(@"[project.RootPath]\External\DirectXTex\DirectXTex\Bin\Desktop_2017\x64\" + target_configuration);
 		conf.LibraryFiles.Add(@"DirectXTex.lib");
 
 		// Add dependency to ShaderCompiler
