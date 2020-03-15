@@ -22,6 +22,8 @@
 #include "Gfx/MeshLoader.h"
 #include "Gfx/TextureLoader.h"
 
+#include "Utils/Mouse.h"
+
 #include "Shaders/Include/ConstantBuffers.h"
 #include "Shaders/Include/Shaders.h"
 
@@ -50,6 +52,7 @@ float m_FOV;
 Mat4	m_ModelMatrix;
 Mat4	m_ViewMatrix;
 Mat4	m_ProjectionMatrix;
+Vec4	m_CameraPosition;
 
 bool m_ContentLoaded;
 
@@ -227,20 +230,33 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	TTT += inDeltaT;
 
 	// Update the model matrix.
-	float angle = TTT * 0.1f;
 	const Vec4 rotation_axis(0, 1, 0, 0);
 	m_ModelMatrix = Mat4::CreateRotationMatrix(rotation_axis, Math::ToRadians(180.0f));
 
-	Vec4 position(0, Math::Sin(angle*0.01f) - 3.0f, 0);
-	m_ModelMatrix = m_ModelMatrix.Tanslate(position);
-
 	float radius = 10.0f;
-	float x = Math::Cos(angle * 0.005f) * radius;
-	float y = Math::Sin(angle * 0.005f) * radius;
+	float x = radius;
+	float y = 3.5f;
+	float z = 0.0f;
+	Vec4 eye_position(x, y, z, 0);
+
+	Mouse& mouse = Mouse::GetInstance();
+	if (mouse.IsButtonDown(MouseButton::Left))
+	{
+		MousePos click_pos		= mouse.GetNormalizedClickPos(MouseButton::Left);
+		MousePos mouse_pos		= mouse.GetNormalizedPos();
+		MousePos click_movement	= { mouse_pos.x - click_pos.x, mouse_pos.y - click_pos.y };
+
+		float angle = click_movement.x * 3.1416f;
+
+		eye_position.X() = Math::Cos(angle) * radius;
+		eye_position.Y() = 3.5f + click_movement.y * radius;
+		eye_position.Z() = Math::Sin(angle) * radius;
+	}
+
+	eye_position = Vec4::Normalize(eye_position) * radius;
 
 	// Update the view matrix.
-	const Vec4 eye_position(10, 3, y, 0);
-	const Vec4 focus_point(0, 0, 0, 0);
+	const Vec4 focus_point(0, 3.5f, 0, 0);
 	const Vec4 up_direction(0, 1, 0, 0);
 	m_ViewMatrix = Mat4::CreateLookAtMatrix(eye_position, focus_point, up_direction);
 

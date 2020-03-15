@@ -5,8 +5,7 @@
 #include "DX12/DX12Device.h"
 #include "DX12/DX12SwapChain.h"
 
-#include <algorithm>
-#include <chrono>
+#include "Utils/Mouse.h"
 
 // Window handle.
 HWND g_hWnd;
@@ -211,6 +210,10 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 			break;
 		}
 	}
+	else if (inMessage >= WM_MOUSEFIRST && inMessage <= WM_MOUSELAST)
+	{
+		Mouse::GetInstance().HandleMouseEvents(inMessage, wParam, lParam);
+	}
 	else if (inMessage == WM_SYSCHAR)
 	{
 		// The default window procedure will play a system notification sound 
@@ -226,6 +229,8 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 		int height	= clientRect.bottom - clientRect.top;
 
 		Resize(width, height);
+
+		Mouse::GetInstance().UpdateWindowSize(width, height);
 	}
 	else if (inMessage == WM_DESTROY)
 	{
