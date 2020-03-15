@@ -206,8 +206,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 		case VK_RETURN:
 			if (alt)
 			{
-		case VK_F11:
-			SetFullscreen(!g_Fullscreen);
+				SetFullscreen(!g_Fullscreen);
 			}
 			break;
 		}
