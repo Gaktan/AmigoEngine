@@ -65,10 +65,14 @@ class AmigoEngine : Project
 
 		// DX12
 		conf.IncludePaths.Add(@"[project.RootPath]\External\D3D12\Include");
-		conf.LibraryFiles.Add(@"D3DCompiler.lib");
 		conf.LibraryFiles.Add(@"D3D12.lib");
 		conf.LibraryFiles.Add(@"DXGI.lib");
 		conf.LibraryFiles.Add(@"dxguid.lib");
+		
+		// DirectXTex
+		conf.IncludePaths.Add(@"[project.RootPath]\External\DirectXTex");
+		conf.LibraryPaths.Add(@"[project.RootPath]\External\DirectXTex\DirectXTex\Bin\Desktop_2017\x64\Release");
+		conf.LibraryFiles.Add(@"DirectXTex.lib");
 
 		// Add dependency to ShaderCompiler
 		conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);

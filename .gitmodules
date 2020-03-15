@@ -2,3 +2,7 @@
 	path = External/Sharpmake
 	url = https://github.com/ubisoftinc/Sharpmake
 	ignore = dirty
+
+[submodule "External/DirectXTex"]
+	path = External/DirectXTex
+	url = https://github.com/microsoft/DirectXTex
