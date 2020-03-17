@@ -240,11 +240,11 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	Vec4 eye_position(x, y, z, 0);
 
 	Mouse& mouse = Mouse::GetInstance();
-	if (mouse.IsButtonDown(MouseButton::Left))
+	if (mouse.IsButtonDown(MouseButton::Middle))
 	{
-		MousePos click_pos		= mouse.GetNormalizedClickPos(MouseButton::Left);
+		MousePos click_pos		= mouse.GetNormalizedClickPos(MouseButton::Middle);
 		MousePos mouse_pos		= mouse.GetNormalizedPos();
-		MousePos click_movement	= { mouse_pos.x - click_pos.x, mouse_pos.y - click_pos.y };
+		MousePos click_movement	= { click_pos.x - mouse_pos.x, click_pos.y - mouse_pos.y };
 
 		float angle = click_movement.x * 3.1416f;
 
