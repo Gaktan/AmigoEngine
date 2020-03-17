@@ -3,6 +3,8 @@
 
 #include <Windows.h>
 
+extern HWND g_hWnd;
+
 void Mouse::HandleMouseEvents(uint64 inMessage, uint64 inWParam, int64 inLParam)
 {
 	// Handle mouse movements
@@ -26,10 +28,17 @@ void Mouse::HandleMouseEvents(uint64 inMessage, uint64 inWParam, int64 inLParam)
 		{
 			m_ButtonStates[button].m_Down					= true;
 			m_ButtonStates[button].m_NormalizedPosAtClick	= m_NormalizedPos;
+
+			// Captures mouse input either when the mouse is over the capturing window,
+			// or when the mouse button was pressed while the mouse was over the capturing window and the button is still down.
+			SetCapture(g_hWnd);
 		}
 		else if (inMessage == WM_LBUTTONUP || inMessage == WM_RBUTTONUP || inMessage == WM_MBUTTONUP)
 		{
 			m_ButtonStates[button].m_Down = false;
+
+			// Release captured mouse
+			ReleaseCapture();
 		}
 		else if (inMessage == WM_LBUTTONDBLCLK || inMessage == WM_RBUTTONDBLCLK || inMessage == WM_MBUTTONDBLCLK)
 		{

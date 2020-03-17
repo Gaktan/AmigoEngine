@@ -237,16 +237,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 		::PostQuitMessage(0);
 
 	}
-	else if (inMessage == WM_SETFOCUS)
-	{
-		// Captures mouse input either when the mouse is over the capturing window,
-		// or when the mouse button was pressed while the mouse was over the capturing window and the button is still down.
-		SetCapture(g_hWnd);
-	}
-	else if (inMessage == WM_KILLFOCUS)
-	{
-		ReleaseCapture();
-	}
 	else
 	{
 		return ::DefWindowProcW(hwnd, inMessage, wParam, lParam);
