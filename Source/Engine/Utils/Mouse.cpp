@@ -3,6 +3,9 @@
 
 #include <Windows.h>
 
+#define GET_X_LPARAM(lp) ((int)(short)LOWORD(lp))
+#define GET_Y_LPARAM(lp) ((int)(short)HIWORD(lp))
+
 extern HWND g_hWnd;
 
 void Mouse::HandleMouseEvents(uint64 inMessage, uint64 inWParam, int64 inLParam)
@@ -10,8 +13,8 @@ void Mouse::HandleMouseEvents(uint64 inMessage, uint64 inWParam, int64 inLParam)
 	// Handle mouse movements
 	if (inMessage == WM_MOUSEMOVE)
 	{
-		int mouse_x = (inLParam) & 0xffff;
-		int mouse_y = (inLParam >> 16) & 0xffff;
+		int mouse_x = GET_X_LPARAM(inLParam);
+		int mouse_y = GET_Y_LPARAM(inLParam);
 
 		UpdateMousePos(mouse_x, mouse_y);
 	}
