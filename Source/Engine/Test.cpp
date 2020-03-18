@@ -52,14 +52,17 @@ float m_FOV;
 Mat4	m_ModelMatrix;
 Mat4	m_ViewMatrix;
 Mat4	m_ProjectionMatrix;
-Vec4	m_CameraPosition;
+
+Vec4	m_SavedPosition;
 
 bool m_ContentLoaded;
 
 void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 {
-	// Flush any GPU commands that might be referencing the depth buffer.
-	inDevice.Flush();
+	inDevice.ResestDescriptorHeaps();
+
+	// Recreate swapchain buffers (causes a flush)
+	inDevice.m_SwapChain->UpdateRenderTargetViews(inDevice, inNewWidth, inNewHeight);
 
 	if (m_DepthBuffer)
 	{
@@ -76,10 +79,14 @@ void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 {
 	{
-		m_ScissorRect	= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-		m_Viewport		= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
-		m_FOV			= 45.0f;
-		m_ContentLoaded = false;
+		m_ScissorRect		= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
+		m_Viewport			= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
+		m_FOV				= 45.0f;
+		m_ContentLoaded		= false;
+
+		const Vec4 eye_position(10.0f, 3.5f, 0.0f, 0);
+		float eye_distance = 10.0f;
+		m_SavedPosition		= Vec4::Normalize(eye_position) * eye_distance;
 	}
 
 	MeshLoader::Init();
@@ -212,53 +219,73 @@ void UnloadContent(DX12Device& inDevice)
 
 void OnResize(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 {
-	//if (inWidth != GetClientWidth() || inHeight != GetClientHeight())
-	//if (inWidth != 800 || inHeight != 600)
-	{
-		inWidth		= Math::Max(256u, inWidth);
-		inHeight	= Math::Max(256u, inHeight);
-		m_Viewport	= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
+	inWidth		= Math::Max(256u, inWidth);
+	inHeight	= Math::Max(256u, inHeight);
+	m_Viewport	= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
 
-		ResizeBuffers(inDevice, inWidth, inHeight);
-	}
+	ResizeBuffers(inDevice, inWidth, inHeight);
 }
 
 float TTT = 0.0f;
 
 void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 {
+	Mouse::GetInstance().UpdateWindowSize(inWidth, inHeight);
+	Mouse::GetInstance().Update();
+
 	TTT += inDeltaT;
 
 	// Update the model matrix.
 	const Vec4 rotation_axis(0, 1, 0, 0);
 	m_ModelMatrix = Mat4::CreateRotationMatrix(rotation_axis, Math::ToRadians(180.0f));
 
-	float radius = 10.0f;
-	float x = radius;
-	float y = 3.5f;
-	float z = 0.0f;
-	Vec4 eye_position(x, y, z, 0);
+	Vec4 eye_position = m_SavedPosition;
+	const Vec4 focus_point(0, 3.5f, 0, 0);
+	const Vec4 up_direction(0, 1, 0, 0);
 
 	Mouse& mouse = Mouse::GetInstance();
-	if (mouse.IsButtonDown(MouseButton::Middle))
+	if (mouse.IsButtonDown(MouseButton::Middle) || mouse.WasJustReleased(MouseButton::Middle))
 	{
 		MousePos click_pos		= mouse.GetNormalizedClickPos(MouseButton::Middle);
 		MousePos mouse_pos		= mouse.GetNormalizedPos();
-		MousePos click_movement	= { click_pos.x - mouse_pos.x, click_pos.y - mouse_pos.y };
+		MousePos mouse_movement	= { click_pos.x - mouse_pos.x, click_pos.y - mouse_pos.y };
 
-		float angle = click_movement.x * 3.1416f;
+		Vec4 local_point(eye_position - focus_point);
+		float x = local_point.X();
+		float y = local_point.Y();
+		float z = local_point.Z();
+		float r = local_point.Length();
 
-		eye_position.X() = Math::Cos(angle) * radius;
-		eye_position.Y() = 3.5f + click_movement.y * radius;
-		eye_position.Z() = Math::Sin(angle) * radius;
+		float phi	= Math::Atan2(z, x);
+		float theta	= Math::Atan2(Math::Sqrt(x*x + z*z), y);
+
+		float camera_movement_speed = 1.0f;
+		phi		+= mouse_movement.x * camera_movement_speed * Math::Pi;
+		theta	-= mouse_movement.y * camera_movement_speed * Math::Pi;
+
+		// Restrain Theta to avoid flipping camera at the poles
+		// TODO: Use Quaternions instead
+		const float limit = 0.1f;
+		theta = Math::Clamp(theta, limit, Math::Pi - limit);
+
+		local_point.X() = r * Math::Sin(theta) * Math::Cos(phi);
+		local_point.Y() = r * Math::Cos(theta);
+		local_point.Z() = r * Math::Sin(theta) * Math::Sin(phi);
+
+		// Preserve the correct distance
+		eye_position = Vec4::Normalize(local_point + focus_point) * m_SavedPosition.Length();
 	}
 
-	eye_position = Vec4::Normalize(eye_position) * radius;
-
 	// Update the view matrix.
-	const Vec4 focus_point(0, 3.5f, 0, 0);
-	const Vec4 up_direction(0, 1, 0, 0);
 	m_ViewMatrix = Mat4::CreateLookAtMatrix(eye_position, focus_point, up_direction);
+
+	// Release middle click means we need to save the new position
+	if (mouse.WasJustReleased(MouseButton::Middle))
+	{
+		m_SavedPosition		= eye_position;
+	}
+
+	//Trace("%f", m_SavedPosition.Length());
 
 	// Update the projection matrix.
 	float aspect_ratio = inWidth / static_cast<float>(inHeight);

@@ -5,6 +5,8 @@
 
 namespace Math
 {
+	constexpr float Pi = 3.141592653589793238462643383279f;
+
 	template<typename T>
 	inline T Abs(T x)
 	{
@@ -79,6 +81,31 @@ namespace Math
 	inline float Tan(float a)
 	{
 		return ::tanf(a);
+	}
+
+	inline float Asin(float a)
+	{
+		return ::asinf(a);
+	}
+
+	inline float Acos(float a)
+	{
+		return ::acosf(a);
+	}
+
+	inline float Atan(float a)
+	{
+		return ::atanf(a);
+	}
+
+	inline float Atan2(float a, float b)
+	{
+		return ::atan2f(a, b);
+	}
+
+	inline float Sqrt(float a)
+	{
+		return ::sqrtf(a);
 	}
 
 	inline bool IsPowerOfTwo(int n)

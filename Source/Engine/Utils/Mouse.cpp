@@ -8,49 +8,66 @@
 
 extern HWND g_hWnd;
 
-void Mouse::HandleMouseEvents(uint64 inMessage, uint64 inWParam, int64 inLParam)
+void Mouse::Update()
 {
-	// Handle mouse movements
-	if (inMessage == WM_MOUSEMOVE)
-	{
-		int mouse_x = GET_X_LPARAM(inLParam);
-		int mouse_y = GET_Y_LPARAM(inLParam);
+	Assert(m_WindowSize.x > 0.0f && m_WindowSize.y > 0.0f);
 
-		UpdateMousePos(mouse_x, mouse_y);
+	bool has_focus		= GetFocus() == g_hWnd;
+	bool has_capture	= GetCapture() == g_hWnd;
+
+	// Don't update anything if we dont have focus or Capture
+	if (!has_focus && !has_capture)
+	{
+		return;
 	}
-	// Handle button press (Left, Right, Middle click)
-	if (inMessage >= WM_LBUTTONDOWN && inMessage <= WM_MBUTTONDBLCLK)
-	{
-		MouseButton button = MouseButton::Left;
-		if (inMessage >= WM_RBUTTONDOWN && inMessage <= WM_RBUTTONDBLCLK)
-			button = MouseButton::Right;
-		else if (inMessage >= WM_MBUTTONDOWN && inMessage <= WM_MBUTTONDBLCLK)
-			button = MouseButton::Middle;
 
-		if (inMessage == WM_LBUTTONDOWN || inMessage == WM_RBUTTONDOWN || inMessage == WM_MBUTTONDOWN)
+	// Update mouse position
+	POINT cursor_pos;
+	GetCursorPos(&cursor_pos);
+	ScreenToClient(g_hWnd, &cursor_pos);
+	UpdatePos(cursor_pos.x, cursor_pos.y);
+
+	short win_button_states[(int) MouseButton::Count];
+	win_button_states[(int) MouseButton::Left]		= GetAsyncKeyState(VK_LBUTTON);
+	win_button_states[(int) MouseButton::Right]		= GetAsyncKeyState(VK_RBUTTON);
+	win_button_states[(int) MouseButton::Middle]	= GetAsyncKeyState(VK_MBUTTON);
+
+	for (int i = 0; i < (int) MouseButton::Count; i++)
+	{
+		short win_button_state				= win_button_states[i];
+		bool win_button_pressed				= win_button_state != 0;
+		bool win_button_pressed_this_frame	= win_button_state & 0x1;
+
+		ButtonState& button_state	= m_ButtonStates[i];
+		button_state.m_WasPressed	= false;
+
+		if (win_button_pressed_this_frame)
 		{
-			m_ButtonStates[button].m_Down					= true;
-			m_ButtonStates[button].m_NormalizedPosAtClick	= m_NormalizedPos;
+			// Cursor is outside the window, don't process button press
+			if (m_CurrentPos.x < 0.0f || m_CurrentPos.y < 0.0f)
+			{
+				continue;
+			}
+
+			button_state.m_IsDown = true;
+			button_state.m_NormalizedPosAtClick	= m_NormalizedPos;
 
 			// Captures mouse input either when the mouse is over the capturing window,
 			// or when the mouse button was pressed while the mouse was over the capturing window and the button is still down.
 			SetCapture(g_hWnd);
 		}
-		else if (inMessage == WM_LBUTTONUP || inMessage == WM_RBUTTONUP || inMessage == WM_MBUTTONUP)
+		else if (!win_button_pressed && button_state.m_IsDown)
 		{
-			m_ButtonStates[button].m_Down = false;
+			button_state.m_IsDown		= false;
+			button_state.m_WasPressed	= true;
 
 			// Release captured mouse
 			ReleaseCapture();
 		}
-		else if (inMessage == WM_LBUTTONDBLCLK || inMessage == WM_RBUTTONDBLCLK || inMessage == WM_MBUTTONDBLCLK)
-		{
-			// Double click not supported yet
-		}
 	}
 }
 
-void Mouse::UpdateMousePos(int inMousePosX, int inMousePosY)
+void Mouse::UpdatePos(int inMousePosX, int inMousePosY)
 {
 	m_CurrentPos = { (float) inMousePosX, (float) inMousePosY };
 
@@ -75,12 +92,17 @@ MousePos Mouse::GetNormalizedPos() const
 
 MousePos Mouse::GetNormalizedClickPos(MouseButton inButton) const
 {
-	return m_ButtonStates[inButton].m_NormalizedPosAtClick;
+	return m_ButtonStates[(int) inButton].m_NormalizedPosAtClick;
 }
 
 bool Mouse::IsButtonDown(MouseButton inButton) const
 {
-	return m_ButtonStates[inButton].m_Down;
+	return m_ButtonStates[(int) inButton].m_IsDown;
+}
+
+bool Mouse::WasJustReleased(MouseButton inButton) const
+{
+	return m_ButtonStates[(int) inButton].m_WasPressed;
 }
 
 Mouse& Mouse::GetInstance()

@@ -109,15 +109,14 @@ public:
 		return ret;
 	}
 
-	Mat4 Tanslate(const Vec4& inPosition) const
+	void SetPosition(const Vec4& inPosition)
 	{
-		Mat4 ret(*this);
+		r[3] = inPosition;
+	}
 
-		ret._m30 += inPosition.X();
-		ret._m31 += inPosition.Y();
-		ret._m32 += inPosition.Z();
-
-		return ret;
+	Vec4 GetPosition() const
+	{
+		return r[3];
 	}
 
 	static Mat4 CreateRotationMatrix(const Vec4& inAxis, float inAngle)
@@ -152,7 +151,7 @@ public:
 	static Mat4 CreateLookAtMatrix(const Vec4& inEye, const Vec4& inFocus, const Vec4& inUpVector = { 0, 1, 0 })
 	{
 		Vec4 forward	= Vec4::Normalize(inFocus - inEye);
-		Vec4 right		= Vec4::Cross(Vec4::Normalize(inUpVector), forward);
+		Vec4 right		= Vec4::Normalize(Vec4::Cross(Vec4::Normalize(inUpVector), forward));
 		Vec4 up			= Vec4::Cross(forward, right);
 
 		Mat4 ret(true);
@@ -209,7 +208,7 @@ public:
 		return Result;
 	}
 
-	Mat4 Transpose() const
+	Mat4 Transposed() const
 	{
 		Mat4 ret;
 
@@ -222,6 +221,24 @@ public:
 		}
 
 		return ret;
+	}
+
+	Vec4 GetForward() const
+	{
+		Vec4 forward(_m02, _m12, _m22, _m32);
+		return forward;
+	}
+
+	Vec4 GetRight() const
+	{
+		Vec4 right(_m00, _m10, _m20, _m30);
+		return right;
+	}
+
+	Vec4 GetUp() const
+	{
+		Vec4 up(_m01, _m11, _m21, _m31);
+		return up;
 	}
 };
 

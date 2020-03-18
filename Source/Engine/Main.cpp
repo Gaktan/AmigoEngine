@@ -5,8 +5,6 @@
 #include "DX12/DX12Device.h"
 #include "DX12/DX12SwapChain.h"
 
-#include "Utils/Mouse.h"
-
 // Window handle.
 HWND g_hWnd;
 // Window rectangle (used to toggle fullscreen state).
@@ -178,12 +176,8 @@ void Resize(uint32_t inWwidth, uint32_t inHeight)
 		g_ClientWidth	= Math::Max(1u, inWwidth);
 		g_ClientHeight	= Math::Max(1u, inHeight);
 
-		g_Device.ResestDescriptorHeaps();
-
-		g_Device.m_SwapChain->UpdateRenderTargetViews(g_Device, g_ClientWidth, g_ClientHeight);
+		OnResize(g_Device, inWwidth, inHeight);
 	}
-
-	OnResize(g_Device, inWwidth, inHeight);
 }
 
 LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam)
@@ -210,10 +204,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 			break;
 		}
 	}
-	else if (inMessage >= WM_MOUSEFIRST && inMessage <= WM_MOUSELAST)
-	{
-		Mouse::GetInstance().HandleMouseEvents(inMessage, wParam, lParam);
-	}
 	else if (inMessage == WM_SYSCHAR)
 	{
 		// The default window procedure will play a system notification sound 
@@ -229,8 +219,6 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 		int height	= clientRect.bottom - clientRect.top;
 
 		Resize(width, height);
-
-		Mouse::GetInstance().UpdateWindowSize(width, height);
 	}
 	else if (inMessage == WM_DESTROY)
 	{
