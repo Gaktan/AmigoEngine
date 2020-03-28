@@ -1,10 +1,12 @@
 #include "Engine.h"
 #include "DX12/DX12Resource.h"
 
+#include "DX12/DX12Device.h"
+
 #include "D3dx12.h"
 
 void DX12Resource::InitAsResource(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
@@ -13,7 +15,7 @@ void DX12Resource::InitAsResource(
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize, inFlags);
 
 	// Create a committed resource for the GPU resource in a default heap.
-	ThrowIfFailed(inDevice->CreateCommittedResource(
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -36,7 +38,7 @@ DX12Resource::~DX12Resource()
 }
 
 void DX12Resource::UpdateBufferResource(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
@@ -49,7 +51,7 @@ void DX12Resource::UpdateBufferResource(
 			D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize);
 
 			// Create upload buffer on the CPU
-			ThrowIfFailed(inDevice->CreateCommittedResource(
+			ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 				&heap_properties,
 				D3D12_HEAP_FLAG_NONE,
 				&resource_desc,
@@ -85,7 +87,7 @@ void DX12Resource::SetResourceName(ID3D12Resource* inResource, const std::string
 }
 
 void DX12VertexBuffer::InitAsVertexBuffer(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize, const void* inBufferData, uint32 inStride,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
@@ -111,7 +113,7 @@ void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList
 }
 
 void DX12IndexBuffer::InitAsIndexBuffer(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize, const void* inBufferData,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
@@ -137,14 +139,14 @@ void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* inCommandList) 
 }
 
 void DX12ConstantBuffer::InitAsConstantBuffer(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	size_t inBufferSize)
 {
 	D3D12_HEAP_PROPERTIES	heap_properties	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize);
 
 	// These will remain in upload heap because we use them only once per frame
-	ThrowIfFailed(inDevice->CreateCommittedResource(
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -156,10 +158,14 @@ void DX12ConstantBuffer::InitAsConstantBuffer(
 }
 
 void DX12ConstantBuffer::UpdateBufferResource(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
+	// TODO: Ignore unused arguments
+	(void) inDevice;
+	(void) inCommandList;
+
 	// Perform Map/Unmap with the new data
 	if (inBufferData)
 	{

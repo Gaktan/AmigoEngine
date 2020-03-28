@@ -23,7 +23,7 @@ void DX12RenderTarget::InitAsRenderTarget(
 																		   /*arraySize*/ 1, /*mipLevels*/ 1, /*sampleCount*/ 1, /*sampleQuality*/ 0,
 																		   D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-	ThrowIfFailed(inDevice.m_Device->CreateCommittedResource(
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -39,7 +39,7 @@ void DX12RenderTarget::InitAsRenderTarget(
 	view_desc.Texture2D.MipSlice	= 0;
 	view_desc.Texture2D.PlaneSlice	= 0;
 
-	inDevice.m_Device->CreateRenderTargetView(m_Resource, &view_desc, m_DescriptorHandle);
+	inDevice.GetD3DDevice()->CreateRenderTargetView(m_Resource, &view_desc, m_DescriptorHandle);
 
 	SetResourceName(m_Resource, "DX12RenderTarget::InitAsRenderTarget");
 }
@@ -56,7 +56,7 @@ void DX12RenderTarget::InitFromResource(
 	m_DescriptorHandle	= inDescriptorHandle;
 	m_Resource			= inResource;
 
-	inDevice.m_Device->CreateRenderTargetView(m_Resource, nullptr, m_DescriptorHandle);
+	inDevice.GetD3DDevice()->CreateRenderTargetView(m_Resource, nullptr, m_DescriptorHandle);
 
 	SetResourceName(m_Resource, "DX12RenderTarget::InitFromResource");
 }
@@ -97,7 +97,7 @@ void DX12DepthRenderTarget::InitAsDepthStencilBuffer(
 																		   /*arraySize*/ 1, /*mipLevels*/ 1, /*sampleCount*/ 1, /*sampleQuality*/ 0,
 																		   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
-	ThrowIfFailed(inDevice.m_Device->CreateCommittedResource(
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -113,7 +113,7 @@ void DX12DepthRenderTarget::InitAsDepthStencilBuffer(
 	view_desc.Texture2D.MipSlice	= 0;
 	view_desc.Flags					= D3D12_DSV_FLAG_NONE;
 
-	inDevice.m_Device->CreateDepthStencilView(m_Resource, &view_desc, m_DescriptorHandle);
+	inDevice.GetD3DDevice()->CreateDepthStencilView(m_Resource, &view_desc, m_DescriptorHandle);
 
 	SetResourceName(m_Resource, "DX12DepthRenderTarget::InitAsDepthStencilBuffer");
 }

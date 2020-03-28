@@ -30,7 +30,7 @@ void DX12Texture::InitAsTexture(
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, m_Width, m_Height, /*arraySize*/ 1, /*mipLevels*/ 1);
 
-	ThrowIfFailed(inDevice.m_Device->CreateCommittedResource(
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -39,7 +39,7 @@ void DX12Texture::InitAsTexture(
 		IID_PPV_ARGS(&m_Resource)
 	));
 
-	UpdateBufferResource(inDevice.m_Device, inCommandList, 0, inBufferData);
+	UpdateBufferResource(inDevice, inCommandList, 0, inBufferData);
 
 	const CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
 		m_Resource,
@@ -56,11 +56,11 @@ void DX12Texture::InitAsTexture(
 	view_desc.Texture2D.MostDetailedMip		= 0;
 	view_desc.Texture2D.ResourceMinLODClamp	= 0.0f;
 
-	inDevice.m_Device->CreateShaderResourceView(m_Resource, &view_desc, GetCPUHandle());
+	inDevice.GetD3DDevice()->CreateShaderResourceView(m_Resource, &view_desc, GetCPUHandle());
 }
 
 void DX12Texture::UpdateBufferResource(
-	ID3D12Device* inDevice,
+	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
@@ -77,7 +77,7 @@ void DX12Texture::UpdateBufferResource(
 	D3D12_RESOURCE_DESC resource_desc		= CD3DX12_RESOURCE_DESC::Buffer(upload_buffer_size);
 
 	// Create upload buffer on the CPU
-	ThrowIfFailed(inDevice->CreateCommittedResource(
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,

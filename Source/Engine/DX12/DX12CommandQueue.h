@@ -11,16 +11,16 @@ class DX12CommandQueue
 {
 protected:
 	D3D12_COMMAND_LIST_TYPE		m_CommandListType;
-	ID3D12CommandQueue*			m_CommandQueue;
+	ID3D12CommandQueue*			m_D3DCommandQueue;
 
 	DX12Fence					m_Fence;
 	uint32						m_CurrentIndex;
 
 	struct CommandListEntry
 	{
-		ID3D12CommandAllocator*		m_CommandAllocator	= nullptr;
-		ID3D12GraphicsCommandList2*	m_CommandList		= nullptr;
-		bool						m_IsBeingRecorded	= false;
+		ID3D12CommandAllocator*		m_D3DCommandAllocator	= nullptr;
+		ID3D12GraphicsCommandList2*	m_D3DCommandList		= nullptr;
+		bool						m_IsBeingRecorded		= false;
 	};
 
 	CommandListEntry			m_CommandListEntries[NUM_BUFFERED_FRAMES];

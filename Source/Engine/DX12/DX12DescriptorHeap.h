@@ -8,7 +8,7 @@ class DX12Device;
 class DX12DescriptorHeap
 {
 protected:
-	ID3D12DescriptorHeap*			m_DescriptorHeap	= nullptr;
+	ID3D12DescriptorHeap*			m_D3DDescriptorHeap	= nullptr;
 	uint32							m_IncrementSize;
 	uint32							m_NumDescriptors;
 	uint32							m_CurrentOffset		= 0;

@@ -85,7 +85,7 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 	ReverseWinding();
 }
 
-Mesh * MeshLoader::CreateMeshObject(ID3D12Device* inDevice, ID3D12GraphicsCommandList2* inCommandList)
+Mesh * MeshLoader::CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
 {
 	Assert(m_VertexData.size() > 0);
 

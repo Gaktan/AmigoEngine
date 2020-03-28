@@ -12,7 +12,7 @@ constexpr uint32 NUM_BUFFERED_FRAMES = 3;
 class DX12SwapChain
 {
 protected:
-	IDXGISwapChain4*		m_SwapChain;
+	IDXGISwapChain4*		m_D3DSwapChain;
 
 	DX12RenderTarget*		m_BackBuffers[NUM_BUFFERED_FRAMES];
 

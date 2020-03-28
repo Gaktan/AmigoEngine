@@ -25,7 +25,7 @@ public:
 	}
 
 	void Init(
-		ID3D12Device* inDevice, ID3D12GraphicsCommandList2* inCommandList,
+		DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList,
 		D3D_PRIMITIVE_TOPOLOGY inPrimitiveTopology,
 		void* inVertexBuffer, int32 inVertexBufferSize, int32 inStride,
 		void* inIndexBuffer, int32 inIndexBufferSize);

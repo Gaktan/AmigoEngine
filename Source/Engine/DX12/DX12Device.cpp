@@ -24,7 +24,7 @@ DX12Device::~DX12Device()
 
 #if defined(_DEBUG)
 	ID3D12DebugDevice* debug_device = nullptr;
-	ThrowIfFailed(m_Device->QueryInterface(IID_PPV_ARGS(&debug_device)));
+	ThrowIfFailed(m_D3DDevice->QueryInterface(IID_PPV_ARGS(&debug_device)));
 
 	HRESULT result = debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
 	ThrowIfFailed(result);
@@ -32,7 +32,7 @@ DX12Device::~DX12Device()
 	debug_device->Release();
 #endif
 
-	m_Device->Release();
+	m_D3DDevice->Release();
 }
 
 void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
@@ -42,7 +42,7 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 
 	{
 		IDXGIAdapter4* dxgi_adapter4 = GetAdapter(m_UseWarp);
-		m_Device = CreateDevice(dxgi_adapter4);
+		m_D3DDevice = CreateDevice(dxgi_adapter4);
 		dxgi_adapter4->Release();
 	}
 
@@ -203,6 +203,16 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 	dxgi_factory->Release();
 
 	return dxgi_adapter4;
+}
+
+ID3D12Device2* DX12Device::GetD3DDevice() const
+{
+	return m_D3DDevice;
+}
+
+DX12SwapChain * DX12Device::GetSwapChain() const
+{
+	return m_SwapChain;
 }
 
 DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const

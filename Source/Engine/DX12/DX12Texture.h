@@ -28,7 +28,7 @@ public:
 
 protected:
 	virtual void UpdateBufferResource(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr) override;
 };

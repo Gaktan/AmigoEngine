@@ -77,12 +77,12 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 	// will be handled manually.
 	ThrowIfFailed(dxgi_factory4->MakeWindowAssociation(inHandle, DXGI_MWA_NO_ALT_ENTER));
 
-	ThrowIfFailed(swap_chain1->QueryInterface(IID_PPV_ARGS(&m_SwapChain)));
+	ThrowIfFailed(swap_chain1->QueryInterface(IID_PPV_ARGS(&m_D3DSwapChain)));
 
 	swap_chain1->Release();
 	dxgi_factory4->Release();
 
-	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
+	m_CurrentBackBufferIndex = m_D3DSwapChain->GetCurrentBackBufferIndex();
 
 	bool first_call = true;
 	UpdateRenderTargetViews(inDevice, inWidth, inHeight, first_call);
@@ -95,7 +95,7 @@ DX12SwapChain::~DX12SwapChain()
 		delete m_BackBuffers[i];
 	}
 
-	m_SwapChain->Release();
+	m_D3DSwapChain->Release();
 }
 
 void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth, uint32 inHeight, bool inFirstCall/* = false*/)
@@ -115,10 +115,10 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 		}
 
 		DXGI_SWAP_CHAIN_DESC swap_chain_desc = {};
-		ThrowIfFailed(m_SwapChain->GetDesc(&swap_chain_desc));
-		ThrowIfFailed(m_SwapChain->ResizeBuffers(NUM_BUFFERED_FRAMES, inWidth, inHeight, swap_chain_desc.BufferDesc.Format, swap_chain_desc.Flags));
+		ThrowIfFailed(m_D3DSwapChain->GetDesc(&swap_chain_desc));
+		ThrowIfFailed(m_D3DSwapChain->ResizeBuffers(NUM_BUFFERED_FRAMES, inWidth, inHeight, swap_chain_desc.BufferDesc.Format, swap_chain_desc.Flags));
 
-		m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
+		m_CurrentBackBufferIndex = m_D3DSwapChain->GetCurrentBackBufferIndex();
 	}
 
 	DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
@@ -127,7 +127,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
 		ID3D12Resource* back_buffer;
-		ThrowIfFailed(m_SwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
+		ThrowIfFailed(m_D3DSwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
 
 		uint32 heap_index = descriptor_heap->GetFreeIndex();
 
@@ -163,9 +163,9 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 
 	uint32 sync_interval = m_VSync ? 1 : 0;
 	uint32 present_flags = m_TearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
-	ThrowIfFailed(m_SwapChain->Present(sync_interval, present_flags));
+	ThrowIfFailed(m_D3DSwapChain->Present(sync_interval, present_flags));
 
-	m_CurrentBackBufferIndex = m_SwapChain->GetCurrentBackBufferIndex();
+	m_CurrentBackBufferIndex = m_D3DSwapChain->GetCurrentBackBufferIndex();
 
 	inCommandQueue->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
 }

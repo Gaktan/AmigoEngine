@@ -10,10 +10,6 @@ class DX12FreeListDescriptorHeap;
 
 class DX12Device
 {
-public: //Temp hack
-	ID3D12Device2*			m_Device;
-	DX12SwapChain*			m_SwapChain;
-
 protected:
 	// Use WARP adapter
 	bool					m_UseWarp = false;
@@ -28,6 +24,9 @@ protected:
 	DX12DescriptorHeap*				m_DSVDescriptorHeap;
 	DX12FreeListDescriptorHeap*		m_SRVDescriptorHeap;
 
+	DX12SwapChain*			m_SwapChain;
+	ID3D12Device2*			m_D3DDevice;
+
 public:
 	DX12Device();
 	virtual ~DX12Device();
@@ -37,6 +36,8 @@ public:
 
 	void ResestDescriptorHeaps();
 
+	ID3D12Device2*		GetD3DDevice() const;
+	DX12SwapChain*		GetSwapChain() const;
 	DX12CommandQueue*	GetCommandQueue(D3D12_COMMAND_LIST_TYPE inType) const;
 	DX12DescriptorHeap*	GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const;
 

@@ -15,16 +15,16 @@ DX12DescriptorHeap::DX12DescriptorHeap(
 	desc.Type			= inHeapType;
 	desc.NodeMask		= 0;
 	desc.Flags			= inFlags;
-	ThrowIfFailed(inDevice.m_Device->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_DescriptorHeap)));
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_D3DDescriptorHeap)));
 
-	m_IncrementSize	= inDevice.m_Device->GetDescriptorHandleIncrementSize(inHeapType);
-	m_CPUHandle		= m_DescriptorHeap->GetCPUDescriptorHandleForHeapStart();
-	m_GPUHandle		= m_DescriptorHeap->GetGPUDescriptorHandleForHeapStart();
+	m_IncrementSize	= inDevice.GetD3DDevice()->GetDescriptorHandleIncrementSize(inHeapType);
+	m_CPUHandle		= m_D3DDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
+	m_GPUHandle		= m_D3DDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 }
 
 DX12DescriptorHeap::~DX12DescriptorHeap()
 {
-	m_DescriptorHeap->Release();
+	m_D3DDescriptorHeap->Release();
 }
 
 uint32 DX12DescriptorHeap::GetFreeIndex()
@@ -57,7 +57,7 @@ D3D12_GPU_DESCRIPTOR_HANDLE DX12DescriptorHeap::GetGPUHandle(uint32 inIndex) con
 
 ID3D12DescriptorHeap* DX12DescriptorHeap::GetD3DDescriptorHeap() const
 {
-	return m_DescriptorHeap;
+	return m_D3DDescriptorHeap;
 }
 
 DX12FreeListDescriptorHeap::DX12FreeListDescriptorHeap(

@@ -3,6 +3,8 @@
 #include <d3d12.h>
 #include <string>
 
+class DX12Device;
+
 class DX12Resource
 {
 protected:
@@ -13,13 +15,13 @@ public:
 	virtual ~DX12Resource();
 
 	virtual void InitAsResource(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr,
 		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
 
 	virtual void UpdateBufferResource(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr);
 
@@ -40,7 +42,7 @@ public:
 	}
 
 	void InitAsVertexBuffer(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize, const void* inBufferData, uint32 inStride,
 		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
@@ -59,7 +61,7 @@ public:
 	}
 
 	void InitAsIndexBuffer(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize, const void* inBufferData,
 		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
@@ -75,11 +77,11 @@ public:
 	}
 
 	void InitAsConstantBuffer(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		size_t inBufferSize);
 
 	virtual void UpdateBufferResource(
-		ID3D12Device* inDevice,
+		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr) override;
 

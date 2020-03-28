@@ -6,7 +6,7 @@
 
 DX12CommandQueue::DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE inType) :
 	m_CommandListType(inType),
-	m_Fence(inDevice.m_Device)
+	m_Fence(inDevice)
 {
 	D3D12_COMMAND_QUEUE_DESC desc = {};
 	desc.Type		= inType;
@@ -14,7 +14,7 @@ DX12CommandQueue::DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE
 	desc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE;
 	desc.NodeMask	= 0;
 
-	ThrowIfFailed(inDevice.m_Device->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_CommandQueue)));
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_D3DCommandQueue)));
 }
 
 DX12CommandQueue::~DX12CommandQueue()
@@ -23,19 +23,19 @@ DX12CommandQueue::~DX12CommandQueue()
 
 	for (auto& command_list_entry : m_CommandListEntries)
 	{
-		if (command_list_entry.m_CommandList)
+		if (command_list_entry.m_D3DCommandList)
 		{
-			command_list_entry.m_CommandList->Release();
-			command_list_entry.m_CommandAllocator->Release();
+			command_list_entry.m_D3DCommandList->Release();
+			command_list_entry.m_D3DCommandAllocator->Release();
 		}
 	}
 
-	m_CommandQueue->Release();
+	m_D3DCommandQueue->Release();
 }
 
 uint64_t DX12CommandQueue::Signal()
 {
-	return m_Fence.Signal(m_CommandQueue);
+	return m_Fence.Signal(m_D3DCommandQueue);
 }
 
 bool DX12CommandQueue::IsFenceComplete(uint64 inFenceValue) const
@@ -56,7 +56,7 @@ void DX12CommandQueue::Flush()
 ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device& inDevice) const
 {
 	ID3D12CommandAllocator* command_allocator;
-	ThrowIfFailed(inDevice.m_Device->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&command_allocator)));
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&command_allocator)));
 
 	return command_allocator;
 }
@@ -64,46 +64,36 @@ ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator(DX12Device& inD
 ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device& inDevice, ID3D12CommandAllocator* inCommandAllocator) const
 {
 	ID3D12GraphicsCommandList2* command_list;
-	ThrowIfFailed(inDevice.m_Device->CreateCommandList(0, m_CommandListType, inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
+	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommandList(0, m_CommandListType, inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
 
 	return command_list;
 }
 
 ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device& inDevice)
 {
-	m_CurrentIndex = inDevice.m_SwapChain->GetCurrentBackBufferIndex();
+	// TODO: Store frame index elsewhere
+	m_CurrentIndex = inDevice.GetSwapChain()->GetCurrentBackBufferIndex();
 
 	// No need for fences, a commandlist from 3 frames ago should already have been processed by the GPU
 	auto& entry = m_CommandListEntries[m_CurrentIndex];
-
-	// Test to see if it's worth destroying and recreating command list allocators to free memory.
-	// It doesn't seem to change anything, so let's disable it for now
-#define ALLOCATE_NEW_COMMANDLISTS 0
 
 	if (!entry.m_IsBeingRecorded)
 	{
 		entry.m_IsBeingRecorded = true;
 
-		if (entry.m_CommandList)
+		if (entry.m_D3DCommandList)
 		{
-#if !ALLOCATE_NEW_COMMANDLISTS
-			entry.m_CommandAllocator->Reset();
-			entry.m_CommandList->Reset(entry.m_CommandAllocator, nullptr);
-#else
-			entry.m_CommandList->Release();
-			entry.commandAllocator->Release();
-#endif
+			entry.m_D3DCommandAllocator->Reset();
+			entry.m_D3DCommandList->Reset(entry.m_D3DCommandAllocator, nullptr);
 		}
-#if !ALLOCATE_NEW_COMMANDLISTS
 		else
-#endif
 		{
-			entry.m_CommandAllocator	= CreateCommandAllocator(inDevice);
-			entry.m_CommandList			= CreateCommandList(inDevice, entry.m_CommandAllocator);
+			entry.m_D3DCommandAllocator	= CreateCommandAllocator(inDevice);
+			entry.m_D3DCommandList			= CreateCommandList(inDevice, entry.m_D3DCommandAllocator);
 		}
 	}
 
-	return entry.m_CommandList;
+	return entry.m_D3DCommandList;
 }
 
 // Execute a command list.
@@ -117,12 +107,12 @@ uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inComman
 		inCommandList
 	};
 
-	m_CommandQueue->ExecuteCommandLists(1, ppCommandLists);
+	m_D3DCommandQueue->ExecuteCommandLists(1, ppCommandLists);
 	uint64_t fence_value = Signal();
 
 	auto& entry = m_CommandListEntries[m_CurrentIndex];
 	// Make sure we are executing a commandlist from the correct frame
-	Assert(entry.m_CommandList == inCommandList);
+	Assert(entry.m_D3DCommandList == inCommandList);
 
 	entry.m_IsBeingRecorded = false;
 
@@ -131,5 +121,5 @@ uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inComman
 
 ID3D12CommandQueue* DX12CommandQueue::GetD3D12CommandQueue() const
 {
-	return m_CommandQueue;
+	return m_D3DCommandQueue;
 }

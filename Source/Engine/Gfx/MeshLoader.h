@@ -48,7 +48,7 @@ protected:
 
 public:
 	void	LoadFromFile(const std::string& inFile);
-	Mesh*	CreateMeshObject(ID3D12Device* inDevice, ID3D12GraphicsCommandList2* inCommandList);
+	Mesh*	CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList);
 
 private:
 	void	ProcessLine(const std::string& inLine);

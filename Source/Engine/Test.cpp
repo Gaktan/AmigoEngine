@@ -62,7 +62,7 @@ void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 	inDevice.ResestDescriptorHeaps();
 
 	// Recreate swapchain buffers (causes a flush)
-	inDevice.m_SwapChain->UpdateRenderTargetViews(inDevice, inNewWidth, inNewHeight);
+	inDevice.GetSwapChain()->UpdateRenderTargetViews(inDevice, inNewWidth, inNewHeight);
 
 	if (m_DepthBuffer)
 	{
@@ -92,9 +92,9 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	MeshLoader::Init();
 	TextureLoader::Init();
 
-	auto dx12_device	= inDevice.m_Device;
-	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
-	auto command_list	= command_queue->GetCommandList(inDevice);
+	auto* dx12_device	= inDevice.GetD3DDevice();
+	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
+	auto* command_list	= command_queue->GetCommandList(inDevice);
 
 	// Create the depth buffer
 	ResizeBuffers(inDevice, inWidth, inHeight);
@@ -111,7 +111,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Load mesh
 	MeshLoader mesh_loader;
 	mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
-	m_SceneMesh = mesh_loader.CreateMeshObject(dx12_device, command_list);
+	m_SceneMesh = mesh_loader.CreateMeshObject(inDevice, command_list);
 
 	// Load texture
 	TextureLoader texture_loader;
@@ -120,7 +120,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
-	m_ConstantBuffer->InitAsConstantBuffer(dx12_device, sizeof(ConstantBuffer::ModelViewProjection));
+	m_ConstantBuffer->InitAsConstantBuffer(inDevice, sizeof(ConstantBuffer::ModelViewProjection));
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
@@ -294,12 +294,13 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 
 void OnRender(DX12Device& inDevice)
 {
-	auto command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto command_list	= command_queue->GetCommandList(inDevice);
+	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto* command_list	= command_queue->GetCommandList(inDevice);
+	auto* swap_chain	= inDevice.GetSwapChain();
 
 	// Clear the render targets.
 	{
-		inDevice.m_SwapChain->ClearBackBuffer(command_list);
+		swap_chain->ClearBackBuffer(command_list);
 		m_DepthBuffer->ClearBuffer(command_list);
 	}
 
@@ -311,7 +312,7 @@ void OnRender(DX12Device& inDevice)
 	command_list->RSSetViewports(1, &m_Viewport);
 	command_list->RSSetScissorRects(1, &m_ScissorRect);
 
-	inDevice.m_SwapChain->SetRenderTarget(command_list, m_DepthBuffer);
+	swap_chain->SetRenderTarget(command_list, m_DepthBuffer);
 
 	// TODO: Pre multiply matrix
 	ConstantBuffer::ModelViewProjection mvp;
@@ -329,7 +330,7 @@ void OnRender(DX12Device& inDevice)
 	command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
 
 	// Upload Constant Buffer to GPU
-	m_ConstantBuffer->UpdateBufferResource(inDevice.m_Device, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
+	m_ConstantBuffer->UpdateBufferResource(inDevice, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
 	m_ConstantBuffer->SetConstantBuffer(command_list, 1);
 
 	command_list->DrawIndexedInstanced(m_SceneMesh->GetNumIndices(), 1, 0, 0, 0);
