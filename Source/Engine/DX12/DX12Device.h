@@ -1,6 +1,6 @@
 #pragma once
 
-#include <d3d12.h>
+#include "DX12/DX12Includes.h"
 #include <dxgi1_6.h>
 
 class DX12CommandQueue;

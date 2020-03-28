@@ -2,9 +2,7 @@
 
 constexpr uint32 NUM_BUFFERED_FRAMES = 3;
 
-#include <d3d12.h>
-#include <dxgi1_6.h>
-
+#include "DX12/DX12Includes.h"
 #include "DX12/DX12Device.h"
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12RenderTarget.h"

@@ -1,7 +1,7 @@
 #pragma once
 
-// Make sure d3d12 is included before DirectXTex
-#include <d3d12.h>
+// Make sure DX12Includes is included before DirectXTex
+#include "DX12/DX12Includes.h"
 #include <DirectXTex/DirectXTex.h>
 
 #include "DX12/DX12Device.h"
