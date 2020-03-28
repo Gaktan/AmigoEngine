@@ -1,6 +1,5 @@
 #pragma once
 
-#include "D3dx12.h"
 #include "DX12/DX12Device.h"
 
 bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight);

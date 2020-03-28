@@ -4,8 +4,6 @@
 #include "DX12/DX12DescriptorHeap.h"
 #include "DX12/DX12Device.h"
 
-#include "D3dx12.h"
-
 bool CheckTearingSupport()
 {
 	bool allow_tearing = false;

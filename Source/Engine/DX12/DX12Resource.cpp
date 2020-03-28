@@ -3,8 +3,6 @@
 
 #include "DX12/DX12Device.h"
 
-#include "D3dx12.h"
-
 void DX12Resource::InitAsResource(
 	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,

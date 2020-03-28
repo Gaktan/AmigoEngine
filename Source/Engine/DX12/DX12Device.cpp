@@ -4,8 +4,6 @@
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12DescriptorHeap.h"
 
-#include <D3dx12.h>
-
 DX12Device::DX12Device()
 {
 }

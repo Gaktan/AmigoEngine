@@ -3,8 +3,6 @@
 
 #include "DX12/DX12DescriptorHeap.h"
 
-#include "D3dx12.h"
-
 DX12Texture::~DX12Texture()
 {
 	DX12FreeListDescriptorHeap* free_list_descriptor_heap = dynamic_cast<DX12FreeListDescriptorHeap*>(m_DescriptorHeap);

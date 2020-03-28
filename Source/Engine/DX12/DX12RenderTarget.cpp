@@ -1,8 +1,6 @@
 #include "Engine.h"
 #include "DX12/DX12RenderTarget.h"
 
-#include "D3dx12.h"
-
 void DX12RenderTarget::InitAsRenderTarget(
 	DX12Device& inDevice,
 	D3D12_CPU_DESCRIPTOR_HANDLE inDescriptorHandle,
