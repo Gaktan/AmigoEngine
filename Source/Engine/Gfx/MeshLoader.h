@@ -42,6 +42,20 @@ struct Range
 	int m_End	= -1;
 };
 
+struct MeshInfo
+{
+	Range				m_VertexBuffeRange;
+	Range				m_IndexBufferRange;
+
+	std::string			m_ObjectName;
+	std::string			m_MaterialName;
+
+	MeshInfo();
+	MeshInfo(const MeshInfo& inPreviousMeshInfo);
+
+	void EndRange(int inVertexBufferEnd, int inIndexBufferEnd);
+};
+
 class MeshLoader
 {
 protected:
@@ -54,9 +68,8 @@ protected:
 
 	uint16							m_IncrementalIndexValue	= 0;
 
-	std::vector<Range>				m_IndexBuffersRange;
-	std::vector<Range>				m_VertexBufferRange;
-	size_t							m_CurrentBufferRange	= 0;
+	std::vector<MeshInfo*>			m_MeshInfos;
+	size_t							m_CurrentMeshInfo		= 0;
 
 public:
 	void	LoadFromFile(const std::string& inFile);

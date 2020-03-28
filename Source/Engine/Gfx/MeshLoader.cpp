@@ -81,9 +81,9 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 		ProcessLine(line);
 	}
 
-	// Close the last ranges
-	m_VertexBufferRange[m_CurrentBufferRange].m_End = (int) m_VertexData.size();
-	m_IndexBuffersRange[m_CurrentBufferRange].m_End = (int) m_IndexData.size();
+	// Close range on the last MeshInfo
+	MeshInfo& last_mesh_info = *m_MeshInfos[m_CurrentMeshInfo];
+	last_mesh_info.EndRange((int) m_VertexData.size(), (int) m_IndexData.size());
 
 	// Blender exports meshes in Right Hand Coordinates. DX12 uses Left Hand. We need to flip the winding order
 	ReverseWinding();
@@ -93,10 +93,12 @@ void MeshLoader::CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandLi
 {
 	Assert(m_VertexData.size() > 0);
 
-	for (size_t i = 0; i <= m_CurrentBufferRange; i++)
+	for (size_t i = 0; i <= m_CurrentMeshInfo; i++)
 	{
-		Range vertex_range	= m_VertexBufferRange[i];
-		Range index_range	= m_IndexBuffersRange[i];
+		MeshInfo* mesh_info = m_MeshInfos[i];
+
+		const Range vertex_range	= mesh_info->m_VertexBuffeRange;
+		const Range index_range		= mesh_info->m_IndexBufferRange;
 
 		uint32 vertex_size	= static_cast<uint32>(vertex_range.m_End	- vertex_range.m_Start) * sizeof(VertexPosUVNormal);
 		uint32 index_size	= static_cast<uint32>(index_range.m_End		- index_range.m_Start) * sizeof(uint16);
@@ -107,7 +109,13 @@ void MeshLoader::CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandLi
 				   m_VertexData.data()	+ vertex_range.m_Start,	vertex_size, sizeof(VertexPosUVNormal),
 				   m_IndexData.data()	+ index_range.m_Start,	index_size);
 
+		// Set Mesh debug name
+		const std::string mesh_name = mesh_info->m_ObjectName + "_" + mesh_info->m_MaterialName;
+		mesh->SetResourceName(mesh_name);
+
 		outMeshes.push_back(mesh);
+
+		delete mesh_info;
 	}
 
 
@@ -164,10 +172,42 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		break;
 	}
 	case OBJKeyword::MaterialLibrary:
-	case OBJKeyword::MaterialName:
 		// Not supported for now, but harmless, so don't do anything
 		break;
+	case OBJKeyword::MaterialName:
+	{
+		// Special case for different materials within the same mesh.
+		// Recreate a new mesh but still based on the current 
 
+		Assert(m_MeshInfos.size() != 0);
+
+		MeshInfo& current_mesh_info = *m_MeshInfos[m_CurrentMeshInfo];
+
+		// If we haven't processed any vertices yet. Don't create a new MeshInfo. We are processing the first material of a new object
+		if (m_IncrementalIndexValue != 0)
+		{
+			// Deal in the same was as if it was a new object.
+			// TODO: Use the same vertex buffer with different index buffer?
+
+			current_mesh_info.EndRange((int) m_VertexData.size(), (int) m_IndexData.size());
+
+			MeshInfo* new_mesh_info = new MeshInfo(current_mesh_info);
+			new_mesh_info->m_ObjectName = current_mesh_info.m_ObjectName;
+
+			m_MeshInfos.push_back(new_mesh_info);
+
+			m_IndexMap.clear();
+			m_IncrementalIndexValue = 0;
+
+			m_CurrentMeshInfo++;
+		}
+
+		// Actually set the material name for the current or new MeshInfo
+		Assert(m_MeshInfos[m_CurrentMeshInfo]->m_MaterialName.length() == 0);
+		m_MeshInfos[m_CurrentMeshInfo]->m_MaterialName = all_elem[0];
+
+		break;
+	}
 	case OBJKeyword::Point:
 	case OBJKeyword::Line:
 	{
@@ -183,36 +223,29 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 	}
 	case OBJKeyword::ObjectName:
 	{
-		if (m_VertexBufferRange.size() == 0)
+		// Object name is different so we need to start creating a new mesh
+
+		if (m_MeshInfos.size() == 0)
 		{
-			Assert(m_IndexBuffersRange.size() == 0);
-			m_VertexBufferRange.push_back(Range { 0, -1 });
-			m_IndexBuffersRange.push_back(Range { 0, -1 });
+			// Create first empty mesh info
+			m_MeshInfos.push_back(new MeshInfo);
 		}
 		else
 		{
-			// Update vertex buffer range
-			{
-				Range& current_range = m_VertexBufferRange[m_CurrentBufferRange];
-				current_range.m_End = (int) m_VertexData.size();
+			// Create new MeshInfo based on infos from the previous one
+			MeshInfo& current_mesh_info = *m_MeshInfos[m_CurrentMeshInfo];
+			current_mesh_info.EndRange((int) m_VertexData.size(), (int) m_IndexData.size());
 
-				m_VertexBufferRange.push_back({ current_range.m_End, -1 });
-			}
-			// Update index buffer range
-			{
-				Range& current_range = m_IndexBuffersRange[m_CurrentBufferRange];
-				current_range.m_End = (int) m_IndexData.size();
-
-				m_IndexBuffersRange.push_back({ current_range.m_End, -1 });
-			}
+			m_MeshInfos.push_back(new MeshInfo(current_mesh_info));
 
 			m_IndexMap.clear();
 			m_IncrementalIndexValue = 0;
 
-			m_CurrentBufferRange++;
+			m_CurrentMeshInfo++;
 		}
 
-		
+		// Actually set the object name for the new MeshInfo
+		m_MeshInfos[m_CurrentMeshInfo]->m_ObjectName = all_elem[0];
 
 		break;
 	}
@@ -286,4 +319,22 @@ OBJKeyword MeshLoader::GetKeywordFromString(const std::string & inStr)
 		return (*search).second;
 	}
 	return OBJKeyword::Invalid;
+}
+
+MeshInfo::MeshInfo()
+{
+	m_VertexBuffeRange = { 0, -1 };
+	m_IndexBufferRange = { 0, -1 };
+}
+
+MeshInfo::MeshInfo(const MeshInfo & inPreviousMeshInfo)
+{
+	m_VertexBuffeRange = { inPreviousMeshInfo.m_VertexBuffeRange.m_End, -1 };
+	m_IndexBufferRange = { inPreviousMeshInfo.m_IndexBufferRange.m_End, -1 };
+}
+
+void MeshInfo::EndRange(int inVertexBufferEnd, int inIndexBufferEnd)
+{
+	m_VertexBuffeRange.m_End = inVertexBufferEnd;
+	m_IndexBufferRange.m_End = inIndexBufferEnd;
 }

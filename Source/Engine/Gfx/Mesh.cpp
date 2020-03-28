@@ -14,6 +14,14 @@ void Mesh::Init(
 	m_PrimitiveTopology = inPrimitiveTopology;
 }
 
+void Mesh::SetResourceName(const std::string & inName)
+{
+	// TODO: Properly handle string and wstrings...
+	const std::wstring wide_str(inName.begin(), inName.end());
+	m_VertexBuffer.GetResource()->SetName((wide_str + L"_VertexBuffer").c_str());
+	m_IndexBuffer.GetResource()->SetName((wide_str + L"_IndexBuffer").c_str());
+}
+
 void Mesh::Set(ID3D12GraphicsCommandList2* inCommandList)
 {
 	inCommandList->IASetPrimitiveTopology(m_PrimitiveTopology);

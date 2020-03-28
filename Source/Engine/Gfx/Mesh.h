@@ -30,6 +30,8 @@ public:
 		void* inVertexBuffer, int32 inVertexBufferSize, int32 inStride,
 		void* inIndexBuffer, int32 inIndexBufferSize);
 
+	void SetResourceName(const std::string& inName);
+
 	void	Set(ID3D12GraphicsCommandList2* inCommandList);
 	uint32	GetNumIndices() const;
 };
