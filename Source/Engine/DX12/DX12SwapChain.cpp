@@ -20,7 +20,7 @@ bool CheckTearingSupport()
 	if (result == S_OK)
 	{
 		IDXGIFactory5* factory5;
-		result = factory4->QueryInterface(__uuidof(IDXGIFactory5), (void **) &factory5);
+		result = factory4->QueryInterface(IID_PPV_ARGS(&factory5));
 
 		if (result == S_OK)
 		{
@@ -77,7 +77,7 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 	// will be handled manually.
 	ThrowIfFailed(dxgi_factory4->MakeWindowAssociation(inHandle, DXGI_MWA_NO_ALT_ENTER));
 
-	ThrowIfFailed(swap_chain1->QueryInterface(__uuidof(IDXGISwapChain4), (void **) &m_SwapChain));
+	ThrowIfFailed(swap_chain1->QueryInterface(IID_PPV_ARGS(&m_SwapChain)));
 
 	swap_chain1->Release();
 	dxgi_factory4->Release();

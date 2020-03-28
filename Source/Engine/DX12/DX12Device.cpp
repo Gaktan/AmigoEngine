@@ -24,7 +24,7 @@ DX12Device::~DX12Device()
 
 #if defined(_DEBUG)
 	ID3D12DebugDevice* debug_device = nullptr;
-	ThrowIfFailed(m_Device->QueryInterface(__uuidof(ID3D12DebugDevice), reinterpret_cast<void**>(&debug_device)));
+	ThrowIfFailed(m_Device->QueryInterface(IID_PPV_ARGS(&debug_device)));
 
 	HRESULT result = debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL | D3D12_RLDO_IGNORE_INTERNAL);
 	ThrowIfFailed(result);
@@ -89,7 +89,7 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
 	// Enable debug messages in debug mode.
 #if defined(_DEBUG)
 	ID3D12InfoQueue* info_queue;
-	if (SUCCEEDED(d3d12_device2->QueryInterface(__uuidof(ID3D12InfoQueue), (void **) &info_queue)))
+	if (SUCCEEDED(d3d12_device2->QueryInterface(IID_PPV_ARGS(&info_queue))))
 	{
 		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
 		info_queue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
@@ -173,7 +173,7 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 	{
 		IDXGIAdapter1* dxgi_adapter1 = nullptr;
 		ThrowIfFailed(dxgi_factory->EnumWarpAdapter(IID_PPV_ARGS(&dxgi_adapter1)));
-		ThrowIfFailed(dxgi_adapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgi_adapter4));
+		ThrowIfFailed(dxgi_adapter1->QueryInterface(IID_PPV_ARGS(&dxgi_adapter4)));
 		dxgi_adapter1->Release();
 	}
 	else
@@ -188,12 +188,12 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 			// Check to see if the adapter can create a D3D12 device without actually 
 			// creating it. The adapter with the largest dedicated video memory
 			// is favored.
-			if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0 &&
-				SUCCEEDED(D3D12CreateDevice(dxgi_adapter1, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)) &&
-				desc.DedicatedVideoMemory > max_dedicated_video_memory)
+			if ((desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) == 0
+				&& SUCCEEDED(D3D12CreateDevice(dxgi_adapter1, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr))
+				&& desc.DedicatedVideoMemory > max_dedicated_video_memory)
 			{
 				max_dedicated_video_memory = desc.DedicatedVideoMemory;
-				ThrowIfFailed(dxgi_adapter1->QueryInterface(__uuidof(IDXGIAdapter4), (void **) &dxgi_adapter4));
+				ThrowIfFailed(dxgi_adapter1->QueryInterface(IID_PPV_ARGS(&dxgi_adapter4)));
 			}
 
 			dxgi_adapter1->Release();
