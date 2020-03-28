@@ -168,15 +168,15 @@ void Update()
 	OnUpdate(g_ClientWidth, g_ClientHeight, deltaMS);
 }
 
-void Resize(uint32_t inWwidth, uint32_t inHeight)
+void Resize(uint32_t inWidth, uint32_t inHeight)
 {
-	if (g_ClientWidth != inWwidth || g_ClientHeight != inHeight)
+	if (g_ClientWidth != inWidth || g_ClientHeight != inHeight)
 	{
-		// Don't allow 0 size swap chain back buffers.
-		g_ClientWidth	= Math::Max(1u, inWwidth);
-		g_ClientHeight	= Math::Max(1u, inHeight);
+		// Don't allow resolution below 256. This is arbitrary, but as long as it's greater than 0. See WM_GETMINMAXINFO
+		g_ClientWidth	= Math::Max(128u, inWidth);
+		g_ClientHeight	= Math::Max(128u, inHeight);
 
-		OnResize(g_Device, inWwidth, inHeight);
+		OnResize(g_Device, inWidth, inHeight);
 	}
 }
 
@@ -220,10 +220,17 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 
 		Resize(width, height);
 	}
+	else if (inMessage == WM_GETMINMAXINFO)
+	{
+		MINMAXINFO* min_max_info = reinterpret_cast<MINMAXINFO*>(lParam);
+
+		// See Resize() function
+		min_max_info->ptMinTrackSize.x = 128;
+		min_max_info->ptMinTrackSize.y = 128;
+	}
 	else if (inMessage == WM_DESTROY)
 	{
 		::PostQuitMessage(0);
-
 	}
 	else
 	{

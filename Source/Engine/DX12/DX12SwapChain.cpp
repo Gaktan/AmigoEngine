@@ -174,6 +174,16 @@ void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, c
 	D3D12_CPU_DESCRIPTOR_HANDLE dsv = inDepthBuffer->GetCPUDescriptorHandle();
 
 	inCommandList->OMSetRenderTargets(1, &rtv, false, &dsv);
+
+
+	// TODO: Allow to set custom viewports and scissor rects
+	D3D12_RESOURCE_DESC desc = m_BackBuffers[m_CurrentBackBufferIndex]->GetResource()->GetDesc();
+
+	D3D12_RECT		scissor_rect	= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
+	D3D12_VIEWPORT	viewport		= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(desc.Width), static_cast<float>(desc.Height));
+
+	inCommandList->RSSetViewports(1, &viewport);
+	inCommandList->RSSetScissorRects(1, &scissor_rect);
 }
 
 uint32 DX12SwapChain::GetCurrentBackBufferIndex()

@@ -37,9 +37,6 @@ DX12Texture* m_DummyTexture = nullptr;
 
 std::vector<DrawableObject*> m_DrawableObjects;
 
-D3D12_VIEWPORT	m_Viewport;
-D3D12_RECT		m_ScissorRect;
-
 float	m_FOV;
 Mat4	m_ModelMatrix;
 Mat4	m_ViewMatrix;
@@ -71,8 +68,6 @@ void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 {
 	{
-		m_ScissorRect		= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
-		m_Viewport			= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
 		m_FOV				= 45.0f;
 		m_ContentLoaded		= false;
 
@@ -152,10 +147,6 @@ void UnloadContent(DX12Device& inDevice)
 
 void OnResize(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 {
-	inWidth		= Math::Max(256u, inWidth);
-	inHeight	= Math::Max(256u, inHeight);
-	m_Viewport	= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(inWidth), static_cast<float>(inHeight));
-
 	ResizeBuffers(inDevice, inWidth, inHeight);
 }
 
@@ -236,9 +227,6 @@ void OnRender(DX12Device& inDevice)
 		swap_chain->ClearBackBuffer(command_list);
 		m_DepthBuffer->ClearBuffer(command_list);
 	}
-
-	command_list->RSSetViewports(1, &m_Viewport);
-	command_list->RSSetScissorRects(1, &m_ScissorRect);
 
 	swap_chain->SetRenderTarget(command_list, m_DepthBuffer);
 
