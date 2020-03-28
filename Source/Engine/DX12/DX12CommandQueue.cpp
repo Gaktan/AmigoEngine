@@ -15,6 +15,12 @@ DX12CommandQueue::DX12CommandQueue(DX12Device& inDevice, D3D12_COMMAND_LIST_TYPE
 	desc.NodeMask	= 0;
 
 	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_D3DCommandQueue)));
+
+	for (auto& entry : m_CommandListEntries)
+	{
+		entry.m_D3DCommandAllocator	= CreateCommandAllocator(inDevice);
+		entry.m_D3DCommandList		= CreateCommandList(inDevice, entry.m_D3DCommandAllocator);
+	}
 }
 
 DX12CommandQueue::~DX12CommandQueue()
@@ -66,6 +72,8 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(DX12Device& inDe
 	ID3D12GraphicsCommandList2* command_list;
 	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommandList(0, m_CommandListType, inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
 
+	command_list->Close();
+
 	return command_list;
 }
 
@@ -81,16 +89,8 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList(DX12Device& inDevic
 	{
 		entry.m_IsBeingRecorded = true;
 
-		if (entry.m_D3DCommandList)
-		{
-			entry.m_D3DCommandAllocator->Reset();
-			entry.m_D3DCommandList->Reset(entry.m_D3DCommandAllocator, nullptr);
-		}
-		else
-		{
-			entry.m_D3DCommandAllocator	= CreateCommandAllocator(inDevice);
-			entry.m_D3DCommandList			= CreateCommandList(inDevice, entry.m_D3DCommandAllocator);
-		}
+		entry.m_D3DCommandAllocator->Reset();
+		entry.m_D3DCommandList->Reset(entry.m_D3DCommandAllocator, nullptr);
 	}
 
 	return entry.m_D3DCommandList;
