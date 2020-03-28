@@ -81,22 +81,36 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 		ProcessLine(line);
 	}
 
+	// Close the last ranges
+	m_VertexBufferRange[m_CurrentBufferRange].m_End = (int) m_VertexData.size();
+	m_IndexBuffersRange[m_CurrentBufferRange].m_End = (int) m_IndexData.size();
+
 	// Blender exports meshes in Right Hand Coordinates. DX12 uses Left Hand. We need to flip the winding order
 	ReverseWinding();
 }
 
-Mesh* MeshLoader::CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+void MeshLoader::CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, std::vector<Mesh*>& outMeshes)
 {
 	Assert(m_VertexData.size() > 0);
 
-	Mesh* mesh = new Mesh();
+	for (size_t i = 0; i <= m_CurrentBufferRange; i++)
+	{
+		Range vertex_range	= m_VertexBufferRange[i];
+		Range index_range	= m_IndexBuffersRange[i];
 
-	mesh->Init(inDevice, inCommandList,
-			   D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-			   m_VertexData.data(), static_cast<uint32>(m_VertexData.size()) * sizeof(VertexPosUVNormal), sizeof(VertexPosUVNormal),
-			   m_IndexData.data(), static_cast<uint32>(m_IndexData.size()) * sizeof(uint16));
+		uint32 vertex_size	= static_cast<uint32>(vertex_range.m_End	- vertex_range.m_Start) * sizeof(VertexPosUVNormal);
+		uint32 index_size	= static_cast<uint32>(index_range.m_End		- index_range.m_Start) * sizeof(uint16);
 
-	return mesh;
+		Mesh* mesh = new Mesh();
+		mesh->Init(inDevice, inCommandList,
+				   D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
+				   m_VertexData.data()	+ vertex_range.m_Start,	vertex_size, sizeof(VertexPosUVNormal),
+				   m_IndexData.data()	+ index_range.m_Start,	index_size);
+
+		outMeshes.push_back(mesh);
+	}
+
+
 }
 
 void MeshLoader::ProcessLine(const std::string& inLine)
@@ -156,7 +170,10 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 
 	case OBJKeyword::Point:
 	case OBJKeyword::Line:
+	{
 		Assert(false);
+		break;
+	}
 	case OBJKeyword::Polygon:
 	{
 		// Only support triangles
@@ -165,6 +182,40 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		break;
 	}
 	case OBJKeyword::ObjectName:
+	{
+		if (m_VertexBufferRange.size() == 0)
+		{
+			Assert(m_IndexBuffersRange.size() == 0);
+			m_VertexBufferRange.push_back(Range { 0, -1 });
+			m_IndexBuffersRange.push_back(Range { 0, -1 });
+		}
+		else
+		{
+			// Update vertex buffer range
+			{
+				Range& current_range = m_VertexBufferRange[m_CurrentBufferRange];
+				current_range.m_End = (int) m_VertexData.size();
+
+				m_VertexBufferRange.push_back({ current_range.m_End, -1 });
+			}
+			// Update index buffer range
+			{
+				Range& current_range = m_IndexBuffersRange[m_CurrentBufferRange];
+				current_range.m_End = (int) m_IndexData.size();
+
+				m_IndexBuffersRange.push_back({ current_range.m_End, -1 });
+			}
+
+			m_IndexMap.clear();
+			m_IncrementalIndexValue = 0;
+
+			m_CurrentBufferRange++;
+		}
+
+		
+
+		break;
+	}
 	case OBJKeyword::GroupName:
 		// Don't do anything for now
 		break;
@@ -197,9 +248,9 @@ void MeshLoader::ProcessTriangle(const std::vector<std::string>& inFaceElements)
 		auto index_search = m_IndexMap.find(vertex_string);
 		if (index_search == m_IndexMap.end())
 		{
-			m_IndexMap[vertex_string] = m_CurrentIndex;
-			m_IndexData.push_back(m_CurrentIndex);
-			m_CurrentIndex++;
+			m_IndexMap[vertex_string] = m_IncrementalIndexValue;
+			m_IndexData.push_back(m_IncrementalIndexValue);
+			m_IncrementalIndexValue++;
 
 			std::vector<std::string> all_elem = String::Split(vertex_string, "/");
 			size_t num_elems = all_elem.size();

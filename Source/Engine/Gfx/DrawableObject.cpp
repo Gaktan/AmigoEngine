@@ -93,7 +93,7 @@ void DrawableObject::CreatePSO(DX12Device& inDevice)
 
 void DrawableObject::CreateRootSignature(DX12Device& inDevice)
 {
-	// TODO: Root signatures should be associated with the shader instead!
+	// TODO: Root signatures should be associated with the shader or shader bindings instead!
 	auto* dx12_device	= inDevice.GetD3DDevice();
 
 	// Create a root signature.

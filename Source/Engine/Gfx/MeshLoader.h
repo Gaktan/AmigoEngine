@@ -36,6 +36,12 @@ enum class OBJKeyword
 	NumKeywords
 };
 
+struct Range
+{
+	int m_Start	= 0;
+	int m_End	= -1;
+};
+
 class MeshLoader
 {
 protected:
@@ -46,11 +52,15 @@ protected:
 	std::vector<uint16>				m_IndexData;
 	std::map<std::string, uint16>	m_IndexMap;
 
-	uint16							m_CurrentIndex = 0;
+	uint16							m_IncrementalIndexValue	= 0;
+
+	std::vector<Range>				m_IndexBuffersRange;
+	std::vector<Range>				m_VertexBufferRange;
+	size_t							m_CurrentBufferRange	= 0;
 
 public:
 	void	LoadFromFile(const std::string& inFile);
-	Mesh*	CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList);
+	void	CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, std::vector<Mesh*>& outMeshes);
 
 private:
 	void	ProcessLine(const std::string& inLine);

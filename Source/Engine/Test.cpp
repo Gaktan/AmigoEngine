@@ -90,19 +90,26 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Create the depth buffer
 	ResizeBuffers(inDevice, inWidth, inHeight);
 
+	std::vector<Mesh*> all_meshes;
+
 	// Create drawable objects
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
-		Mesh* bulb_mesh = mesh_loader.CreateMeshObject(inDevice, command_list);
-		m_DrawableObjects.push_back(DrawableObject::CreateDrawableObject(inDevice, bulb_mesh));
+		mesh_loader.CreateMeshObjects(inDevice, command_list, all_meshes);
 	}
 	{
-		Trace("=======\n\n\n=======");
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\LightBulb.obj");
-		Mesh* bulb_mesh = mesh_loader.CreateMeshObject(inDevice, command_list);
-		m_DrawableObjects.push_back(DrawableObject::CreateDrawableObject(inDevice, bulb_mesh));
+		mesh_loader.CreateMeshObjects(inDevice, command_list, all_meshes);
+
+		// The lightbulb obj should load a bunch of different meshes
+		Assert(all_meshes.size() > 2);
+	}
+
+	for (Mesh* mesh : all_meshes)
+	{
+		m_DrawableObjects.push_back(DrawableObject::CreateDrawableObject(inDevice, mesh));
 	}
 
 	// Load texture
