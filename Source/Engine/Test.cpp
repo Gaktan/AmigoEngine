@@ -21,14 +21,11 @@
 #include "Gfx/Mesh.h"
 #include "Gfx/MeshLoader.h"
 #include "Gfx/TextureLoader.h"
+#include "Gfx/DrawableObject.h"
 
 #include "Utils/Mouse.h"
 
 #include "Shaders/Include/ConstantBuffers.h"
-#include "Shaders/Include/Shaders.h"
-
-// Mesh for the scene
-Mesh* m_SceneMesh = nullptr;
 
 // Constant Buffer for the vertex shader
 DX12ConstantBuffer* m_ConstantBuffer = nullptr;
@@ -36,26 +33,21 @@ DX12ConstantBuffer* m_ConstantBuffer = nullptr;
 // Depth buffer.
 DX12DepthRenderTarget* m_DepthBuffer = nullptr;
 
-// Root signature
-ID3D12RootSignature* m_RootSignature = nullptr;
-
-// Pipeline state object.
-ID3D12PipelineState* m_PipelineState = nullptr;
-
 DX12Texture* m_DummyTexture = nullptr;
 
-D3D12_VIEWPORT m_Viewport;
-D3D12_RECT m_ScissorRect;
+std::vector<DrawableObject*> m_DrawableObjects;
 
-float m_FOV;
+D3D12_VIEWPORT	m_Viewport;
+D3D12_RECT		m_ScissorRect;
 
+float	m_FOV;
 Mat4	m_ModelMatrix;
 Mat4	m_ViewMatrix;
 Mat4	m_ProjectionMatrix;
 
 Vec4	m_SavedPosition;
 
-bool m_ContentLoaded;
+bool	m_ContentLoaded;
 
 void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 {
@@ -92,26 +84,26 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	MeshLoader::Init();
 	TextureLoader::Init();
 
-	auto* dx12_device	= inDevice.GetD3DDevice();
 	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
 	auto* command_list	= command_queue->GetCommandList(inDevice);
 
 	// Create the depth buffer
 	ResizeBuffers(inDevice, inWidth, inHeight);
 
-	// Create the vertex input layout
-	D3D12_INPUT_ELEMENT_DESC input_layout[] =
+	// Create drawable objects
 	{
-		// Based on VertexPosUVNormal
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-
-	// Load mesh
-	MeshLoader mesh_loader;
-	mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
-	m_SceneMesh = mesh_loader.CreateMeshObject(inDevice, command_list);
+		MeshLoader mesh_loader;
+		mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
+		Mesh* bulb_mesh = mesh_loader.CreateMeshObject(inDevice, command_list);
+		m_DrawableObjects.push_back(DrawableObject::CreateDrawableObject(inDevice, bulb_mesh));
+	}
+	{
+		Trace("=======\n\n\n=======");
+		MeshLoader mesh_loader;
+		mesh_loader.LoadFromFile("Data\\LightBulb.obj");
+		Mesh* bulb_mesh = mesh_loader.CreateMeshObject(inDevice, command_list);
+		m_DrawableObjects.push_back(DrawableObject::CreateDrawableObject(inDevice, bulb_mesh));
+	}
 
 	// Load texture
 	TextureLoader texture_loader;
@@ -121,76 +113,6 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
 	m_ConstantBuffer->InitAsConstantBuffer(inDevice, sizeof(ConstantBuffer::ModelViewProjection));
-
-	// Create a root signature.
-	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
-	feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	if (FAILED(dx12_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
-	{
-		feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
-	}
-
-	// Allow input layout and deny unnecessary access to certain pipeline stages.
-	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-
-	// Create a descriptor table with one entry in our descriptor heap
-	CD3DX12_DESCRIPTOR_RANGE1 range { D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0 };
-
-	// A single Constant Buffer View root parameter that is used by the vertex shader.
-	CD3DX12_ROOT_PARAMETER1 root_parameters[2];
-	root_parameters[0].InitAsDescriptorTable(1, &range, D3D12_SHADER_VISIBILITY_PIXEL);
-	root_parameters[1].InitAsConstantBufferView(0, 0, D3D12_ROOT_DESCRIPTOR_FLAG_NONE, D3D12_SHADER_VISIBILITY_VERTEX);
-
-	// We don't use another descriptor heap for the sampler, instead we use a
-	// static sampler
-	CD3DX12_STATIC_SAMPLER_DESC samplers[1];
-	samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
-
-	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_desc;
-	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 1, samplers, rootSignatureFlags);
-
-	// Serialize the root signature.
-	ID3DBlob* root_signature_blob;
-	ID3DBlob* error_blob;
-	ThrowIfFailed(D3DX12SerializeVersionedRootSignature(&root_signature_desc,
-														feature_data.HighestVersion, &root_signature_blob, &error_blob));
-	// Create the root signature.
-	ThrowIfFailed(dx12_device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-												   root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
-
-	struct PipelineStateStream
-	{
-		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE			m_RootSignature;
-		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT				m_InputLayout;
-		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY		m_PrimitiveTopologyType;
-		CD3DX12_PIPELINE_STATE_STREAM_VS						m_VertexShader;
-		CD3DX12_PIPELINE_STATE_STREAM_PS						m_PixelShader;
-		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT		m_DSVFormat;
-		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS		m_RTVFormats;
-		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER				m_Rasterizer;
-	} pipeline_state_stream;
-
-	D3D12_RT_FORMAT_ARRAY rtv_formats = {};
-	rtv_formats.NumRenderTargets	= 1;
-	rtv_formats.RTFormats[0]		= DXGI_FORMAT_R8G8B8A8_UNORM;
-
-	pipeline_state_stream.m_RootSignature			= m_RootSignature;
-	pipeline_state_stream.m_InputLayout				= { input_layout, _countof(input_layout) };
-	pipeline_state_stream.m_PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipeline_state_stream.m_VertexShader			= GET_SHADER_BYTECODE(VertexShader);
-	pipeline_state_stream.m_PixelShader				= GET_SHADER_BYTECODE(PixelShader);
-	pipeline_state_stream.m_DSVFormat				= m_DepthBuffer->GetFormat();
-	pipeline_state_stream.m_RTVFormats				= rtv_formats;
-
-	D3D12_PIPELINE_STATE_STREAM_DESC pipeline_state_desc =
-	{
-		sizeof(PipelineStateStream), &pipeline_state_stream
-	};
-	ThrowIfFailed(dx12_device->CreatePipelineState(&pipeline_state_desc, IID_PPV_ARGS(&m_PipelineState)));
 
 	auto fence_value = command_queue->ExecuteCommandList(command_list);
 	command_queue->WaitForFenceValue(fence_value);
@@ -205,12 +127,16 @@ void UnloadContent(DX12Device& inDevice)
 	// Make sure the command queue has finished all commands before closing.
 	inDevice.Flush();
 
-	delete m_SceneMesh;
+	// Delete all drawable objects
+	for (DrawableObject* d : m_DrawableObjects)
+	{
+		delete d;
+	}
+	m_DrawableObjects.clear();
+
 	delete m_ConstantBuffer;
 
 	delete m_DepthBuffer;
-	m_RootSignature->Release();
-	m_PipelineState->Release();
 
 	delete m_DummyTexture;
 
@@ -304,11 +230,6 @@ void OnRender(DX12Device& inDevice)
 		m_DepthBuffer->ClearBuffer(command_list);
 	}
 
-	command_list->SetPipelineState(m_PipelineState);
-	command_list->SetGraphicsRootSignature(m_RootSignature);
-
-	m_SceneMesh->Set(command_list);
-
 	command_list->RSSetViewports(1, &m_Viewport);
 	command_list->RSSetScissorRects(1, &m_ScissorRect);
 
@@ -320,20 +241,26 @@ void OnRender(DX12Device& inDevice)
 	mvp.View		= m_ViewMatrix;
 	mvp.Projection	= m_ProjectionMatrix;
 
-	// Set texture
+	for (DrawableObject* d : m_DrawableObjects)
+	{
+		d->SetupBindings(command_list);
 
-	// Set the descriptor heap containing the texture srv
-	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
-	command_list->SetDescriptorHeaps(1, heaps);
+		// Set texture
+		{
+			// Set the descriptor heap containing the texture srv
+			ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
+			command_list->SetDescriptorHeaps(1, heaps);
 
-	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-	command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
+			// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
+			command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
+		}
 
-	// Upload Constant Buffer to GPU
-	m_ConstantBuffer->UpdateBufferResource(inDevice, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
-	m_ConstantBuffer->SetConstantBuffer(command_list, 1);
+		// Upload Constant Buffer to GPU
+		m_ConstantBuffer->UpdateBufferResource(inDevice, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
+		m_ConstantBuffer->SetConstantBuffer(command_list, 1);
 
-	command_list->DrawIndexedInstanced(m_SceneMesh->GetNumIndices(), 1, 0, 0, 0);
+		d->Render(command_list);
+	}
 
 	// Present
 	inDevice.Present(command_list);

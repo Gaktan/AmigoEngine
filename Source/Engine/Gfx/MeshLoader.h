@@ -46,6 +46,8 @@ protected:
 	std::vector<uint16>				m_IndexData;
 	std::map<std::string, uint16>	m_IndexMap;
 
+	uint16							m_CurrentIndex = 0;
+
 public:
 	void	LoadFromFile(const std::string& inFile);
 	Mesh*	CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList);

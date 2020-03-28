@@ -85,7 +85,7 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 	ReverseWinding();
 }
 
-Mesh * MeshLoader::CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+Mesh* MeshLoader::CreateMeshObject(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
 {
 	Assert(m_VertexData.size() > 0);
 
@@ -197,10 +197,9 @@ void MeshLoader::ProcessTriangle(const std::vector<std::string>& inFaceElements)
 		auto index_search = m_IndexMap.find(vertex_string);
 		if (index_search == m_IndexMap.end())
 		{
-			static uint16 s_Index = 0;
-			m_IndexMap[vertex_string] = s_Index;
-			m_IndexData.push_back(s_Index);
-			s_Index++;
+			m_IndexMap[vertex_string] = m_CurrentIndex;
+			m_IndexData.push_back(m_CurrentIndex);
+			m_CurrentIndex++;
 
 			std::vector<std::string> all_elem = String::Split(vertex_string, "/");
 			size_t num_elems = all_elem.size();
