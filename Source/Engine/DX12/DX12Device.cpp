@@ -70,9 +70,9 @@ void DX12Device::Present(ID3D12GraphicsCommandList2* inCommandList)
 
 void DX12Device::ResestDescriptorHeaps()
 {
-	if (m_RTVDescriptorHeap == nullptr)
+	if (m_RTVDescriptorHeap != nullptr)
 	{
-		Assert(m_DSVDescriptorHeap == nullptr);
+		Assert(m_DSVDescriptorHeap != nullptr);
 		delete m_RTVDescriptorHeap;
 		delete m_DSVDescriptorHeap;
 	}
