@@ -176,7 +176,7 @@ void Resize(uint32_t inWidth, uint32_t inHeight)
 		g_ClientWidth	= Math::Max(128u, inWidth);
 		g_ClientHeight	= Math::Max(128u, inHeight);
 
-		OnResize(g_Device, inWidth, inHeight);
+		OnResize(g_Device, g_ClientWidth, g_ClientHeight);
 	}
 }
 
