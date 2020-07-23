@@ -81,7 +81,7 @@ void DX12Texture::UpdateBufferResource(
 		&resource_desc,
 		D3D12_RESOURCE_STATE_GENERIC_READ,
 		nullptr,
-			IID_PPV_ARGS(&m_IntermediateResource)));
+		IID_PPV_ARGS(&m_IntermediateResource)));
 
 	D3D12_SUBRESOURCE_DATA subresource_data = {};
 	subresource_data.pData		= inBufferData;
