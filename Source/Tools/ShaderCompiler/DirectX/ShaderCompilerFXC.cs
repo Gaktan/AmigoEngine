@@ -9,7 +9,7 @@ namespace ShaderCompiler
 		protected override string GetCompilerPath()
 		{
 			// Hardcoding path to Windows Kits. No clue if we can detect it or not. Version must match sharpmake project.
-			return @"C:\Program Files (x86)\Windows Kits\10\bin\10.0.17763.0\x64\fxc.exe";
+			return @"C:\Program Files (x86)\Windows Kits\10\bin\10.0.19041.0\x64\fxc.exe";
 		}
 
 		protected override string GetCompilerDefine()

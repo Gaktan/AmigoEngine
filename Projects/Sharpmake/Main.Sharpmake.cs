@@ -86,46 +86,43 @@ class AmigoEngine : Project
 		// Compiler Shaders during Pre-Build event
 		conf.EventPreBuild.Add(@"""[project.RootPath]\Tools\ShaderCompiler\ShaderCompiler.exe"" -Build -c Config.ini -r ""[project.SourceRootPath]\shaders""");
 	}
+}
 
-	[Generate]
-	public class AmigoSolution : Solution
+[Generate]
+public class AmigoSolution : Solution
+{
+	public AmigoSolution()
 	{
-		public AmigoSolution()
-		{
-			Name = "Amigo";
+		Name = "Amigo";
 
-			Target target = new Target(
-				Platform.win64,
-				DevEnv.vs2017,
-				Optimization.Debug | Optimization.Release);
-			target.Framework = DotNetFramework.v4_5;
+		Target target = new Target(
+			Platform.win64,
+			DevEnv.vs2017,
+			Optimization.Debug | Optimization.Release);
+		target.Framework = DotNetFramework.v4_5;
 
-			AddTargets(target);
-		}
-
-		[Configure]
-		public void ConfigureAll(Configuration conf, Target target)
-		{
-			// Sets proper Windows Kits version
-			KitsRootPaths.SetUseKitsRootForDevEnv(
-				target.DevEnv,
-				KitsRootEnum.KitsRoot10,
-				Options.Vc.General.WindowsTargetPlatformVersion.v10_0_17763_0);
-
-			conf.SolutionFileName = "[solution.Name]";
-			conf.SolutionPath = @"[solution.SharpmakeCsPath]\..\..\";
-
-			conf.AddProject<AmigoEngine>(target);
-			conf.AddProject<ShaderCompiler>(target);
-		}
+		AddTargets(target);
 	}
 
-	public static class Main
+	[Configure()]
+	public void ConfigureAll(Configuration conf, Target target)
 	{
-		[Sharpmake.Main]
-		public static void SharpmakeMain(Arguments arguments)
-		{
-			arguments.Generate<AmigoSolution>();
-		}
+		// Sets proper Windows Kits version
+		KitsRootPaths.SetUseKitsRootForDevEnv(
+			target.DevEnv,
+			KitsRootEnum.KitsRoot10,
+			Options.Vc.General.WindowsTargetPlatformVersion.v10_0_19041_0);
+
+		conf.SolutionFileName = "[solution.Name]";
+		conf.SolutionPath = @"[solution.SharpmakeCsPath]\..\..\";
+
+		conf.AddProject<AmigoEngine>(target);
+		conf.AddProject<ShaderCompiler>(target);
+	}
+	
+	[Sharpmake.Main]
+	public static void SharpmakeMain(Arguments arguments)
+	{
+		arguments.Generate<AmigoSolution>();
 	}
 }
