@@ -222,6 +222,10 @@ void OnRender(DX12Device& inDevice)
 	auto* command_list	= command_queue->GetCommandList(inDevice);
 	auto* swap_chain	= inDevice.GetSwapChain();
 
+	// Set the descriptor heap containing all textures
+	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
+	command_list->SetDescriptorHeaps(1, heaps);
+
 	// Clear the render targets.
 	{
 		swap_chain->ClearBackBuffer(command_list);
@@ -236,19 +240,13 @@ void OnRender(DX12Device& inDevice)
 	mvp.View		= m_ViewMatrix;
 	mvp.Projection	= m_ProjectionMatrix;
 
+
 	for (DrawableObject* d : m_DrawableObjects)
 	{
 		d->SetupBindings(command_list);
 
-		// Set texture
-		{
-			// Set the descriptor heap containing the texture srv
-			ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
-			command_list->SetDescriptorHeaps(1, heaps);
-
-			// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-			command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
-		}
+		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
+		command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
 
 		// Upload Constant Buffer to GPU
 		m_ConstantBuffer->UpdateBufferResource(inDevice, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
