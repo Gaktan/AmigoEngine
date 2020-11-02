@@ -13,7 +13,7 @@ using Vec3 = float[3];
 
 // Code between Begin(X) and End(X) is generated. Do not modify it
 
-namespace ConstantBuffer
+namespace ConstantBuffers
 {
 // BeginConstantBuffer
 struct X1234

@@ -17,9 +17,10 @@
 	#include "Shaders\generated\VertexShader_VertexShader_VS.generated.h"
 // EndInclude
 
-#define GET_SHADER_BYTECODE(__name) SHADER_BYTECODE_ ## __name
-#define INIT_SHADER_BYTECODE(__name) D3D12_SHADER_BYTECODE GET_SHADER_BYTECODE(__name) = { g_ ## __name, sizeof(g_ ## __name) }
+#define INIT_SHADER_BYTECODE(__name) static const D3D12_SHADER_BYTECODE __name = { g_ ## __name, sizeof(g_ ## __name) }
 
+namespace InlineShaders
+{
 // BeginShaderByteCode
 	INIT_SHADER_BYTECODE(PixelShader);
 	INIT_SHADER_BYTECODE(Test_10);
@@ -34,3 +35,4 @@
 	INIT_SHADER_BYTECODE(Test_24);
 	INIT_SHADER_BYTECODE(VertexShader);
 // EndShaderByteCode
+};

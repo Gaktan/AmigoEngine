@@ -114,7 +114,7 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
-	m_ConstantBuffer->InitAsConstantBuffer(inDevice, sizeof(ConstantBuffer::ModelViewProjection));
+	m_ConstantBuffer->InitAsConstantBuffer(inDevice, sizeof(ConstantBuffers::ModelViewProjection));
 
 	auto fence_value = command_queue->ExecuteCommandList(command_list);
 	command_queue->WaitForFenceValue(fence_value);
@@ -216,6 +216,29 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	m_ProjectionMatrix = Mat4::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
 }
 
+void RenderGeometry(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+{
+	// TODO: Pre multiply matrix
+	ConstantBuffers::ModelViewProjection mvp;
+	mvp.Model		= m_ModelMatrix;
+	mvp.View		= m_ViewMatrix;
+	mvp.Projection	= m_ProjectionMatrix;
+
+	for (DrawableObject* d : m_DrawableObjects)
+	{
+		d->SetupBindings(inCommandList);
+
+		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
+		inCommandList->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
+
+		// Upload Constant Buffer to GPU
+		m_ConstantBuffer->UpdateBufferResource(inDevice, inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
+		m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
+
+		d->Render(inCommandList);
+	}
+}
+
 void OnRender(DX12Device& inDevice)
 {
 	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -234,26 +257,7 @@ void OnRender(DX12Device& inDevice)
 
 	swap_chain->SetRenderTarget(command_list, m_DepthBuffer);
 
-	// TODO: Pre multiply matrix
-	ConstantBuffer::ModelViewProjection mvp;
-	mvp.Model		= m_ModelMatrix;
-	mvp.View		= m_ViewMatrix;
-	mvp.Projection	= m_ProjectionMatrix;
-
-
-	for (DrawableObject* d : m_DrawableObjects)
-	{
-		d->SetupBindings(command_list);
-
-		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-		command_list->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
-
-		// Upload Constant Buffer to GPU
-		m_ConstantBuffer->UpdateBufferResource(inDevice, command_list, sizeof(ConstantBuffer::ModelViewProjection), &mvp);
-		m_ConstantBuffer->SetConstantBuffer(command_list, 1);
-
-		d->Render(command_list);
-	}
+	RenderGeometry(inDevice, command_list);
 
 	// Present
 	inDevice.Present(command_list);

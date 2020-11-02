@@ -79,8 +79,8 @@ void DrawableObject::CreatePSO(DX12Device& inDevice)
 	pipeline_state_stream.m_RootSignature			= m_RootSignature;
 	pipeline_state_stream.m_InputLayout				= { input_layout, _countof(input_layout) };
 	pipeline_state_stream.m_PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipeline_state_stream.m_VertexShader			= GET_SHADER_BYTECODE(VertexShader);
-	pipeline_state_stream.m_PixelShader				= GET_SHADER_BYTECODE(PixelShader);
+	pipeline_state_stream.m_VertexShader			= InlineShaders::VertexShader;
+	pipeline_state_stream.m_PixelShader				= InlineShaders::PixelShader;
 	pipeline_state_stream.m_DSVFormat				= depth_format;
 	pipeline_state_stream.m_RTVFormats				= rtv_formats;
 
