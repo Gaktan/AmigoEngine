@@ -6,6 +6,7 @@
 #include "Shaders/Include/Shaders.h"
 
 #include "Gfx/Mesh.h"
+#include "RenderPass.h"
 
 DrawableObject::~DrawableObject()
 {
@@ -46,26 +47,6 @@ void DrawableObject::CreatePSO(DX12Device& inDevice)
 
 	auto* dx12_device	= inDevice.GetD3DDevice();
 
-	struct PipelineStateStream
-	{
-		CD3DX12_PIPELINE_STATE_STREAM_ROOT_SIGNATURE			m_RootSignature;
-		CD3DX12_PIPELINE_STATE_STREAM_INPUT_LAYOUT				m_InputLayout;
-		CD3DX12_PIPELINE_STATE_STREAM_PRIMITIVE_TOPOLOGY		m_PrimitiveTopologyType;
-		CD3DX12_PIPELINE_STATE_STREAM_VS						m_VertexShader;
-		CD3DX12_PIPELINE_STATE_STREAM_PS						m_PixelShader;
-		CD3DX12_PIPELINE_STATE_STREAM_DEPTH_STENCIL_FORMAT		m_DSVFormat;
-		CD3DX12_PIPELINE_STATE_STREAM_RENDER_TARGET_FORMATS		m_RTVFormats;
-		CD3DX12_PIPELINE_STATE_STREAM_RASTERIZER				m_Rasterizer;
-	} pipeline_state_stream;
-
-	// TODO: Grab appropriate format
-	constexpr DXGI_FORMAT color_format = DXGI_FORMAT_R8G8B8A8_UNORM;
-	constexpr DXGI_FORMAT depth_format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-
-	D3D12_RT_FORMAT_ARRAY rtv_formats = {};
-	rtv_formats.NumRenderTargets	= 1;
-	rtv_formats.RTFormats[0]		= color_format;
-
 	// TODO: Create this from the Shader instead
 	// Create the vertex input layout
 	D3D12_INPUT_ELEMENT_DESC input_layout[] =
@@ -76,19 +57,20 @@ void DrawableObject::CreatePSO(DX12Device& inDevice)
 		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 	};
 
-	pipeline_state_stream.m_RootSignature			= m_RootSignature;
-	pipeline_state_stream.m_InputLayout				= { input_layout, _countof(input_layout) };
-	pipeline_state_stream.m_PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
-	pipeline_state_stream.m_VertexShader			= InlineShaders::VertexShader;
-	pipeline_state_stream.m_PixelShader				= InlineShaders::PixelShader;
-	pipeline_state_stream.m_DSVFormat				= depth_format;
-	pipeline_state_stream.m_RTVFormats				= rtv_formats;
+	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc;
+	::memset(&pso_desc, 0, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
+	pso_desc.pRootSignature			= m_RootSignature;
+	pso_desc.VS						= InlineShaders::VertexShader;
+	pso_desc.PS						= InlineShaders::PixelShader;
+	pso_desc.InputLayout			= { input_layout, _countof(input_layout) };
+	pso_desc.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-	D3D12_PIPELINE_STATE_STREAM_DESC pipeline_state_desc =
-	{
-		sizeof(PipelineStateStream), &pipeline_state_stream
-	};
-	ThrowIfFailed(dx12_device->CreatePipelineState(&pipeline_state_desc, IID_PPV_ARGS(&m_PipelineState)));
+	// What is this value? Documentation says: The sample mask for the blend state.
+	pso_desc.SampleMask				= UINT_MAX;
+
+	RenderPassDesc::SetupRenderPassDesc(RenderPass::Geometry, pso_desc);
+
+	ThrowIfFailed(dx12_device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
 }
 
 void DrawableObject::CreateRootSignature(DX12Device& inDevice)
@@ -105,7 +87,7 @@ void DrawableObject::CreateRootSignature(DX12Device& inDevice)
 	}
 
 	// Allow input layout and deny unnecessary access to certain pipeline stages.
-	D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
+	D3D12_ROOT_SIGNATURE_FLAGS root_signature_flags =
 		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
 		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
@@ -124,7 +106,7 @@ void DrawableObject::CreateRootSignature(DX12Device& inDevice)
 	samplers[0].Init(0, D3D12_FILTER_MIN_MAG_LINEAR_MIP_POINT);
 
 	CD3DX12_VERSIONED_ROOT_SIGNATURE_DESC root_signature_desc;
-	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 1, samplers, rootSignatureFlags);
+	root_signature_desc.Init_1_1(_countof(root_parameters), root_parameters, 1, samplers, root_signature_flags);
 
 	// Serialize the root signature.
 	ID3DBlob* root_signature_blob;
