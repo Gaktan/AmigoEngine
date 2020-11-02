@@ -16,11 +16,12 @@ DrawableObject::~DrawableObject()
 	delete m_Mesh;
 }
 
-DrawableObject* DrawableObject::CreateDrawableObject(DX12Device& inDevice, Mesh* inMesh)
+DrawableObject* DrawableObject::CreateDrawableObject(DX12Device& inDevice, Mesh* inMesh, RenderPass inRenderPass)
 {
 	DrawableObject* drawable_object = new DrawableObject();
 
-	drawable_object->m_Mesh = inMesh;
+	drawable_object->m_RenderPass	= inRenderPass;
+	drawable_object->m_Mesh			= inMesh;
 	drawable_object->CreateRootSignature(inDevice);
 	drawable_object->CreatePSO(inDevice);
 
@@ -68,7 +69,7 @@ void DrawableObject::CreatePSO(DX12Device& inDevice)
 	// What is this value? Documentation says: The sample mask for the blend state.
 	pso_desc.SampleMask				= UINT_MAX;
 
-	RenderPassDesc::SetupRenderPassDesc(RenderPass::Geometry, pso_desc);
+	RenderPassDesc::SetupRenderPassDesc(m_RenderPass, pso_desc);
 
 	ThrowIfFailed(dx12_device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
 }

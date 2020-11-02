@@ -2,12 +2,17 @@
 
 #include "DX12/DX12Includes.h"
 
-enum RenderPass : int
+class DrawableObject;
+
+enum RenderPass : unsigned int
 {
-	Geometry,
+	Geometry = 0,
 	Transparent,
-	Present
+	Count
 };
+
+typedef std::vector<DrawableObject*> RenderBucket;
+typedef RenderBucket RenderBuckets[RenderPass::Count];
 
 class RenderPassDesc
 {

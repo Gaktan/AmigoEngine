@@ -35,7 +35,7 @@ DX12DepthRenderTarget* m_DepthBuffer = nullptr;
 
 DX12Texture* m_DummyTexture = nullptr;
 
-std::vector<DrawableObject*> m_DrawableObjects;
+RenderBuckets m_RenderBuckets;
 
 float	m_FOV;
 Mat4	m_ModelMatrix;
@@ -85,26 +85,16 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Create the depth buffer
 	ResizeBuffers(inDevice, inWidth, inHeight);
 
-	std::vector<Mesh*> all_meshes;
-
 	// Create drawable objects
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
-		mesh_loader.CreateMeshObjects(inDevice, command_list, all_meshes);
+		mesh_loader.CreateMeshesAndFillBuckets(inDevice, command_list, m_RenderBuckets);
 	}
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\LightBulb.obj");
-		mesh_loader.CreateMeshObjects(inDevice, command_list, all_meshes);
-
-		// The lightbulb obj should load a bunch of different meshes
-		Assert(all_meshes.size() > 2);
-	}
-
-	for (Mesh* mesh : all_meshes)
-	{
-		m_DrawableObjects.push_back(DrawableObject::CreateDrawableObject(inDevice, mesh));
+		mesh_loader.CreateMeshesAndFillBuckets(inDevice, command_list, m_RenderBuckets);
 	}
 
 	// Load texture
@@ -130,11 +120,14 @@ void UnloadContent(DX12Device& inDevice)
 	inDevice.Flush();
 
 	// Delete all drawable objects
-	for (DrawableObject* d : m_DrawableObjects)
+	for (RenderBucket& bucket : m_RenderBuckets)
 	{
-		delete d;
+		for (DrawableObject* d : bucket)
+		{
+			delete d;
+		}
+		bucket.clear();
 	}
-	m_DrawableObjects.clear();
 
 	delete m_ConstantBuffer;
 
@@ -224,7 +217,7 @@ void RenderGeometry(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandL
 	mvp.View		= m_ViewMatrix;
 	mvp.Projection	= m_ProjectionMatrix;
 
-	for (DrawableObject* d : m_DrawableObjects)
+	for (DrawableObject* d : m_RenderBuckets[(int) RenderPass::Geometry])
 	{
 		d->SetupBindings(inCommandList);
 

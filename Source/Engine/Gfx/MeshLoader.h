@@ -7,6 +7,7 @@
 #include "Math/Vec4.h"
 
 #include "Gfx/Mesh.h"
+#include "Gfx/RenderPass.h"
 
 enum class OBJKeyword
 {
@@ -73,7 +74,7 @@ protected:
 
 public:
 	void	LoadFromFile(const std::string& inFile);
-	void	CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, std::vector<Mesh*>& outMeshes);
+	void	CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, RenderBuckets& outBuckets);
 
 private:
 	void	ProcessLine(const std::string& inLine);

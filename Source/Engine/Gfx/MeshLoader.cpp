@@ -4,6 +4,8 @@
 #include "Utils/FileReader.h"
 #include "Utils/String.h"
 
+#include "Gfx/DrawableObject.h"
+
 #include <sstream>
 
 std::map<std::string, OBJKeyword> MeshLoader::s_OBJKeywords;
@@ -89,7 +91,7 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 	ReverseWinding();
 }
 
-void MeshLoader::CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, std::vector<Mesh*>& outMeshes)
+void MeshLoader::CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, RenderBuckets& outBuckets)
 {
 	Assert(m_VertexData.size() > 0);
 
@@ -113,7 +115,9 @@ void MeshLoader::CreateMeshObjects(DX12Device& inDevice, ID3D12GraphicsCommandLi
 		const std::string mesh_name = mesh_info->m_ObjectName + "_" + mesh_info->m_MaterialName;
 		mesh->SetResourceName(mesh_name);
 
-		outMeshes.push_back(mesh);
+		RenderPass render_pass = RenderPass::Geometry;
+		DrawableObject* drawable = DrawableObject::CreateDrawableObject(inDevice, mesh, render_pass);
+		outBuckets[(int) render_pass].emplace_back(drawable);
 
 		delete mesh_info;
 	}
