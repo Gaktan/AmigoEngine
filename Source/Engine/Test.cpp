@@ -232,6 +232,29 @@ void RenderGeometry(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandL
 	}
 }
 
+void RenderTransparent(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+{
+	// TODO: Pre multiply matrix
+	ConstantBuffers::ModelViewProjection mvp;
+	mvp.Model		= m_ModelMatrix;
+	mvp.View		= m_ViewMatrix;
+	mvp.Projection	= m_ProjectionMatrix;
+
+	for (DrawableObject* d : m_RenderBuckets[(int) RenderPass::Transparent])
+	{
+		d->SetupBindings(inCommandList);
+
+		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
+		inCommandList->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
+
+		// Upload Constant Buffer to GPU
+		m_ConstantBuffer->UpdateBufferResource(inDevice, inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
+		m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
+
+		d->Render(inCommandList);
+	}
+}
+
 void OnRender(DX12Device& inDevice)
 {
 	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -251,6 +274,7 @@ void OnRender(DX12Device& inDevice)
 	swap_chain->SetRenderTarget(command_list, m_DepthBuffer);
 
 	RenderGeometry(inDevice, command_list);
+	RenderTransparent(inDevice, command_list);
 
 	// Present
 	inDevice.Present(command_list);

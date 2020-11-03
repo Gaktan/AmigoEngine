@@ -62,7 +62,7 @@ void DrawableObject::CreatePSO(DX12Device& inDevice)
 	::memset(&pso_desc, 0, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	pso_desc.pRootSignature			= m_RootSignature;
 	pso_desc.VS						= InlineShaders::VertexShader;
-	pso_desc.PS						= InlineShaders::PixelShader;
+	pso_desc.PS						= (m_RenderPass == RenderPass::Geometry) ? InlineShaders::PixelShader : InlineShaders::TransparentShader;
 	pso_desc.InputLayout			= { input_layout, _countof(input_layout) };
 	pso_desc.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 

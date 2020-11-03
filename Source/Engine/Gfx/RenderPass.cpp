@@ -3,15 +3,6 @@
 
 void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS_PIPELINE_STATE_DESC& outDesc)
 {
-	const D3D12_RENDER_TARGET_BLEND_DESC default_render_target_blend_desc =
-	{
-		false, false,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
-		D3D12_LOGIC_OP_NOOP,
-		D3D12_COLOR_WRITE_ENABLE_ALL,
-	};
-
 	switch (inRenderPass)
 	{
 	case RenderPass::Geometry:
@@ -20,6 +11,15 @@ void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS
 		{
 			outDesc.BlendState.AlphaToCoverageEnable	= false;
 			outDesc.BlendState.IndependentBlendEnable	= false;
+
+			const D3D12_RENDER_TARGET_BLEND_DESC default_render_target_blend_desc =
+			{
+				false, false,
+				D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+				D3D12_BLEND_ONE, D3D12_BLEND_ZERO, D3D12_BLEND_OP_ADD,
+				D3D12_LOGIC_OP_NOOP,
+				D3D12_COLOR_WRITE_ENABLE_ALL,
+			};
 
 			for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
 				outDesc.BlendState.RenderTarget[i] = default_render_target_blend_desc;
@@ -78,11 +78,7 @@ void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS
 			outDesc.BlendState.AlphaToCoverageEnable	= false;
 			outDesc.BlendState.IndependentBlendEnable	= false;
 
-			for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
-				outDesc.BlendState.RenderTarget[i] = default_render_target_blend_desc;
-
-			// Enable alpha blending operation for RT0
-			outDesc.BlendState.RenderTarget[0] =
+			const D3D12_RENDER_TARGET_BLEND_DESC transparency_blend_desc =
 			{
 				true, false,
 				D3D12_BLEND_SRC_ALPHA, D3D12_BLEND_INV_SRC_ALPHA, D3D12_BLEND_OP_ADD,
@@ -90,8 +86,10 @@ void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS
 				D3D12_LOGIC_OP_NOOP,
 				D3D12_COLOR_WRITE_ENABLE_ALL,
 			};
-		}
 
+			for (UINT i = 0; i < D3D12_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+				outDesc.BlendState.RenderTarget[i] = transparency_blend_desc;
+		}
 		// Setup rasterizer states
 		{
 			outDesc.RasterizerState.FillMode				= D3D12_FILL_MODE_SOLID;
@@ -111,7 +109,7 @@ void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS
 		{
 			const D3D12_DEPTH_STENCILOP_DESC default_stencil_op = { D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_STENCIL_OP_KEEP, D3D12_COMPARISON_FUNC_ALWAYS };
 
-			outDesc.DepthStencilState.DepthEnable		= false;
+			outDesc.DepthStencilState.DepthEnable		= true;
 			outDesc.DepthStencilState.DepthWriteMask	= D3D12_DEPTH_WRITE_MASK_ZERO;
 			outDesc.DepthStencilState.DepthFunc			= D3D12_COMPARISON_FUNC_LESS;
 			outDesc.DepthStencilState.StencilEnable		= false;
