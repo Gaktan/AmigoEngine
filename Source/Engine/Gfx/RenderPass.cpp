@@ -5,7 +5,7 @@ void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS
 {
 	switch (inRenderPass)
 	{
-	case RenderPass::Geometry:
+	case RenderPass::OpaqueGeometry:
 	{
 		// Setup blend states
 		{

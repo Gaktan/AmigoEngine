@@ -22,10 +22,12 @@
 #include "Gfx/MeshLoader.h"
 #include "Gfx/TextureLoader.h"
 #include "Gfx/DrawableObject.h"
+#include "Gfx/ShaderObject.h"
 
 #include "Utils/Mouse.h"
 
 #include "Shaders/Include/ConstantBuffers.h"
+#include "Shaders/Include/Shaders.h"
 
 // Constant Buffer for the vertex shader
 DX12ConstantBuffer* m_ConstantBuffer = nullptr;
@@ -35,6 +37,7 @@ DX12DepthRenderTarget* m_DepthBuffer = nullptr;
 
 DX12Texture* m_DummyTexture = nullptr;
 
+std::map<std::string, ShaderObject*> m_AllShaderObjects;
 RenderBuckets m_RenderBuckets;
 
 float	m_FOV;
@@ -85,16 +88,22 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	// Create the depth buffer
 	ResizeBuffers(inDevice, inWidth, inHeight);
 
+	// Create shader objects
+	{
+		m_AllShaderObjects["OpaqueGeometry"]	= new ShaderObject(inDevice, RenderPass::OpaqueGeometry, InlineShaders::VertexShader, InlineShaders::PixelShader);
+		m_AllShaderObjects["Transparent"]		= new ShaderObject(inDevice, RenderPass::Transparent, InlineShaders::VertexShader, InlineShaders::TransparentShader);
+	}
+
 	// Create drawable objects
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
-		mesh_loader.CreateMeshesAndFillBuckets(inDevice, command_list, m_RenderBuckets);
+		mesh_loader.Finalize(inDevice, command_list, m_AllShaderObjects, m_RenderBuckets);
 	}
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\LightBulb.obj");
-		mesh_loader.CreateMeshesAndFillBuckets(inDevice, command_list, m_RenderBuckets);
+		mesh_loader.Finalize(inDevice, command_list, m_AllShaderObjects, m_RenderBuckets);
 	}
 
 	// Load texture
@@ -127,6 +136,12 @@ void UnloadContent(DX12Device& inDevice)
 			delete d;
 		}
 		bucket.clear();
+	}
+
+	// Delete all materials
+	for (auto pair : m_AllShaderObjects)
+	{
+		delete pair.second;
 	}
 
 	delete m_ConstantBuffer;
@@ -217,7 +232,7 @@ void RenderGeometry(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandL
 	mvp.View		= m_ViewMatrix;
 	mvp.Projection	= m_ProjectionMatrix;
 
-	for (DrawableObject* d : m_RenderBuckets[(int) RenderPass::Geometry])
+	for (DrawableObject* d : m_RenderBuckets[(int) RenderPass::OpaqueGeometry])
 	{
 		d->SetupBindings(inCommandList);
 

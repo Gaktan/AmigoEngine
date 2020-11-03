@@ -9,6 +9,8 @@
 #include "Gfx/Mesh.h"
 #include "Gfx/RenderPass.h"
 
+class ShaderObject;
+
 enum class OBJKeyword
 {
 	// Per Vertex Data
@@ -82,7 +84,8 @@ protected:
 
 public:
 	void	LoadFromFile(const std::string& inFile);
-	void	CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, RenderBuckets& outBuckets);
+	void	Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList,
+					 const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& outBuckets);
 
 private:
 	void	ProcessLine(const std::string& inLine);

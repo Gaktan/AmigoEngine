@@ -32,6 +32,6 @@ public:
 
 	void SetResourceName(const std::string& inName);
 
-	void	Set(ID3D12GraphicsCommandList2* inCommandList);
+	void	Set(ID3D12GraphicsCommandList2* inCommandList) const;
 	uint32	GetNumIndices() const;
 };

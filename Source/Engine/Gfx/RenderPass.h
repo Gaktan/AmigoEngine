@@ -6,7 +6,7 @@ class DrawableObject;
 
 enum RenderPass : unsigned int
 {
-	Geometry = 0,
+	OpaqueGeometry = 0,
 	Transparent,
 	Count
 };

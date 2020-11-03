@@ -5,6 +5,7 @@
 #include "Utils/String.h"
 
 #include "Gfx/DrawableObject.h"
+#include "Gfx/ShaderObject.h"
 
 #include <sstream>
 
@@ -152,7 +153,10 @@ bool IsIlluminationModelTransparent(int inIlluminationModel)
 			inIlluminationModel == 7 || inIlluminationModel == 9);
 }
 
-void MeshLoader::CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, RenderBuckets& outBuckets)
+// Final step of loading OBJ files
+// Create materials, create meshes, create Drawable objects
+void MeshLoader::Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList,
+						  const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& outBuckets)
 {
 	Assert(m_VertexData.size() > 0);
 
@@ -177,9 +181,9 @@ void MeshLoader::CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12Graphics
 		mesh->SetResourceName(mesh_name);
 
 		bool is_transparent = IsIlluminationModelTransparent(m_MaterialInfos[mesh_info->m_MaterialName].m_IlluminationModel);
-		RenderPass render_pass = is_transparent ? RenderPass::Transparent : RenderPass::Geometry;
-		DrawableObject* drawable = DrawableObject::CreateDrawableObject(inDevice, mesh, render_pass);
-		outBuckets[(int) render_pass].emplace_back(drawable);
+		const ShaderObject* shader_object = is_transparent ? inShaderObjects.at("Transparent") : inShaderObjects.at("OpaqueGeometry");
+		DrawableObject* drawable = new DrawableObject(mesh, shader_object);
+		outBuckets[(int) shader_object->GetRenderPass()].emplace_back(drawable);
 
 		delete mesh_info;
 	}

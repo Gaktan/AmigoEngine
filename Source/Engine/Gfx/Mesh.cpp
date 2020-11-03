@@ -22,7 +22,7 @@ void Mesh::SetResourceName(const std::string & inName)
 	m_IndexBuffer.GetResource()->SetName((wide_str + L"_IndexBuffer").c_str());
 }
 
-void Mesh::Set(ID3D12GraphicsCommandList2* inCommandList)
+void Mesh::Set(ID3D12GraphicsCommandList2* inCommandList) const
 {
 	inCommandList->IASetPrimitiveTopology(m_PrimitiveTopology);
 	m_VertexBuffer.SetVertexBuffer(inCommandList, 0);
