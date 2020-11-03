@@ -58,6 +58,59 @@ void MeshLoader::ReverseWinding()
 	}
 }
 
+void MeshLoader::ProcessMaterialLibraryFile(const std::string & inFile)
+{
+	FileReader file_reader;
+	// TODO: Hack: Find a nice way to read from the same directory as obj file?
+	bool success = file_reader.ReadFile("Data\\" + inFile);
+	Assert(success);
+
+	std::istringstream stream(file_reader.GetContentAsString());
+	std::string line;
+
+	MaterialInfo* current_material = nullptr;
+
+	// Process a single line
+	while (String::GetLine(stream, line))
+	{
+		// TODO: Those spaces right there is a hack.
+		const std::string newmtl("newmtl ");
+		const std::string illum("illum ");
+		const std::string d("d ");
+
+		// TODO: It's tricky to list all MTL keywords. Let's just detect the Illumination Model (illum) for transparency for now
+
+		// Keyword to create a new material
+		if (line.substr(0, newmtl.size()) == newmtl)
+		{
+			std::string material_name = line.substr(newmtl.size());
+			Assert(m_MaterialInfos.find(material_name) == m_MaterialInfos.end());
+
+			m_MaterialInfos[material_name] = MaterialInfo();
+
+			current_material = &(*m_MaterialInfos.find(material_name)).second;
+		}
+		// Check Illumination
+		else if (line.substr(0, illum.size()) == illum)
+		{
+			Assert(current_material != nullptr);
+
+			std::string value_str = line.substr(illum.size());
+			int value = String::ToInt(value_str);
+			current_material->m_IlluminationModel = value;
+		}
+		// Check disolve factor
+		else if (line.substr(0, d.size()) == d)
+		{
+			Assert(current_material != nullptr);
+
+			std::string value_str = line.substr(d.size());
+			float value = String::ToFloat(value_str);
+			current_material->m_DisolveFactor = value;
+		}
+	}
+}
+
 void MeshLoader::Init()
 {
 	for (size_t i = 0; i < static_cast<size_t>(OBJKeyword::NumKeywords); i++)
@@ -78,7 +131,7 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 
 	std::istringstream stream(file_reader.GetContentAsString());
 	std::string line;
-	while (std::getline(stream, line))
+	while (String::GetLine(stream, line))
 	{
 		ProcessLine(line);
 	}
@@ -89,6 +142,14 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 
 	// Blender exports meshes in Right Hand Coordinates. DX12 uses Left Hand. We need to flip the winding order
 	ReverseWinding();
+}
+
+// Crude test to check if material should be transparent
+// http://paulbourke.net/dataformats/mtl/
+bool IsIlluminationModelTransparent(int inIlluminationModel)
+{
+	return (inIlluminationModel == 4 || inIlluminationModel == 6 ||
+			inIlluminationModel == 7 || inIlluminationModel == 9);
 }
 
 void MeshLoader::CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, RenderBuckets& outBuckets)
@@ -115,18 +176,23 @@ void MeshLoader::CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12Graphics
 		const std::string mesh_name = mesh_info->m_ObjectName + "_" + mesh_info->m_MaterialName;
 		mesh->SetResourceName(mesh_name);
 
-		RenderPass render_pass = RenderPass::Geometry;
+		bool is_transparent = IsIlluminationModelTransparent(m_MaterialInfos[mesh_info->m_MaterialName].m_IlluminationModel);
+		RenderPass render_pass = is_transparent ? RenderPass::Transparent : RenderPass::Geometry;
 		DrawableObject* drawable = DrawableObject::CreateDrawableObject(inDevice, mesh, render_pass);
 		outBuckets[(int) render_pass].emplace_back(drawable);
 
 		delete mesh_info;
 	}
-
-
 }
 
 void MeshLoader::ProcessLine(const std::string& inLine)
 {
+	// Don't process empty lines
+	if (inLine.empty())
+	{
+		return;
+	}
+
 	// Get all elements from line
 	std::vector<std::string> all_elem = String::Split(inLine, " ");
 	size_t num_elems = all_elem.size();
@@ -176,7 +242,10 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		break;
 	}
 	case OBJKeyword::MaterialLibrary:
-		// Not supported for now, but harmless, so don't do anything
+		// Should only be one element. The filename
+		Assert(num_elems == 1);
+
+		ProcessMaterialLibraryFile(all_elem[0]);
 		break;
 	case OBJKeyword::MaterialName:
 	{
@@ -208,6 +277,8 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 
 		// Actually set the material name for the current or new MeshInfo
 		Assert(m_MeshInfos[m_CurrentMeshInfo]->m_MaterialName.length() == 0);
+		Assert(m_MaterialInfos.find(all_elem[0]) != m_MaterialInfos.end());
+
 		m_MeshInfos[m_CurrentMeshInfo]->m_MaterialName = all_elem[0];
 
 		break;

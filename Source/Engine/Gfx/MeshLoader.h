@@ -57,6 +57,12 @@ struct MeshInfo
 	void EndRange(int inVertexBufferEnd, int inIndexBufferEnd);
 };
 
+struct MaterialInfo
+{
+	int				m_IlluminationModel = 0;
+	float			m_DisolveFactor = 1.0f; // Aka "Alpha"
+};
+
 class MeshLoader
 {
 protected:
@@ -72,6 +78,8 @@ protected:
 	std::vector<MeshInfo*>			m_MeshInfos;
 	size_t							m_CurrentMeshInfo		= 0;
 
+	std::map<std::string, MaterialInfo>		m_MaterialInfos;
+
 public:
 	void	LoadFromFile(const std::string& inFile);
 	void	CreateMeshesAndFillBuckets(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList, RenderBuckets& outBuckets);
@@ -80,6 +88,7 @@ private:
 	void	ProcessLine(const std::string& inLine);
 	void	ProcessTriangle(const std::vector<std::string>& inFaceElements);
 	void	ReverseWinding();
+	void	ProcessMaterialLibraryFile(const std::string& inFile);
 
 	// Static members
 protected:

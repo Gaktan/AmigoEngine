@@ -37,4 +37,42 @@ namespace String
 		result.push_back(inStr.substr(pos_start));
 		return result;
 	}
+
+	// TODO: Shoundn't be in String.h but oh well
+	// https://stackoverflow.com/questions/6089231/getting-std-ifstream-to-handle-lf-cr-and-crlf
+	std::istream& GetLine(std::istream& inStream, std::string& outLine)
+	{
+		outLine.clear();
+
+		// The characters in the stream are read one-by-one using a std::streambuf.
+		// That is faster than reading them one-by-one using the std::istream.
+		// Code that uses streambuf this way must be guarded by a sentry object.
+		// The sentry object performs various tasks,
+		// such as thread synchronization and updating the stream state.
+
+		std::istream::sentry se(inStream, true);
+		std::streambuf* stream_buffer = inStream.rdbuf();
+
+		// Go through each character one by one to find and handle delimiters
+		for (;;)
+		{
+			int c = stream_buffer->sbumpc();
+			switch (c)
+			{
+			case '\n':
+				return inStream;
+			case '\r':
+				if (stream_buffer->sgetc() == '\n')
+					stream_buffer->sbumpc();
+				return inStream;
+			case std::streambuf::traits_type::eof():
+				// Also handle the case when the last line has no line ending
+				if (outLine.empty())
+					inStream.setstate(std::ios::eofbit);
+				return inStream;
+			default:
+				outLine += (char) c;
+			}
+		}
+	}
 }
