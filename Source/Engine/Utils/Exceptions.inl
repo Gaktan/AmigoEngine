@@ -1,5 +1,6 @@
+#pragma once
+
 #include "Engine.h"
-#include "Exceptions.h"
 
 #include "Utils/Logger.h"
 
