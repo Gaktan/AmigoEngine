@@ -27,5 +27,5 @@ void Trace(const char* inMessage, /*args*/ ...)
 
 	OutputDebugString(buffer);
 
-	delete buffer;
+	delete[] buffer;
 }
