@@ -33,6 +33,14 @@ const char* obj_keywords_strings[] =
  };
 static_assert(_countof(obj_keywords_strings) == static_cast<int>(OBJKeyword::NumKeywords));
 
+// Crude test to check if material should be transparent
+// http://paulbourke.net/dataformats/mtl/
+bool IsIlluminationModelTransparent(int inIlluminationModel)
+{
+	return (inIlluminationModel == 4 || inIlluminationModel == 6 ||
+			inIlluminationModel == 7 || inIlluminationModel == 9);
+}
+
 // Flip winding of geometric primitives for LH vs. RH coords
 void MeshLoader::ReverseWinding()
 {
@@ -77,7 +85,6 @@ void MeshLoader::ProcessMaterialLibraryFile(const std::string & inFile)
 		// TODO: Those spaces right there is a hack.
 		const std::string newmtl("newmtl ");
 		const std::string illum("illum ");
-		const std::string d("d ");
 
 		// TODO: It's tricky to list all MTL keywords. Let's just detect the Illumination Model (illum) for transparency for now
 
@@ -97,17 +104,8 @@ void MeshLoader::ProcessMaterialLibraryFile(const std::string & inFile)
 			Assert(current_material != nullptr);
 
 			std::string value_str = line.substr(illum.size());
-			int value = String::ToInt(value_str);
-			current_material->m_IlluminationModel = value;
-		}
-		// Check disolve factor
-		else if (line.substr(0, d.size()) == d)
-		{
-			Assert(current_material != nullptr);
-
-			std::string value_str = line.substr(d.size());
-			float value = String::ToFloat(value_str);
-			current_material->m_DisolveFactor = value;
+			int illumination_model = String::ToInt(value_str);
+			current_material->m_IsTransparent = IsIlluminationModelTransparent(illumination_model);
 		}
 	}
 }
@@ -145,14 +143,6 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 	ReverseWinding();
 }
 
-// Crude test to check if material should be transparent
-// http://paulbourke.net/dataformats/mtl/
-bool IsIlluminationModelTransparent(int inIlluminationModel)
-{
-	return (inIlluminationModel == 4 || inIlluminationModel == 6 ||
-			inIlluminationModel == 7 || inIlluminationModel == 9);
-}
-
 // Final step of loading OBJ files
 // Create materials, create meshes, create Drawable objects
 void MeshLoader::Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList,
@@ -180,7 +170,7 @@ void MeshLoader::Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCo
 		const std::string mesh_name = mesh_info->m_ObjectName + "_" + mesh_info->m_MaterialName;
 		mesh->SetResourceName(mesh_name);
 
-		bool is_transparent = IsIlluminationModelTransparent(m_MaterialInfos[mesh_info->m_MaterialName].m_IlluminationModel);
+		bool is_transparent = m_MaterialInfos[mesh_info->m_MaterialName].m_IsTransparent;
 		const ShaderObject* shader_object = is_transparent ? inShaderObjects.at("Transparent") : inShaderObjects.at("OpaqueGeometry");
 		DrawableObject* drawable = new DrawableObject(mesh, shader_object);
 		outBuckets[(int) shader_object->GetRenderPass()].emplace_back(drawable);

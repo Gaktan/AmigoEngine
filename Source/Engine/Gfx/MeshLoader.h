@@ -61,8 +61,7 @@ struct MeshInfo
 
 struct MaterialInfo
 {
-	int				m_IlluminationModel = 0;
-	float			m_DisolveFactor = 1.0f; // Aka "Alpha"
+	bool m_IsTransparent = false;
 };
 
 class MeshLoader
