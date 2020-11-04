@@ -4,7 +4,7 @@
 
 class DrawableObject;
 
-enum RenderPass : unsigned int
+enum RenderPass : uint32
 {
 	OpaqueGeometry = 0,
 	Transparent,

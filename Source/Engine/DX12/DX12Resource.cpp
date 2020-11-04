@@ -78,7 +78,7 @@ ID3D12Resource* DX12Resource::GetResource() const
 
 void DX12Resource::SetResourceName(ID3D12Resource* inResource, const std::string& inName)
 {
-	static int resource_number = 0;
+	static uint32 resource_number = 0;
 	std::string narrow_string = inName + std::to_string(resource_number++);
 	std::wstring wide_string = std::wstring(narrow_string.begin(), narrow_string.end());
 	inResource->SetName(wide_string.c_str());

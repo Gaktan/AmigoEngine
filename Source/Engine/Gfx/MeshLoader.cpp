@@ -173,7 +173,7 @@ void MeshLoader::Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCo
 		bool is_transparent = m_MaterialInfos[mesh_info->m_MaterialName].m_IsTransparent;
 		const ShaderObject* shader_object = is_transparent ? inShaderObjects.at("Transparent") : inShaderObjects.at("OpaqueGeometry");
 		DrawableObject* drawable = new DrawableObject(mesh, shader_object);
-		outBuckets[(int) shader_object->GetRenderPass()].emplace_back(drawable);
+		outBuckets[(uint32) shader_object->GetRenderPass()].emplace_back(drawable);
 
 		delete mesh_info;
 	}
