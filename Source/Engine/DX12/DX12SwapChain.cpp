@@ -88,7 +88,7 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 
 DX12SwapChain::~DX12SwapChain()
 {
-	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
+	for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
 		delete m_BackBuffers[i];
 	}
@@ -104,7 +104,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 		// are not being referenced by an in-flight command list.
 		inDevice.Flush();
 
-		for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
+		for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 		{
 			// Any references to the back buffers must be released
 			// before the swap chain can be resized.
@@ -122,7 +122,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 	DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 
 	const Vec4 clear_color = { 0.4f, 0.6f, 0.9f, 1.0f };
-	for (int i = 0; i < NUM_BUFFERED_FRAMES; ++i)
+	for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
 		ID3D12Resource* back_buffer;
 		ThrowIfFailed(m_D3DSwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
