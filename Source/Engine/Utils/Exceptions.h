@@ -1,7 +1,6 @@
 #pragma once
 
 void ThrowIfFailed(uint32 inResult);
-void Assert(bool inCondition);
-void Assert(bool inCondition, const char* inMessage);
+#define Assert(expression, ...) do { if (!(expression) && HandleAssert(__FILE__, __LINE__, #expression, ##__VA_ARGS__)) __debugbreak(); } while (0);
 
-#include "Utils/Exceptions.inl"
+bool HandleAssert(const char* inFileName, int inLineNumber, const char* inExpression, const char* inMessage = nullptr);
