@@ -34,8 +34,6 @@ public:
 	void Flush();
 	void Present(ID3D12GraphicsCommandList2* inCommandList);
 
-	void ResestDescriptorHeaps();
-
 	ID3D12Device2*		GetD3DDevice() const;
 	DX12SwapChain*		GetSwapChain() const;
 	DX12CommandQueue*	GetCommandQueue(D3D12_COMMAND_LIST_TYPE inType) const;

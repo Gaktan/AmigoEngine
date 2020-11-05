@@ -20,6 +20,8 @@ public:
 		size_t inBufferSize = 0, const void* inBufferData = nullptr,
 		D3D12_RESOURCE_FLAGS inFlags = D3D12_RESOURCE_FLAG_NONE);
 
+	virtual void ReleaseResources();
+
 	virtual void UpdateBufferResource(
 		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,

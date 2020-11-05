@@ -14,7 +14,7 @@ void Mesh::Init(
 	m_PrimitiveTopology = inPrimitiveTopology;
 }
 
-void Mesh::SetResourceName(const std::string & inName)
+void Mesh::SetResourceName(const std::string& inName)
 {
 	// TODO: Properly handle string and wstrings...
 	const std::wstring wide_str(inName.begin(), inName.end());

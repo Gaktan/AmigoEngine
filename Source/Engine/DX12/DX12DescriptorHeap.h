@@ -2,6 +2,7 @@
 
 #include "DX12/DX12Includes.h"
 #include <vector>
+#include <mutex>
 
 class DX12Device;
 
@@ -16,6 +17,8 @@ protected:
 	D3D12_CPU_DESCRIPTOR_HANDLE		m_CPUHandle			= { 0 };
 	D3D12_GPU_DESCRIPTOR_HANDLE		m_GPUHandle			= { 0 };
 
+	std::mutex						m_FreeIndexMutex;
+
 public:
 	DX12DescriptorHeap(
 		DX12Device& inDevice,
@@ -24,7 +27,8 @@ public:
 
 	virtual ~DX12DescriptorHeap();
 
-	virtual uint32 GetFreeIndex();
+	virtual uint32 Allocate();
+	virtual void Release(uint32 inIndex);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32 inIndex) const;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32 inIndex) const;
@@ -36,7 +40,7 @@ public:
 class DX12FreeListDescriptorHeap : public DX12DescriptorHeap
 {
 protected:
-	std::vector<bool> m_FreeEntries;
+	std::vector<int> m_FreeIndices;
 
 public:
 	DX12FreeListDescriptorHeap(
@@ -46,6 +50,6 @@ public:
 
 	virtual ~DX12FreeListDescriptorHeap();
 
-	virtual uint32 GetFreeIndex();
-	void ReleaseIndex(uint32 inIndex);
+	virtual uint32 Allocate() override;
+	virtual void Release(uint32 inIndex) override;
 };

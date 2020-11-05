@@ -5,25 +5,24 @@
 
 DX12Texture::~DX12Texture()
 {
-	DX12FreeListDescriptorHeap* free_list_descriptor_heap = dynamic_cast<DX12FreeListDescriptorHeap*>(m_DescriptorHeap);
-	if (free_list_descriptor_heap)
-	{
-		free_list_descriptor_heap->ReleaseIndex(m_DescriptorHeapIndex);
-	}
+	// TODO: Need to deal with releasing descriptor handles for textures. We need to grab the device for this.
+	// A refactor is needed to have the device as a global variable, so it's accessible anywhere.
+	// Since we can only have one device, this is a good strategy, and we avoid passing the device to every single function we make.
+	// Also need to deal with the awkwardness of releasing the CPU handle which will automatically release the GPU handle too
+	
+	//DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	//descriptor_heap->Release(descriptor_index);
 }
 
 void DX12Texture::InitAsTexture(
 	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
-	DX12DescriptorHeap* inDescriptorHeap,
 	uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 	const void* inBufferData)
 {
-	m_Width					= inWidth;
-	m_Height				= inHeight;
-	m_Format				= inFormat;
-	m_DescriptorHeap		= inDescriptorHeap;
-	m_DescriptorHeapIndex	= m_DescriptorHeap->GetFreeIndex();
+	m_Width		= inWidth;
+	m_Height	= inHeight;
+	m_Format	= inFormat;
 
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, m_Width, m_Height, /*arraySize*/ 1, /*mipLevels*/ 1);
@@ -54,7 +53,15 @@ void DX12Texture::InitAsTexture(
 	view_desc.Texture2D.MostDetailedMip		= 0;
 	view_desc.Texture2D.ResourceMinLODClamp	= 0.0f;
 
-	inDevice.GetD3DDevice()->CreateShaderResourceView(m_Resource, &view_desc, GetCPUHandle());
+	// Allocate descriptors
+	{
+		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		uint32 descriptor_index	= descriptor_heap->Allocate();
+		m_CPUHandle = descriptor_heap->GetCPUHandle(descriptor_index);
+		m_GPUHandle = descriptor_heap->GetGPUHandle(descriptor_index);
+	}
+
+	inDevice.GetD3DDevice()->CreateShaderResourceView(m_Resource, &view_desc, m_CPUHandle);
 }
 
 void DX12Texture::UpdateBufferResource(
@@ -97,10 +104,10 @@ void DX12Texture::UpdateBufferResource(
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUHandle() const
 {
-	return m_DescriptorHeap->GetCPUHandle(m_DescriptorHeapIndex);
+	return m_CPUHandle;
 }
 
 D3D12_GPU_DESCRIPTOR_HANDLE DX12Texture::GetGPUHandle() const
 {
-	return m_DescriptorHeap->GetGPUHandle(m_DescriptorHeapIndex);
+	return m_GPUHandle;
 }

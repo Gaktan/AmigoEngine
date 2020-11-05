@@ -67,7 +67,7 @@ void MeshLoader::ReverseWinding()
 	}
 }
 
-void MeshLoader::ProcessMaterialLibraryFile(const std::string & inFile)
+void MeshLoader::ProcessMaterialLibraryFile(const std::string& inFile)
 {
 	FileReader file_reader;
 	// TODO: Hack: Find a nice way to read from the same directory as obj file?
@@ -380,7 +380,7 @@ void MeshLoader::ProcessTriangle(const std::vector<std::string>& inFaceElements)
 	}
 }
 
-OBJKeyword MeshLoader::GetKeywordFromString(const std::string & inStr)
+OBJKeyword MeshLoader::GetKeywordFromString(const std::string& inStr)
 {
 	auto search = s_OBJKeywords.find(inStr);
 	if (search != s_OBJKeywords.end())
@@ -396,7 +396,7 @@ MeshInfo::MeshInfo()
 	m_IndexBufferRange = { 0, -1 };
 }
 
-MeshInfo::MeshInfo(const MeshInfo & inPreviousMeshInfo)
+MeshInfo::MeshInfo(const MeshInfo& inPreviousMeshInfo)
 {
 	m_VertexBuffeRange = { inPreviousMeshInfo.m_VertexBuffeRange.m_End, -1 };
 	m_IndexBufferRange = { inPreviousMeshInfo.m_IndexBufferRange.m_End, -1 };

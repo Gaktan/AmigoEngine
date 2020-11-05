@@ -23,6 +23,7 @@
 #include "Gfx/TextureLoader.h"
 #include "Gfx/DrawableObject.h"
 #include "Gfx/ShaderObject.h"
+#include "Gfx/GBuffer.h"
 
 #include "Utils/Mouse.h"
 
@@ -32,8 +33,7 @@
 // Constant Buffer for the vertex shader
 DX12ConstantBuffer* m_ConstantBuffer = nullptr;
 
-// Depth buffer.
-DX12DepthRenderTarget* m_DepthBuffer = nullptr;
+GBuffer* m_GBuffer = nullptr;
 
 DX12Texture* m_DummyTexture = nullptr;
 
@@ -51,21 +51,12 @@ bool	m_ContentLoaded;
 
 void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
 {
-	inDevice.ResestDescriptorHeaps();
-
 	// Recreate swapchain buffers (causes a flush)
 	inDevice.GetSwapChain()->UpdateRenderTargetViews(inDevice, inNewWidth, inNewHeight);
 
-	if (m_DepthBuffer)
-	{
-		delete m_DepthBuffer;
-	}
-	m_DepthBuffer = new DX12DepthRenderTarget();
-
-	DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
-	uint32 heap_index = descriptor_heap->GetFreeIndex();
-
-	m_DepthBuffer->InitAsDepthStencilBuffer(inDevice, descriptor_heap->GetCPUHandle(heap_index), inNewWidth, inNewHeight);
+	//Recreate GBuffer
+	m_GBuffer->ReleaseResources();
+	m_GBuffer->AllocateResources(inDevice, inNewWidth, inNewHeight);
 }
 
 bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
@@ -85,7 +76,9 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
 	auto* command_list	= command_queue->GetCommandList(inDevice);
 
-	// Create the depth buffer
+	m_GBuffer = new GBuffer;
+
+	// Buffers
 	ResizeBuffers(inDevice, inWidth, inHeight);
 
 	// Create shader objects
@@ -146,7 +139,7 @@ void UnloadContent(DX12Device& inDevice)
 
 	delete m_ConstantBuffer;
 
-	delete m_DepthBuffer;
+	delete m_GBuffer;
 
 	delete m_DummyTexture;
 
@@ -270,26 +263,37 @@ void RenderTransparent(DX12Device& inDevice, ID3D12GraphicsCommandList2* inComma
 	}
 }
 
+void CopyToBackBuffer(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+{
+	auto* swap_chain = inDevice.GetSwapChain();
+
+	// Clear will trigger a resource transition
+	swap_chain->ClearBackBuffer(inCommandList);
+	
+	swap_chain->SetRenderTarget(inCommandList);
+
+	// TODO: Do the actual copy
+}
+
 void OnRender(DX12Device& inDevice)
 {
 	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	auto* command_list	= command_queue->GetCommandList(inDevice);
-	auto* swap_chain	= inDevice.GetSwapChain();
 
 	// Set the descriptor heap containing all textures
 	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
 	command_list->SetDescriptorHeaps(1, heaps);
 
-	// Clear the render targets.
-	{
-		swap_chain->ClearBackBuffer(command_list);
-		m_DepthBuffer->ClearBuffer(command_list);
-	}
+	// Clear the GBuffer targets.
+	m_GBuffer->ClearDepthBuffer(command_list);
+	m_GBuffer->ClearRenderTargets(command_list);
 
-	swap_chain->SetRenderTarget(command_list, m_DepthBuffer);
+	m_GBuffer->Set(command_list);
 
 	RenderGeometry(inDevice, command_list);
 	RenderTransparent(inDevice, command_list);
+
+	CopyToBackBuffer(inDevice, command_list);
 
 	// Present
 	inDevice.Present(command_list);

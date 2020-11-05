@@ -3,7 +3,7 @@
 
 #include "Shaders/Include/Shaders.h"
 
-ShaderObject::ShaderObject(DX12Device & inDevice, RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode) :
+ShaderObject::ShaderObject(DX12Device& inDevice, RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode) :
 	m_RenderPass(inRenderPass)
 {
 	CreateRootSignature(inDevice);
@@ -16,7 +16,7 @@ ShaderObject::~ShaderObject()
 	m_RootSignature->Release();
 }
 
-void ShaderObject::Set(ID3D12GraphicsCommandList2 * inCommandList) const
+void ShaderObject::Set(ID3D12GraphicsCommandList2* inCommandList) const
 {
 	// TODO: Deal with actual shader bindings (textures, constant buffers, ...)
 	inCommandList->SetGraphicsRootSignature(m_RootSignature);

@@ -28,7 +28,7 @@ public:
 	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 
-	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer);
+	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList);
 
 	uint32 GetCurrentBackBufferIndex();
 };

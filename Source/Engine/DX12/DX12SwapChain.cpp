@@ -82,6 +82,9 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 
 	m_CurrentBackBufferIndex = m_D3DSwapChain->GetCurrentBackBufferIndex();
 
+	for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
+		m_BackBuffers[i] = new DX12RenderTarget();
+
 	bool first_call = true;
 	UpdateRenderTargetViews(inDevice, inWidth, inHeight, first_call);
 }
@@ -89,9 +92,7 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 DX12SwapChain::~DX12SwapChain()
 {
 	for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
-	{
 		delete m_BackBuffers[i];
-	}
 
 	m_D3DSwapChain->Release();
 }
@@ -106,9 +107,8 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 
 		for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 		{
-			// Any references to the back buffers must be released
-			// before the swap chain can be resized.
-			delete m_BackBuffers[i];
+			// Any references to the back buffers must be released before the swap chain can be resized.
+			m_BackBuffers[i]->ReleaseResources();
 			m_FrameFenceValues[i] = m_FrameFenceValues[m_CurrentBackBufferIndex];
 		}
 
@@ -119,18 +119,13 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 		m_CurrentBackBufferIndex = m_D3DSwapChain->GetCurrentBackBufferIndex();
 	}
 
-	DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
-
 	const Vec4 clear_color = { 0.4f, 0.6f, 0.9f, 1.0f };
 	for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 	{
 		ID3D12Resource* back_buffer;
 		ThrowIfFailed(m_D3DSwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
 
-		uint32 heap_index = descriptor_heap->GetFreeIndex();
-
-		m_BackBuffers[i] = new DX12RenderTarget();
-		m_BackBuffers[i]->InitFromResource(inDevice, back_buffer, descriptor_heap->GetCPUHandle(heap_index), clear_color);
+		m_BackBuffers[i]->InitFromResource(inDevice, back_buffer, DXGI_FORMAT_R8G8B8A8_UNORM, clear_color);
 	}
 }
 
@@ -168,13 +163,10 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 	inCommandQueue->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
 }
 
-void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList, const DX12DepthRenderTarget* inDepthBuffer)
+void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_BackBuffers[m_CurrentBackBufferIndex]->GetCPUDescriptorHandle();
-	D3D12_CPU_DESCRIPTOR_HANDLE dsv = inDepthBuffer->GetCPUDescriptorHandle();
-
-	inCommandList->OMSetRenderTargets(1, &rtv, false, &dsv);
-
+	inCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
 
 	// TODO: Allow to set custom viewports and scissor rects
 	D3D12_RESOURCE_DESC desc = m_BackBuffers[m_CurrentBackBufferIndex]->GetResource()->GetDesc();

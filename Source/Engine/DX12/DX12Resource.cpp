@@ -26,13 +26,18 @@ void DX12Resource::InitAsResource(
 	SetResourceName(m_Resource, "DX12Resource::InitAsResource");
 }
 
+void DX12Resource::ReleaseResources()
+{
+	if (m_Resource != nullptr)
+		m_Resource->Release();
+
+	if (m_IntermediateResource != nullptr)
+		m_IntermediateResource->Release();
+}
+
 DX12Resource::~DX12Resource()
 {
-	m_Resource->Release();
-	if (m_IntermediateResource)
-	{
-		m_IntermediateResource->Release();
-	}
+	ReleaseResources();
 }
 
 void DX12Resource::UpdateBufferResource(
@@ -79,7 +84,7 @@ ID3D12Resource* DX12Resource::GetResource() const
 void DX12Resource::SetResourceName(ID3D12Resource* inResource, const std::string& inName)
 {
 	static uint32 resource_number = 0;
-	std::string narrow_string = inName + std::to_string(resource_number++);
+	std::string narrow_string = inName + "_" + std::to_string(resource_number++);
 	std::wstring wide_string = std::wstring(narrow_string.begin(), narrow_string.end());
 	inResource->SetName(wide_string.c_str());
 }

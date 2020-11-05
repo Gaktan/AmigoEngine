@@ -16,7 +16,7 @@ protected:
 	std::string				m_Name;
 
 public:
-	ShaderObject(DX12Device & inDevice, RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode);
+	ShaderObject(DX12Device& inDevice, RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode);
 	~ShaderObject();
 
 	const std::string& GetName() const

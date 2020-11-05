@@ -25,10 +25,9 @@ void TextureLoader::LoadFromFile(const std::string& inFile)
 DX12Texture* TextureLoader::CreateTexture(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
 {
 	DirectX::TexMetadata metadata		= m_ScratchImage.GetMetadata();
-	DX12DescriptorHeap* descriptor_heap	= inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	DX12Texture* texture = new DX12Texture();
-	texture->InitAsTexture(inDevice, inCommandList, descriptor_heap,
+	texture->InitAsTexture(inDevice, inCommandList,
 						   static_cast<uint32>(metadata.width), static_cast<uint32>((metadata.height)),
 						   metadata.format, m_ScratchImage.GetPixels());
 
