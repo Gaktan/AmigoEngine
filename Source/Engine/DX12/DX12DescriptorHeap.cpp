@@ -46,6 +46,12 @@ void DX12DescriptorHeap::Release(D3D12_CPU_DESCRIPTOR_HANDLE inHandle)
 	(void) inHandle;
 }
 
+void DX12DescriptorHeap::Reset()
+{
+	// Just reset the offset so we can start allocating from the 0 index again.
+	m_CurrentOffset = 0;
+}
+
 D3D12_CPU_DESCRIPTOR_HANDLE DX12DescriptorHeap::GetCPUHandle(uint32 inIndex) const
 {
 	Assert(inIndex < m_NumDescriptors);

@@ -6,7 +6,6 @@
 
 DX12Texture::~DX12Texture()
 {
-	// No need to release the GPU handle, since it should match with the same index as the CPU handle
 	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 	descriptor_heap->Release(m_CPUHandle);
 }
@@ -54,7 +53,6 @@ void DX12Texture::InitAsTexture(
 		DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 		uint32 descriptor_index	= descriptor_heap->Allocate();
 		m_CPUHandle = descriptor_heap->GetCPUHandle(descriptor_index);
-		m_GPUHandle = descriptor_heap->GetGPUHandle(descriptor_index);
 	}
 
 	g_RenderingDevice.GetD3DDevice()->CreateShaderResourceView(m_Resource, &view_desc, m_CPUHandle);
@@ -100,9 +98,4 @@ void DX12Texture::UpdateBufferResource(
 D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUHandle() const
 {
 	return m_CPUHandle;
-}
-
-D3D12_GPU_DESCRIPTOR_HANDLE DX12Texture::GetGPUHandle() const
-{
-	return m_GPUHandle;
 }

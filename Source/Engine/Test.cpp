@@ -18,12 +18,13 @@
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12Texture.h"
 
+#include "Gfx/DrawableObject.h"
+#include "Gfx/DrawUtils.h"
+#include "Gfx/GBuffer.h"
 #include "Gfx/Mesh.h"
 #include "Gfx/MeshLoader.h"
-#include "Gfx/TextureLoader.h"
-#include "Gfx/DrawableObject.h"
 #include "Gfx/ShaderObject.h"
-#include "Gfx/GBuffer.h"
+#include "Gfx/TextureLoader.h"
 
 #include "Utils/Mouse.h"
 
@@ -87,6 +88,8 @@ bool LoadContent(uint32 inWidth, uint32 inHeight)
 		m_AllShaderObjects["Transparent"]		= new ShaderObject(RenderPass::Transparent, InlineShaders::VertexShader, InlineShaders::TransparentShader);
 	}
 
+	DrawUtils::Init(command_list);
+
 	// Create drawable objects
 	{
 		MeshLoader mesh_loader;
@@ -136,6 +139,8 @@ void UnloadContent()
 	{
 		delete pair.second;
 	}
+
+	DrawUtils::Destroy();
 
 	delete m_ConstantBuffer;
 
@@ -217,6 +222,17 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	m_ProjectionMatrix = Mat4::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
 }
 
+void SetupBindings(ID3D12GraphicsCommandList2* inCommandList)
+{
+	// TODO: This is whack
+	auto& descriptor_heap = g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->GetDescriptorHeap();
+	uint32 descriptor_index = descriptor_heap.Allocate();
+	g_RenderingDevice.GetD3DDevice()->CopyDescriptorsSimple(1, descriptor_heap.GetCPUHandle(descriptor_index), m_DummyTexture->GetCPUHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+
+	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
+	inCommandList->SetGraphicsRootDescriptorTable(0, descriptor_heap.GetGPUHandle(descriptor_index));
+}
+
 void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 {
 	// TODO: Pre multiply matrix
@@ -229,8 +245,7 @@ void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 	{
 		d->SetupBindings(inCommandList);
 
-		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-		inCommandList->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
+		SetupBindings(inCommandList);
 
 		// Upload Constant Buffer to GPU
 		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
@@ -252,8 +267,7 @@ void RenderTransparent(ID3D12GraphicsCommandList2* inCommandList)
 	{
 		d->SetupBindings(inCommandList);
 
-		// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-		inCommandList->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
+		SetupBindings(inCommandList);
 
 		// Upload Constant Buffer to GPU
 		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
@@ -272,16 +286,16 @@ void CopyToBackBuffer(ID3D12GraphicsCommandList2* inCommandList)
 	
 	swap_chain->SetRenderTarget(inCommandList);
 
-	// TODO: Do the actual copy
+	DrawUtils::DrawFullScreenTriangle(inCommandList, m_GBuffer->GetRenderTarget(0));
 }
 
 void OnRender()
 {
-	auto* command_queue	= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto* command_list	= command_queue->GetCommandList();
+	auto* command_queue		= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto* command_list		= command_queue->GetCommandList();
 
 	// Set the descriptor heap containing all textures
-	ID3D12DescriptorHeap* heaps[] = { g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
+	ID3D12DescriptorHeap* heaps[] = { command_queue->GetDescriptorHeap().GetD3DDescriptorHeap() };
 	command_list->SetDescriptorHeaps(1, heaps);
 
 	// Clear the GBuffer targets.

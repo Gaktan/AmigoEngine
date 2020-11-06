@@ -10,7 +10,6 @@ protected:
 	uint32							m_Height;
 	DXGI_FORMAT						m_Format;
 	D3D12_CPU_DESCRIPTOR_HANDLE		m_CPUHandle			= { 0 };
-	D3D12_GPU_DESCRIPTOR_HANDLE		m_GPUHandle			= { 0 };
 
 public:
 	virtual ~DX12Texture();
@@ -21,7 +20,6 @@ public:
 		const void* inBufferData);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE		GetCPUHandle() const;
-	D3D12_GPU_DESCRIPTOR_HANDLE		GetGPUHandle() const;
 
 protected:
 	virtual void UpdateBufferResource(

@@ -55,8 +55,7 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 
 	m_RTVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2048);
 	m_DSVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024);
-	// TODO: Making this shader visible for now because it's easier to handle and we don't need to copy descriptors
-	m_SRVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1024, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+	m_SRVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
 
 	m_DirectCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
 	m_ComputeCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);

@@ -14,6 +14,8 @@
 	#include "Shaders\generated\ShaderFileToTest_Test_22_PS.generated.h"
 	#include "Shaders\generated\ShaderFileToTest_Test_23_PS.generated.h"
 	#include "Shaders\generated\ShaderFileToTest_Test_24_PS.generated.h"
+	#include "Shaders\generated\TextureCopy_TextureCopyPS_PS.generated.h"
+	#include "Shaders\generated\TextureCopy_TextureCopyVS_VS.generated.h"
 	#include "Shaders\generated\TransparentShader_TransparentShader_PS.generated.h"
 	#include "Shaders\generated\VertexShader_VertexShader_VS.generated.h"
 // EndInclude
@@ -34,6 +36,8 @@ namespace InlineShaders
 	INIT_SHADER_BYTECODE(Test_22);
 	INIT_SHADER_BYTECODE(Test_23);
 	INIT_SHADER_BYTECODE(Test_24);
+	INIT_SHADER_BYTECODE(TextureCopyPS);
+	INIT_SHADER_BYTECODE(TextureCopyVS);
 	INIT_SHADER_BYTECODE(TransparentShader);
 	INIT_SHADER_BYTECODE(VertexShader);
 // EndShaderByteCode

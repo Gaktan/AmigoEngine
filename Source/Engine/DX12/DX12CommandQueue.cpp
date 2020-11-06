@@ -20,6 +20,7 @@ DX12CommandQueue::DX12CommandQueue(D3D12_COMMAND_LIST_TYPE inType) :
 	{
 		entry.m_D3DCommandAllocator	= CreateCommandAllocator();
 		entry.m_D3DCommandList		= CreateCommandList(entry.m_D3DCommandAllocator);
+		entry.m_DescriptorHeap		= new DX12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2048, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 	}
 }
 
@@ -27,12 +28,13 @@ DX12CommandQueue::~DX12CommandQueue()
 {
 	Flush();
 
-	for (auto& command_list_entry : m_CommandListEntries)
+	for (auto& entry : m_CommandListEntries)
 	{
-		if (command_list_entry.m_D3DCommandList)
+		if (entry.m_D3DCommandList)
 		{
-			command_list_entry.m_D3DCommandList->Release();
-			command_list_entry.m_D3DCommandAllocator->Release();
+			entry.m_D3DCommandList->Release();
+			entry.m_D3DCommandAllocator->Release();
+			delete entry.m_DescriptorHeap;
 		}
 	}
 
@@ -96,6 +98,11 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList()
 	return entry.m_D3DCommandList;
 }
 
+DX12DescriptorHeap& DX12CommandQueue::GetDescriptorHeap()
+{
+	return *m_CommandListEntries[m_CurrentIndex].m_DescriptorHeap;
+}
+
 // Execute a command list.
 // Returns the fence value to wait for for this command list.
 uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList)
@@ -116,10 +123,8 @@ uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inComman
 
 	entry.m_IsBeingRecorded = false;
 
-	return fence_value;
-}
+	// Reset descriptor heap for shader bindings
+	entry.m_DescriptorHeap->Reset();
 
-ID3D12CommandQueue* DX12CommandQueue::GetD3D12CommandQueue() const
-{
-	return m_D3DCommandQueue;
+	return fence_value;
 }

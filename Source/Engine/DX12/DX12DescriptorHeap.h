@@ -28,6 +28,8 @@ public:
 	virtual void Release(uint32 inIndex);
 	virtual void Release(D3D12_CPU_DESCRIPTOR_HANDLE inHandle);
 
+	void Reset();
+
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32 inIndex) const;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32 inIndex) const;
 	ID3D12DescriptorHeap*		GetD3DDescriptorHeap() const;

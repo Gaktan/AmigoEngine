@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DX12/DX12Includes.h"
-#include <dxgi1_6.h>
 
 class DX12CommandQueue;
 class DX12SwapChain;
@@ -21,8 +20,8 @@ protected:
 	DX12CommandQueue*		m_CopyCommandQueue;
 
 	// Descriptor heaps
-	DX12DescriptorHeap*				m_RTVDescriptorHeap;
-	DX12DescriptorHeap*				m_DSVDescriptorHeap;
+	DX12FreeListDescriptorHeap*		m_RTVDescriptorHeap;
+	DX12FreeListDescriptorHeap*		m_DSVDescriptorHeap;
 	DX12FreeListDescriptorHeap*		m_SRVDescriptorHeap;
 
 	DX12SwapChain*			m_SwapChain;

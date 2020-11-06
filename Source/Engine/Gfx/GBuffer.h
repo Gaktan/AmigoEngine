@@ -25,4 +25,7 @@ public:
 	void Set(ID3D12GraphicsCommandList2* inCommandList) const;
 	void ClearDepthBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
 	void ClearRenderTargets(ID3D12GraphicsCommandList2* inCommandList) const;
+
+	DX12DepthBuffer* GetDepthBuffer()					{ return m_DepthBuffer; }
+	DX12RenderTarget* GetRenderTarget(uint32 inIndex)	{ return m_RenderTargets[inIndex]; }
 };

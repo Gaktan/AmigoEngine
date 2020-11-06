@@ -18,15 +18,8 @@ public:
 	ShaderObject(RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode);
 	~ShaderObject();
 
-	const std::string& GetName() const
-	{
-		return m_Name;
-	}
-
-	RenderPass GetRenderPass() const
-	{
-		return m_RenderPass;
-	}
+	const std::string&	GetName() const			{ return m_Name; }
+	RenderPass			GetRenderPass() const	{ return m_RenderPass; }
 
 	void Set(ID3D12GraphicsCommandList2* inCommandList) const;
 
