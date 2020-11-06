@@ -40,6 +40,12 @@ void DX12DescriptorHeap::Release(uint32 inIndex)
 	(void) inIndex;
 }
 
+void DX12DescriptorHeap::Release(D3D12_CPU_DESCRIPTOR_HANDLE inHandle)
+{
+	// Nothing to do...
+	(void) inHandle;
+}
+
 D3D12_CPU_DESCRIPTOR_HANDLE DX12DescriptorHeap::GetCPUHandle(uint32 inIndex) const
 {
 	Assert(inIndex < m_NumDescriptors);
@@ -104,7 +110,21 @@ void DX12FreeListDescriptorHeap::Release(uint32 inIndex)
 {
 	Assert(inIndex < m_NumDescriptors);
 
-	// Add to free list again 
+	// TODO: Might want to check that we don't release the same index twice?
+
+	// Add to free list again
 	std::lock_guard<std::mutex> lock(m_FreeIndexMutex);
 	m_FreeIndices.push_back(inIndex);
+}
+
+void DX12FreeListDescriptorHeap::Release(D3D12_CPU_DESCRIPTOR_HANDLE inHandle)
+{
+	if (inHandle.ptr == 0)
+		return;
+
+	// Convert the CPU handle back to an index (Inverse of GetCPUHandle)
+	uint64 index = (inHandle.ptr - m_CPUHandle.ptr) / uint64(m_IncrementSize);
+	Assert(index < m_NumDescriptors);
+
+	Release((uint32)index);
 }

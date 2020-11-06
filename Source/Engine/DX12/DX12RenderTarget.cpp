@@ -81,8 +81,8 @@ void DX12RenderTarget::ReleaseResources()
 {
 	DX12Resource::ReleaseResources();
 
-	// TODO: Need to deal with releasing descriptor handles for RenderTargets. We need to grab the device for this.
-	// A refactor is needed to have the device as a global variable, so it's accessible anywhere.
+	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+	descriptor_heap->Release(m_RTVDescriptorHandle);
 }
 
 void DX12RenderTarget::ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const
@@ -151,8 +151,8 @@ void DX12DepthBuffer::ReleaseResources()
 {
 	DX12Resource::ReleaseResources();
 
-	// TODO: Need to deal with releasing descriptor handles for DepthBuffers. We need to grab the device for this.
-	// A refactor is needed to have the device as a global variable, so it's accessible anywhere.
+	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+	descriptor_heap->Release(m_DSVDescriptorHandle);
 }
 
 void DX12DepthBuffer::ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const

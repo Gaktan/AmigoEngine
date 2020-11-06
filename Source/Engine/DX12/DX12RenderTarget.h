@@ -13,7 +13,7 @@ protected:
 	DXGI_FORMAT		m_Format		= DXGI_FORMAT_UNKNOWN;
 	Vec4			m_ClearValue	= 0.0f;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE	m_RTVDescriptorHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE	m_RTVDescriptorHandle = { 0 };
 
 public:
 	virtual ~DX12RenderTarget()
@@ -47,7 +47,7 @@ protected:
 	float			m_ClearValue		= 0.0f;
 	uint8			m_StencilClearValue = 0;
 
-	D3D12_CPU_DESCRIPTOR_HANDLE	m_DSVDescriptorHandle;
+	D3D12_CPU_DESCRIPTOR_HANDLE	m_DSVDescriptorHandle = { 0 };
 
 public:
 	virtual ~DX12DepthBuffer()

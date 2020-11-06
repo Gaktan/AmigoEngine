@@ -26,6 +26,7 @@ public:
 
 	virtual uint32 Allocate();
 	virtual void Release(uint32 inIndex);
+	virtual void Release(D3D12_CPU_DESCRIPTOR_HANDLE inHandle);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUHandle(uint32 inIndex) const;
 	D3D12_GPU_DESCRIPTOR_HANDLE GetGPUHandle(uint32 inIndex) const;
@@ -48,4 +49,5 @@ public:
 
 	virtual uint32 Allocate() override;
 	virtual void Release(uint32 inIndex) override;
+	virtual void Release(D3D12_CPU_DESCRIPTOR_HANDLE inHandle) override;
 };

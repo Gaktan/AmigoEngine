@@ -6,13 +6,9 @@
 
 DX12Texture::~DX12Texture()
 {
-	// TODO: Need to deal with releasing descriptor handles for textures. We need to grab the device for this.
-	// A refactor is needed to have the device as a global variable, so it's accessible anywhere.
-	// Since we can only have one device, this is a good strategy, and we avoid passing the device to every single function we make.
-	// Also need to deal with the awkwardness of releasing the CPU handle which will automatically release the GPU handle too
-	
-	//DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	//descriptor_heap->Release(descriptor_index);
+	// No need to release the GPU handle, since it should match with the same index as the CPU handle
+	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	descriptor_heap->Release(m_CPUHandle);
 }
 
 void DX12Texture::InitAsTexture(
