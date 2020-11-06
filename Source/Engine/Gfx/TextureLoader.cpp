@@ -22,12 +22,12 @@ void TextureLoader::LoadFromFile(const std::string& inFile)
 	Assert(Math::IsPowerOfTwo(static_cast<int>(metadata.height)));
 }
 
-DX12Texture* TextureLoader::CreateTexture(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+DX12Texture* TextureLoader::CreateTexture(ID3D12GraphicsCommandList2* inCommandList)
 {
 	DirectX::TexMetadata metadata		= m_ScratchImage.GetMetadata();
 
 	DX12Texture* texture = new DX12Texture();
-	texture->InitAsTexture(inDevice, inCommandList,
+	texture->InitAsTexture(inCommandList,
 						   static_cast<uint32>(metadata.width), static_cast<uint32>((metadata.height)),
 						   metadata.format, m_ScratchImage.GetPixels());
 

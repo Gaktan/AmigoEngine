@@ -1,6 +1,5 @@
 #pragma once
 
-#include "DX12/DX12Device.h"
 #include "DX12/DX12Resource.h"
 #include "Math/Vec4.h"
 
@@ -17,7 +16,6 @@ public:
 	virtual ~DX12Texture();
 
 	void InitAsTexture(
-		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 		const void* inBufferData);
@@ -27,7 +25,6 @@ public:
 
 protected:
 	virtual void UpdateBufferResource(
-		DX12Device& inDevice,
 		ID3D12GraphicsCommandList2* inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr) override;
 };

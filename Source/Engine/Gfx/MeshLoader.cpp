@@ -145,7 +145,7 @@ void MeshLoader::LoadFromFile(const std::string& inFile)
 
 // Final step of loading OBJ files
 // Create materials, create meshes, create Drawable objects
-void MeshLoader::Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList,
+void MeshLoader::Finalize(ID3D12GraphicsCommandList2* inCommandList,
 						  const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& outBuckets)
 {
 	Assert(m_VertexData.size() > 0);
@@ -161,7 +161,7 @@ void MeshLoader::Finalize(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCo
 		uint32 index_size	= static_cast<uint32>(index_range.m_End		- index_range.m_Start) * sizeof(uint16);
 
 		Mesh* mesh = new Mesh();
-		mesh->Init(inDevice, inCommandList,
+		mesh->Init(inCommandList,
 				   D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
 				   m_VertexData.data()	+ vertex_range.m_Start,	vertex_size, sizeof(VertexPosUVNormal),
 				   m_IndexData.data()	+ index_range.m_Start,	index_size);

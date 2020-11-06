@@ -17,8 +17,6 @@ uint32 g_ClientHeight	= 720;
 // Can be toggled with the Alt+Enter or F11
 bool g_Fullscreen = false;
 
-DX12Device g_Device;
-
 // Window callback function.
 LRESULT CALLBACK WndProc(HWND, UINT, WPARAM, LPARAM);
 
@@ -176,7 +174,7 @@ void Resize(uint32_t inWidth, uint32_t inHeight)
 		g_ClientWidth	= Math::Max(128u, inWidth);
 		g_ClientHeight	= Math::Max(128u, inHeight);
 
-		OnResize(g_Device, g_ClientWidth, g_ClientHeight);
+		OnResize(g_ClientWidth, g_ClientHeight);
 	}
 }
 
@@ -185,7 +183,7 @@ LRESULT CALLBACK WndProc(HWND hwnd, UINT inMessage, WPARAM wParam, LPARAM lParam
 	if (inMessage == WM_PAINT)
 	{
 		Update();
-		OnRender(g_Device);
+		OnRender();
 	}
 	else if (inMessage == WM_SYSKEYDOWN || inMessage == WM_KEYDOWN)
 	{
@@ -264,9 +262,9 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 	// Initialize the global window rect variable.
 	::GetWindowRect(g_hWnd, &g_WindowRect);
 
-	g_Device.Init(g_hWnd, g_ClientWidth, g_ClientHeight);
+	g_RenderingDevice.Init(g_hWnd, g_ClientWidth, g_ClientHeight);
 
-	LoadContent(g_Device, g_ClientWidth, g_ClientHeight);
+	LoadContent(g_ClientWidth, g_ClientHeight);
 
 	::ShowWindow(g_hWnd, SW_SHOW);
 
@@ -280,7 +278,7 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 		}
 	}
 
-	UnloadContent(g_Device);
+	UnloadContent();
 
 	return 0;
 }

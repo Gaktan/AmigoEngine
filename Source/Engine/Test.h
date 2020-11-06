@@ -1,12 +1,10 @@
 #pragma once
 
-#include "DX12/DX12Device.h"
-
-bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight);
-void UnloadContent(DX12Device& inDevice);
+bool LoadContent(uint32 inWidth, uint32 inHeight);
+void UnloadContent();
 
 void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT);
-void OnRender(DX12Device& inDevice);
+void OnRender();
 
 
-void OnResize(DX12Device& inDevice, uint32 inWidth, uint32 inHeight);
+void OnResize(uint32 inWidth, uint32 inHeight);

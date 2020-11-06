@@ -35,7 +35,7 @@ bool CheckTearingSupport()
 	return allow_tearing;
 }
 
-DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight)
+DX12SwapChain::DX12SwapChain(HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight)
 {
 	m_TearingSupported = CheckTearingSupport();
 
@@ -86,7 +86,7 @@ DX12SwapChain::DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12Comm
 		m_BackBuffers[i] = new DX12RenderTarget();
 
 	bool first_call = true;
-	UpdateRenderTargetViews(inDevice, inWidth, inHeight, first_call);
+	UpdateRenderTargetViews(inWidth, inHeight, first_call);
 }
 
 DX12SwapChain::~DX12SwapChain()
@@ -97,13 +97,13 @@ DX12SwapChain::~DX12SwapChain()
 	m_D3DSwapChain->Release();
 }
 
-void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth, uint32 inHeight, bool inFirstCall/* = false*/)
+void DX12SwapChain::UpdateRenderTargetViews(uint32 inWidth, uint32 inHeight, bool inFirstCall/* = false*/)
 {
 	if (!inFirstCall)
 	{
 		// Flush the GPU queue to make sure the swap chain's back buffers
 		// are not being referenced by an in-flight command list.
-		inDevice.Flush();
+		g_RenderingDevice.Flush();
 
 		for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 		{
@@ -125,7 +125,7 @@ void DX12SwapChain::UpdateRenderTargetViews(DX12Device& inDevice, uint32 inWidth
 		ID3D12Resource* back_buffer;
 		ThrowIfFailed(m_D3DSwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
 
-		m_BackBuffers[i]->InitFromResource(inDevice, back_buffer, DXGI_FORMAT_R8G8B8A8_UNORM, clear_color);
+		m_BackBuffers[i]->InitFromResource(back_buffer, DXGI_FORMAT_R8G8B8A8_UNORM, clear_color);
 	}
 }
 

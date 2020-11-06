@@ -21,12 +21,10 @@ public:
 	}
 
 	void InitAsRenderTarget(
-		DX12Device& inDevice,
 		uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat = DXGI_FORMAT_UNKNOWN,
 		Vec4 inClearValue = 0.0f);
 
 	void InitFromResource(
-		DX12Device& inDevice,
 		ID3D12Resource* inResource,
 		DXGI_FORMAT inFormat = DXGI_FORMAT_UNKNOWN,
 		Vec4 inClearValue = 0.0f);
@@ -57,7 +55,6 @@ public:
 	}
 
 	void InitAsDepthStencilBuffer(
-		DX12Device& inDevice,
 		uint32 inWidth, uint32 inHeight,
 		float inClearValue = 1.0f, uint8 inStencilClearValue = 0,
 		DXGI_FORMAT inDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);

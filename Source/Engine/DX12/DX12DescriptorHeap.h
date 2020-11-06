@@ -4,8 +4,6 @@
 #include <vector>
 #include <mutex>
 
-class DX12Device;
-
 class DX12DescriptorHeap
 {
 protected:
@@ -21,7 +19,6 @@ protected:
 
 public:
 	DX12DescriptorHeap(
-		DX12Device& inDevice,
 		D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors,
 		D3D12_DESCRIPTOR_HEAP_FLAGS inFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 
@@ -44,7 +41,6 @@ protected:
 
 public:
 	DX12FreeListDescriptorHeap(
-		DX12Device& inDevice,
 		D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors,
 		D3D12_DESCRIPTOR_HEAP_FLAGS inFlags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE);
 

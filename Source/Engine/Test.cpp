@@ -49,17 +49,17 @@ Vec4	m_SavedPosition;
 
 bool	m_ContentLoaded;
 
-void ResizeBuffers(DX12Device& inDevice, int inNewWidth, int inNewHeight)
+void ResizeBuffers(int inNewWidth, int inNewHeight)
 {
 	// Recreate swapchain buffers (causes a flush)
-	inDevice.GetSwapChain()->UpdateRenderTargetViews(inDevice, inNewWidth, inNewHeight);
+	g_RenderingDevice.GetSwapChain()->UpdateRenderTargetViews(inNewWidth, inNewHeight);
 
 	//Recreate GBuffer
 	m_GBuffer->ReleaseResources();
-	m_GBuffer->AllocateResources(inDevice, inNewWidth, inNewHeight);
+	m_GBuffer->AllocateResources(inNewWidth, inNewHeight);
 }
 
-bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
+bool LoadContent(uint32 inWidth, uint32 inHeight)
 {
 	{
 		m_FOV				= 45.0f;
@@ -73,40 +73,40 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	MeshLoader::Init();
 	TextureLoader::Init();
 
-	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
-	auto* command_list	= command_queue->GetCommandList(inDevice);
+	auto* command_queue	= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
+	auto* command_list	= command_queue->GetCommandList();
 
 	m_GBuffer = new GBuffer;
 
 	// Buffers
-	ResizeBuffers(inDevice, inWidth, inHeight);
+	ResizeBuffers(inWidth, inHeight);
 
 	// Create shader objects
 	{
-		m_AllShaderObjects["OpaqueGeometry"]	= new ShaderObject(inDevice, RenderPass::OpaqueGeometry, InlineShaders::VertexShader, InlineShaders::PixelShader);
-		m_AllShaderObjects["Transparent"]		= new ShaderObject(inDevice, RenderPass::Transparent, InlineShaders::VertexShader, InlineShaders::TransparentShader);
+		m_AllShaderObjects["OpaqueGeometry"]	= new ShaderObject(RenderPass::OpaqueGeometry, InlineShaders::VertexShader, InlineShaders::PixelShader);
+		m_AllShaderObjects["Transparent"]		= new ShaderObject(RenderPass::Transparent, InlineShaders::VertexShader, InlineShaders::TransparentShader);
 	}
 
 	// Create drawable objects
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\Cornell_fake_box.obj");
-		mesh_loader.Finalize(inDevice, command_list, m_AllShaderObjects, m_RenderBuckets);
+		mesh_loader.Finalize(command_list, m_AllShaderObjects, m_RenderBuckets);
 	}
 	{
 		MeshLoader mesh_loader;
 		mesh_loader.LoadFromFile("Data\\LightBulb.obj");
-		mesh_loader.Finalize(inDevice, command_list, m_AllShaderObjects, m_RenderBuckets);
+		mesh_loader.Finalize(command_list, m_AllShaderObjects, m_RenderBuckets);
 	}
 
 	// Load texture
 	TextureLoader texture_loader;
 	texture_loader.LoadFromFile("Data\\render_1024.png");
-	m_DummyTexture = texture_loader.CreateTexture(inDevice, command_list);
+	m_DummyTexture = texture_loader.CreateTexture(command_list);
 
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
-	m_ConstantBuffer->InitAsConstantBuffer(inDevice, sizeof(ConstantBuffers::ModelViewProjection));
+	m_ConstantBuffer->InitAsConstantBuffer(sizeof(ConstantBuffers::ModelViewProjection));
 
 	auto fence_value = command_queue->ExecuteCommandList(command_list);
 	command_queue->WaitForFenceValue(fence_value);
@@ -116,10 +116,10 @@ bool LoadContent(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
 	return true;
 }
 
-void UnloadContent(DX12Device& inDevice)
+void UnloadContent()
 {
 	// Make sure the command queue has finished all commands before closing.
-	inDevice.Flush();
+	g_RenderingDevice.Flush();
 
 	// Delete all drawable objects
 	for (RenderBucket& bucket : m_RenderBuckets)
@@ -146,9 +146,9 @@ void UnloadContent(DX12Device& inDevice)
 	m_ContentLoaded = false;
 }
 
-void OnResize(DX12Device& inDevice, uint32 inWidth, uint32 inHeight)
+void OnResize(uint32 inWidth, uint32 inHeight)
 {
-	ResizeBuffers(inDevice, inWidth, inHeight);
+	ResizeBuffers(inWidth, inHeight);
 }
 
 float TTT = 0.0f;
@@ -217,7 +217,7 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	m_ProjectionMatrix = Mat4::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
 }
 
-void RenderGeometry(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 {
 	// TODO: Pre multiply matrix
 	ConstantBuffers::ModelViewProjection mvp;
@@ -233,14 +233,14 @@ void RenderGeometry(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandL
 		inCommandList->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
 
 		// Upload Constant Buffer to GPU
-		m_ConstantBuffer->UpdateBufferResource(inDevice, inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
+		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
 		m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
 
 		d->Render(inCommandList);
 	}
 }
 
-void RenderTransparent(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+void RenderTransparent(ID3D12GraphicsCommandList2* inCommandList)
 {
 	// TODO: Pre multiply matrix
 	ConstantBuffers::ModelViewProjection mvp;
@@ -256,16 +256,16 @@ void RenderTransparent(DX12Device& inDevice, ID3D12GraphicsCommandList2* inComma
 		inCommandList->SetGraphicsRootDescriptorTable(0, m_DummyTexture->GetGPUHandle());
 
 		// Upload Constant Buffer to GPU
-		m_ConstantBuffer->UpdateBufferResource(inDevice, inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
+		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
 		m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
 
 		d->Render(inCommandList);
 	}
 }
 
-void CopyToBackBuffer(DX12Device& inDevice, ID3D12GraphicsCommandList2* inCommandList)
+void CopyToBackBuffer(ID3D12GraphicsCommandList2* inCommandList)
 {
-	auto* swap_chain = inDevice.GetSwapChain();
+	auto* swap_chain = g_RenderingDevice.GetSwapChain();
 
 	// Clear will trigger a resource transition
 	swap_chain->ClearBackBuffer(inCommandList);
@@ -275,13 +275,13 @@ void CopyToBackBuffer(DX12Device& inDevice, ID3D12GraphicsCommandList2* inComman
 	// TODO: Do the actual copy
 }
 
-void OnRender(DX12Device& inDevice)
+void OnRender()
 {
-	auto* command_queue	= inDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto* command_list	= command_queue->GetCommandList(inDevice);
+	auto* command_queue	= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto* command_list	= command_queue->GetCommandList();
 
 	// Set the descriptor heap containing all textures
-	ID3D12DescriptorHeap* heaps[] = { inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
+	ID3D12DescriptorHeap* heaps[] = { g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV)->GetD3DDescriptorHeap() };
 	command_list->SetDescriptorHeaps(1, heaps);
 
 	// Clear the GBuffer targets.
@@ -290,11 +290,11 @@ void OnRender(DX12Device& inDevice)
 
 	m_GBuffer->Set(command_list);
 
-	RenderGeometry(inDevice, command_list);
-	RenderTransparent(inDevice, command_list);
+	RenderGeometry(command_list);
+	RenderTransparent(command_list);
 
-	CopyToBackBuffer(inDevice, command_list);
+	CopyToBackBuffer(command_list);
 
 	// Present
-	inDevice.Present(command_list);
+	g_RenderingDevice.Present(command_list);
 }

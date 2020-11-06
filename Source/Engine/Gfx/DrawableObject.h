@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DX12/DX12Device.h"
+#include "DX12/DX12Includes.h"
 
 class Mesh;
 class ShaderObject;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DX12/DX12Device.h"
+#include "DX12/DX12Includes.h"
 
 class DX12DepthBuffer;
 class DX12RenderTarget;
@@ -20,7 +20,7 @@ public:
 	~GBuffer();
 
 	void ReleaseResources();
-	void AllocateResources(DX12Device& inDevice, uint32 inTargetWidth, uint32 inTargetHeight);
+	void AllocateResources(uint32 inTargetWidth, uint32 inTargetHeight);
 	
 	void Set(ID3D12GraphicsCommandList2* inCommandList) const;
 	void ClearDepthBuffer(ID3D12GraphicsCommandList2* inCommandList) const;

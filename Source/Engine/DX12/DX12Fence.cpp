@@ -11,9 +11,9 @@ HANDLE CreateEventHandle()
 	return fence_event;
 }
 
-DX12Fence::DX12Fence(DX12Device& inDevice)
+DX12Fence::DX12Fence()
 {
-	ThrowIfFailed(inDevice.GetD3DDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_D3DFence)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_D3DFence)));
 	m_FenceEvent = CreateEventHandle();
 }
 

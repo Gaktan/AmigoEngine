@@ -2,9 +2,9 @@
 #include "DX12/DX12RenderTarget.h"
 
 #include "DX12/DX12DescriptorHeap.h"
+#include "DX12/DX12Device.h"
 
 void DX12RenderTarget::InitAsRenderTarget(
-	DX12Device& inDevice,
 	uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat/* = DXGI_FORMAT_UNKNOWN*/,
 	Vec4 inClearValue/* = 0.0f*/)
 {
@@ -23,7 +23,7 @@ void DX12RenderTarget::InitAsRenderTarget(
 																		   /*arraySize*/ 1, /*mipLevels*/ 1, /*sampleCount*/ 1, /*sampleQuality*/ 0,
 																		   D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
-	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -41,18 +41,17 @@ void DX12RenderTarget::InitAsRenderTarget(
 
 	// Allocate descriptors
 	{
-		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		uint32 descriptor_index	= descriptor_heap->Allocate();
 		m_RTVDescriptorHandle = descriptor_heap->GetCPUHandle(descriptor_index);
 	}
 
-	inDevice.GetD3DDevice()->CreateRenderTargetView(m_Resource, &view_desc, m_RTVDescriptorHandle);
+	g_RenderingDevice.GetD3DDevice()->CreateRenderTargetView(m_Resource, &view_desc, m_RTVDescriptorHandle);
 
 	SetResourceName(m_Resource, "DX12RenderTarget::InitAsRenderTarget");
 }
 
 void DX12RenderTarget::InitFromResource(
-	DX12Device& inDevice,
 	ID3D12Resource* inResource,
 	DXGI_FORMAT inFormat/* = DXGI_FORMAT_UNKNOWN*/,
 	Vec4 inClearValue/* = 0.0f*/)
@@ -68,12 +67,12 @@ void DX12RenderTarget::InitFromResource(
 
 	// Allocate descriptors
 	{
-		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
+		DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 		uint32 descriptor_index	= descriptor_heap->Allocate();
 		m_RTVDescriptorHandle = descriptor_heap->GetCPUHandle(descriptor_index);
 	}
 
-	inDevice.GetD3DDevice()->CreateRenderTargetView(m_Resource, nullptr, m_RTVDescriptorHandle);
+	g_RenderingDevice.GetD3DDevice()->CreateRenderTargetView(m_Resource, nullptr, m_RTVDescriptorHandle);
 
 	SetResourceName(m_Resource, "DX12RenderTarget::InitFromResource");
 }
@@ -102,7 +101,6 @@ DXGI_FORMAT DX12RenderTarget::GetFormat() const
 }
 
 void DX12DepthBuffer::InitAsDepthStencilBuffer(
-	DX12Device& inDevice,
 	uint32 inWidth, uint32 inHeight,
 	float inClearValue/* = 1.0f*/, uint8 inStencilClearValue/* = 0*/,
 	DXGI_FORMAT inDepthFormat/* = DXGI_FORMAT_D24_UNORM_S8_UINT*/)
@@ -121,7 +119,7 @@ void DX12DepthBuffer::InitAsDepthStencilBuffer(
 																		   /*arraySize*/ 1, /*mipLevels*/ 1, /*sampleCount*/ 1, /*sampleQuality*/ 0,
 																		   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL);
 
-	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -139,12 +137,12 @@ void DX12DepthBuffer::InitAsDepthStencilBuffer(
 
 	// Allocate descriptors
 	{
-		DX12DescriptorHeap* descriptor_heap = inDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
+		DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 		uint32 descriptor_index	= descriptor_heap->Allocate();
 		m_DSVDescriptorHandle = descriptor_heap->GetCPUHandle(descriptor_index);
 	}
 
-	inDevice.GetD3DDevice()->CreateDepthStencilView(m_Resource, &view_desc, m_DSVDescriptorHandle);
+	g_RenderingDevice.GetD3DDevice()->CreateDepthStencilView(m_Resource, &view_desc, m_DSVDescriptorHandle);
 
 	SetResourceName(m_Resource, "DX12DepthRenderTarget::InitAsDepthStencilBuffer");
 }

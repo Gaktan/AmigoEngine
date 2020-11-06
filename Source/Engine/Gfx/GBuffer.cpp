@@ -39,18 +39,18 @@ void GBuffer::ReleaseResources()
 		m_RenderTargets[i]->ReleaseResources();
 }
 
-void GBuffer::AllocateResources(DX12Device& inDevice, uint32 inTargetWidth, uint32 inTargetHeight)
+void GBuffer::AllocateResources(uint32 inTargetWidth, uint32 inTargetHeight)
 {
 	// All the resources inside the GBuffer share the same dimensions
 	m_Width		= inTargetWidth;
 	m_Height	= inTargetHeight;
 
 	// Allocate depth buffer
-	m_DepthBuffer->InitAsDepthStencilBuffer(inDevice, m_Width, m_Height);
+	m_DepthBuffer->InitAsDepthStencilBuffer(m_Width, m_Height);
 
 	// Allocate render targets
 	for (uint32 i = 0; i < m_NumRenderTargets; ++i)
-		m_RenderTargets[i]->InitAsRenderTarget(inDevice, m_Width, m_Height, DXGI_FORMAT_R8G8B8A8_UNORM);
+		m_RenderTargets[i]->InitAsRenderTarget(m_Width, m_Height, DXGI_FORMAT_R8G8B8A8_UNORM);
 }
 
 void GBuffer::Set(ID3D12GraphicsCommandList2* inCommandList) const

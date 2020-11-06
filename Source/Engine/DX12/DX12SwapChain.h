@@ -3,7 +3,6 @@
 constexpr uint32 NUM_BUFFERED_FRAMES = 3;
 
 #include "DX12/DX12Includes.h"
-#include "DX12/DX12Device.h"
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12RenderTarget.h"
 
@@ -21,10 +20,10 @@ protected:
 	bool					m_TearingSupported	= false;
 
 public:
-	DX12SwapChain(DX12Device& inDevice, HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight);
+	DX12SwapChain(HWND inHandle, const DX12CommandQueue& inCommandQueue, uint32 inWidth, uint32 inHeight);
 	virtual ~DX12SwapChain();
 
-	void UpdateRenderTargetViews(DX12Device& inDevice, uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall = false);
+	void UpdateRenderTargetViews(uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall = false);
 	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 

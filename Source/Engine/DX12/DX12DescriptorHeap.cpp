@@ -4,7 +4,6 @@
 #include "DX12/DX12Device.h"
 
 DX12DescriptorHeap::DX12DescriptorHeap(
-	DX12Device& inDevice,
 	D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors,
 	D3D12_DESCRIPTOR_HEAP_FLAGS inFlags/* = D3D12_DESCRIPTOR_HEAP_FLAG_NONE*/)
 {
@@ -15,9 +14,9 @@ DX12DescriptorHeap::DX12DescriptorHeap(
 	desc.Type			= inHeapType;
 	desc.NodeMask		= 0;
 	desc.Flags			= inFlags;
-	ThrowIfFailed(inDevice.GetD3DDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_D3DDescriptorHeap)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_D3DDescriptorHeap)));
 
-	m_IncrementSize	= inDevice.GetD3DDevice()->GetDescriptorHandleIncrementSize(inHeapType);
+	m_IncrementSize	= g_RenderingDevice.GetD3DDevice()->GetDescriptorHandleIncrementSize(inHeapType);
 	m_CPUHandle		= m_D3DDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	m_GPUHandle		= m_D3DDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 }
@@ -38,6 +37,7 @@ uint32 DX12DescriptorHeap::Allocate()
 void DX12DescriptorHeap::Release(uint32 inIndex)
 {
 	// Nothing to do...
+	(void) inIndex;
 }
 
 D3D12_CPU_DESCRIPTOR_HANDLE DX12DescriptorHeap::GetCPUHandle(uint32 inIndex) const
@@ -68,10 +68,9 @@ ID3D12DescriptorHeap* DX12DescriptorHeap::GetD3DDescriptorHeap() const
 }
 
 DX12FreeListDescriptorHeap::DX12FreeListDescriptorHeap(
-	DX12Device& inDevice,
 	D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors,
 	D3D12_DESCRIPTOR_HEAP_FLAGS inFlags/* = D3D12_DESCRIPTOR_HEAP_FLAG_NONE*/) :
-	DX12DescriptorHeap(inDevice, inHeapType, inNumDescriptors, inFlags)
+	DX12DescriptorHeap(inHeapType, inNumDescriptors, inFlags)
 {
 	m_FreeIndices.reserve(inNumDescriptors);
 	for (uint32 i = 0; i < inNumDescriptors; ++i)

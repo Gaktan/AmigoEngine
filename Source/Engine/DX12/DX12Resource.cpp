@@ -4,7 +4,6 @@
 #include "DX12/DX12Device.h"
 
 void DX12Resource::InitAsResource(
-	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
@@ -13,7 +12,7 @@ void DX12Resource::InitAsResource(
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize, inFlags);
 
 	// Create a committed resource for the GPU resource in a default heap.
-	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -21,7 +20,7 @@ void DX12Resource::InitAsResource(
 		nullptr,
 		IID_PPV_ARGS(&m_Resource)));
 
-	UpdateBufferResource(inDevice, inCommandList, inBufferSize, inBufferData);
+	UpdateBufferResource(inCommandList, inBufferSize, inBufferData);
 
 	SetResourceName(m_Resource, "DX12Resource::InitAsResource");
 }
@@ -41,7 +40,6 @@ DX12Resource::~DX12Resource()
 }
 
 void DX12Resource::UpdateBufferResource(
-	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
@@ -54,7 +52,7 @@ void DX12Resource::UpdateBufferResource(
 			D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize);
 
 			// Create upload buffer on the CPU
-			ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
+			ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
 				&heap_properties,
 				D3D12_HEAP_FLAG_NONE,
 				&resource_desc,
@@ -90,12 +88,11 @@ void DX12Resource::SetResourceName(ID3D12Resource* inResource, const std::string
 }
 
 void DX12VertexBuffer::InitAsVertexBuffer(
-	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize, const void* inBufferData, uint32 inStride,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
 {
-	DX12Resource::InitAsResource(inDevice, inCommandList, inBufferSize, inBufferData, inFlags);
+	DX12Resource::InitAsResource(inCommandList, inBufferSize, inBufferData, inFlags);
 
 	m_VertexBufferView.BufferLocation	= m_Resource->GetGPUVirtualAddress();
 	m_VertexBufferView.SizeInBytes		= (uint32) inBufferSize;
@@ -116,12 +113,11 @@ void DX12VertexBuffer::SetVertexBuffer(ID3D12GraphicsCommandList2* inCommandList
 }
 
 void DX12IndexBuffer::InitAsIndexBuffer(
-	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize, const void* inBufferData,
 	D3D12_RESOURCE_FLAGS inFlags/* = D3D12_RESOURCE_FLAG_NONE*/)
 {
-	DX12Resource::InitAsResource(inDevice, inCommandList, inBufferSize, inBufferData, inFlags);
+	DX12Resource::InitAsResource(inCommandList, inBufferSize, inBufferData, inFlags);
 
 	m_IndexBufferView.BufferLocation	= m_Resource->GetGPUVirtualAddress();
 	m_IndexBufferView.Format			= DXGI_FORMAT_R16_UINT;
@@ -141,15 +137,13 @@ void DX12IndexBuffer::SetIndexBuffer(ID3D12GraphicsCommandList2* inCommandList) 
 	inCommandList->IASetIndexBuffer(&m_IndexBufferView);
 }
 
-void DX12ConstantBuffer::InitAsConstantBuffer(
-	DX12Device& inDevice,
-	size_t inBufferSize)
+void DX12ConstantBuffer::InitAsConstantBuffer(size_t inBufferSize)
 {
 	D3D12_HEAP_PROPERTIES	heap_properties	= CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Buffer(inBufferSize);
 
 	// These will remain in upload heap because we use them only once per frame
-	ThrowIfFailed(inDevice.GetD3DDevice()->CreateCommittedResource(
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -161,12 +155,10 @@ void DX12ConstantBuffer::InitAsConstantBuffer(
 }
 
 void DX12ConstantBuffer::UpdateBufferResource(
-	DX12Device& inDevice,
 	ID3D12GraphicsCommandList2* inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
 	// TODO: Ignore unused arguments
-	(void) inDevice;
 	(void) inCommandList;
 
 	// Perform Map/Unmap with the new data

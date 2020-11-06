@@ -1,13 +1,14 @@
 #include "Engine.h"
 #include "ShaderObject.h"
 
+#include "DX12/DX12Device.h"
 #include "Shaders/Include/Shaders.h"
 
-ShaderObject::ShaderObject(DX12Device& inDevice, RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode) :
+ShaderObject::ShaderObject(RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode) :
 	m_RenderPass(inRenderPass)
 {
-	CreateRootSignature(inDevice);
-	CreatePSO(inDevice, inVSBytecode, inPSBytecode);
+	CreateRootSignature();
+	CreatePSO(inVSBytecode, inPSBytecode);
 }
 
 ShaderObject::~ShaderObject()
@@ -23,11 +24,9 @@ void ShaderObject::Set(ID3D12GraphicsCommandList2* inCommandList) const
 	inCommandList->SetPipelineState(m_PipelineState);
 }
 
-void ShaderObject::CreatePSO(DX12Device& inDevice, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode)
+void ShaderObject::CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode)
 {
 	Assert(m_RootSignature != nullptr);
-
-	auto* dx12_device	= inDevice.GetD3DDevice();
 
 	// TODO: Create this from the Shader instead
 	// Create the vertex input layout
@@ -52,18 +51,17 @@ void ShaderObject::CreatePSO(DX12Device& inDevice, const D3D12_SHADER_BYTECODE i
 
 	RenderPassDesc::SetupRenderPassDesc(m_RenderPass, pso_desc);
 
-	ThrowIfFailed(dx12_device->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
 }
 
-void ShaderObject::CreateRootSignature(DX12Device& inDevice)
+void ShaderObject::CreateRootSignature()
 {
 	// TODO: Root signatures should be associated with the shader or shader bindings instead!
-	auto* dx12_device	= inDevice.GetD3DDevice();
 
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
 	feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	if (FAILED(dx12_device->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
+	if (FAILED(g_RenderingDevice.GetD3DDevice()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
 	{
 		feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
@@ -97,6 +95,6 @@ void ShaderObject::CreateRootSignature(DX12Device& inDevice)
 														feature_data.HighestVersion, &root_signature_blob, &error_blob));
 
 	// Create the root signature.
-	ThrowIfFailed(dx12_device->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-												   root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
+																		root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
 }

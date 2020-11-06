@@ -3,8 +3,6 @@
 #include "DX12/DX12Includes.h"
 #include <chrono>
 
-class DX12Device;
-
 class DX12Fence
 {
 protected:
@@ -13,7 +11,7 @@ protected:
 	HANDLE			m_FenceEvent;
 
 public:
-	DX12Fence(DX12Device& inDevice);
+	DX12Fence();
 	virtual ~DX12Fence();
 
 	uint64 Signal(ID3D12CommandQueue* inCommandQueue);

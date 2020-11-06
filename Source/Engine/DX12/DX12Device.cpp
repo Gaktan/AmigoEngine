@@ -4,8 +4,12 @@
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12DescriptorHeap.h"
 
+DX12Device g_RenderingDevice;
+
 DX12Device::DX12Device()
 {
+	// Make sure we don't use multiple DX12Devices!
+	Assert(!g_RenderingDevice.IsInitialized());
 }
 
 DX12Device::~DX12Device()
@@ -31,10 +35,15 @@ DX12Device::~DX12Device()
 #endif
 
 	m_D3DDevice->Release();
+
+	m_IsInitialized = false;
 }
 
 void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 {
+	// Make sure we don't use multiple DX12Devices or init the same device twice
+	Assert(!g_RenderingDevice.IsInitialized() && !m_IsInitialized);
+
 	EnableDebugLayer();
 	EnableGPUBasedValidation();
 
@@ -44,16 +53,18 @@ void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
 		dxgi_adapter4->Release();
 	}
 
-	m_RTVDescriptorHeap		= new DX12FreeListDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2048);
-	m_DSVDescriptorHeap		= new DX12FreeListDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024);
+	m_RTVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2048);
+	m_DSVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024);
 	// TODO: Making this shader visible for now because it's easier to handle and we don't need to copy descriptors
-	m_SRVDescriptorHeap		= new DX12FreeListDescriptorHeap(*this, D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1024, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
+	m_SRVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 1024, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 
-	m_DirectCommandQueue	= new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_ComputeCommandQueue	= new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COMPUTE);
-	m_CopyCommandQueue		= new DX12CommandQueue(*this, D3D12_COMMAND_LIST_TYPE_COPY);
+	m_DirectCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_ComputeCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_CopyCommandQueue		= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
 
-	m_SwapChain = new DX12SwapChain(*this, inWindowHandle, *m_DirectCommandQueue, inWidth, inHeight);
+	m_SwapChain = new DX12SwapChain(inWindowHandle, *m_DirectCommandQueue, inWidth, inHeight);
+
+	m_IsInitialized = true;
 }
 
 void DX12Device::Flush()
@@ -190,16 +201,6 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 	dxgi_factory->Release();
 
 	return dxgi_adapter4;
-}
-
-ID3D12Device2* DX12Device::GetD3DDevice() const
-{
-	return m_D3DDevice;
-}
-
-DX12SwapChain* DX12Device::GetSwapChain() const
-{
-	return m_SwapChain;
 }
 
 DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
