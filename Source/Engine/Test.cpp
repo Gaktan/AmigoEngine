@@ -84,8 +84,8 @@ bool LoadContent(uint32 inWidth, uint32 inHeight)
 
 	// Create shader objects
 	{
-		m_AllShaderObjects["OpaqueGeometry"]	= new ShaderObject(RenderPass::OpaqueGeometry, InlineShaders::VertexShader, InlineShaders::PixelShader);
-		m_AllShaderObjects["Transparent"]		= new ShaderObject(RenderPass::Transparent, InlineShaders::VertexShader, InlineShaders::TransparentShader);
+		m_AllShaderObjects["OpaqueGeometry"]	= new ShaderObject(RenderPass::OpaqueGeometry, InlineShaders::DefaultVS, InlineShaders::DefaultPS);
+		m_AllShaderObjects["Transparent"]		= new ShaderObject(RenderPass::Transparent, InlineShaders::DefaultVS, InlineShaders::TransparentShader);
 	}
 
 	DrawUtils::Init(command_list);

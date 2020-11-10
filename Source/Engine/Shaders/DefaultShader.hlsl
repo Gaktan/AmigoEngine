@@ -1,4 +1,5 @@
-// ShaderCompiler. Name: VertexShader, Type: VS
+// ShaderCompiler. Name: DefaultPS, Type: PS, EntryPoint: MainPS
+// ShaderCompiler. Name: DefaultVS, Type: VS, EntryPoint: MainVS
 
 struct ModelViewProjection
 {
@@ -30,16 +31,25 @@ struct VertexShaderOutput
     float4 Position : SV_Position;
 };
 
-VertexShaderOutput main(VertexPosUVNormal IN)
+VertexShaderOutput MainVS(VertexPosUVNormal IN)
 {
 	VertexShaderOutput OUT;
 
-	float4x4 mvp_matrix = ModelViewProjectionCB.Projection * ModelViewProjectionCB.View * ModelViewProjectionCB.Model;
-	float4 res = mul(ModelViewProjectionCB.Projection, mul(ModelViewProjectionCB.View, mul(ModelViewProjectionCB.Model, float4(IN.Position.xyz, 1.0f))));
-
-	OUT.Position	= mul(mvp_matrix, float4(IN.Position.xyz, 1.0f));
-	OUT.Position	= res;
+	OUT.Position	= mul(ModelViewProjectionCB.Projection, mul(ModelViewProjectionCB.View, mul(ModelViewProjectionCB.Model, float4(IN.Position.xyz, 1.0f))));
 	OUT.UV			= IN.UV.xy;
 
 	return OUT;
+}
+
+Texture2D<float4> SceneTexture : register(t0);
+SamplerState Sampler : register(s0);
+
+struct PixelShaderInput
+{
+	float2 UV : TEXCOORD;
+};
+
+float4 MainPS(PixelShaderInput IN) : SV_Target
+{
+    return SceneTexture.SampleLevel(Sampler, IN.UV, 0);
 }

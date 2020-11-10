@@ -53,39 +53,37 @@ namespace ShaderCompiler
 		}
 
 		// Processes all headers from a shader file and compiles every permutation
-		public void Compile(HeaderInfo header, ShaderFile shaderFile)
+		public void Compile(HeaderInfo inHeader, ShaderFile ioShaderFile)
 		{
-			Console.WriteLine("HEADER:\t\t" + header.DebugPrint());
+			Console.WriteLine("HEADER:\t\t" + inHeader.DebugPrint());
 
 			// Shader code as header file or binary file
-			bool headerFile			= true;
-			string exportOption		= headerFile ? "Fh" : "Fo";
-			string outputExtension	= headerFile ? Config.GeneratedHeaderExtension : ".bin";
-			string variableName		= headerFile ? CreateCommand("Vn", "g_" + header.Name) : "";
+			// TODO: Only header files for now
+			bool header_file			= true;
+			string export_option		= header_file ? "Fh" : "Fo";
 
-			string shaderName		= shaderFile.GetFileName() + "_" + header.Name + "_" + EnumUtils.ToDescription(header.Type);
-			string shaderOutputFile	= Config.GeneratedFolderPath + shaderName + outputExtension;
-
-			string inputFile		= shaderFile.FullPath;
-			string outputFile		= CreateCommand(exportOption, shaderOutputFile);
-			string entryPoint		= CreateCommand("E", header.EntryPoint);
-			string profile			= CreateCommand("T", EnumUtils.ToDescription(header.Type).ToLower() + "_" + EnumUtils.ToDescription(Config.ShaderModel));
-			string optimization		= CreateCommand("Od");
-			string debugInfo		= Config.EnableDebugInformation ? CreateCommand("Zi") : "";
-			string defines			= GenerateDefines(header, Config.ShaderModel);
-			string nologo			= CreateCommand("nologo");
+			string cmd_input_file		= ioShaderFile.FullPath;
+			string cmd_output_file		= CreateCommand(export_option, inHeader.GetGeneratedFileName(ioShaderFile));
+			string cmd_variable_name	= header_file ? CreateCommand("Vn", "g_" + inHeader.Name) : "";
+			string cmd_entry_point		= CreateCommand("E", inHeader.EntryPoint);
+			string cmd_profile			= CreateCommand("T", EnumUtils.ToDescription(inHeader.Type).ToLower() + "_" + EnumUtils.ToDescription(Config.ShaderModel));
+			string cmd_optimization		= CreateCommand("Od");
+			string cmd_debug_info		= Config.EnableDebugInformation ? CreateCommand("Zi") : "";
+			string cmd_defines			= GenerateDefines(inHeader, Config.ShaderModel);
+			string cmd_nologo			= CreateCommand("nologo");
 
 			// Don't output to file in Test. This should just output the shader code in the console
 			if (Arguments.Operation == Arguments.OperationType.Test)
 			{
-				variableName = "";
-				outputFile = "";
+				cmd_variable_name = "";
+				cmd_output_file = "";
 			}
 
-			string args = CombineCommands(inputFile, outputFile, entryPoint, profile, optimization, debugInfo, variableName, defines, nologo);
+			string args = CombineCommands(cmd_input_file, cmd_output_file, cmd_variable_name, cmd_entry_point, cmd_profile,
+				cmd_optimization, cmd_debug_info, cmd_defines, cmd_nologo);
 
-			string compilerExe = GetCompilerPath();
-			Process process = Process.Start(compilerExe);
+			string compiler_exe = GetCompilerPath();
+			Process process = Process.Start(compiler_exe);
 			process.StartInfo.RedirectStandardOutput	= true;
 			process.StartInfo.RedirectStandardError		= true;
 			process.StartInfo.UseShellExecute			= false;
@@ -100,11 +98,11 @@ namespace ShaderCompiler
 
 			process.WaitForExit();
 
-			shaderFile.DidCompile = (process.ExitCode == 0);
+			ioShaderFile.DidCompile = (process.ExitCode == 0);
 
-			if (!shaderFile.DidCompile)
+			if (!ioShaderFile.DidCompile)
 			{
-				string errorMessage = process.StandardError.ReadToEnd() + "Failed with commandline:\n" + compilerExe + " " + args + "\n\n";
+				string errorMessage = process.StandardError.ReadToEnd() + "Failed with commandline:\n" + compiler_exe + " " + args + "\n\n";
 				throw new Exception(errorMessage);
 				//throw new Exception(process.StandardOutput.ReadToEnd());
 			}

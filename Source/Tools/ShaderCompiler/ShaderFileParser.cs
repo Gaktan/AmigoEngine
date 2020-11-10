@@ -22,25 +22,19 @@ namespace ShaderCompiler
 
 			// Compile
 			if (inShaderFile.ShouldCompile)
-			{
 				ShaderCompiler.Compile(inShaderFile);
-			}
 		}
 
 		public void ProcessFiles()
 		{
 			foreach (ShaderFile shaderFile in ShaderFiles)
-			{
 				ProcessSingleFile(shaderFile);
-			}
 
 			// Find if it has any duplicates
 			bool duplicates = Structs.GroupBy(n => n).Any(c => c.Count() > 1);
 
 			if (duplicates)
-			{
 				throw new Exception("Multiple structs have the same Name. Probably shouldn't allow it.");
-			}
 
 			//DebugPrint();
 		}

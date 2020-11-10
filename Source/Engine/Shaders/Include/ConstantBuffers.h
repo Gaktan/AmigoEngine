@@ -16,6 +16,13 @@ using Vec3 = float[3];
 namespace ConstantBuffers
 {
 // BeginConstantBuffer
+struct ModelViewProjection
+{
+	Mat4 Model;
+	Mat4 View;
+	Mat4 Projection;
+};
+
 struct X1234
 {
 	float x1;
@@ -38,13 +45,6 @@ struct MultipleArrays
 struct InsideStruct
 {
 	X1234 X;
-};
-
-struct ModelViewProjection
-{
-	Mat4 Model;
-	Mat4 View;
-	Mat4 Projection;
 };
 // EndConstantBuffer
 }

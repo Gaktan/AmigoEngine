@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.Serialization;
 using System.Runtime.Serialization.Formatters.Binary;
+using System.Text.RegularExpressions;
 
 namespace ShaderCompiler
 {
@@ -18,6 +19,14 @@ namespace ShaderCompiler
 		public string		FullPath;
 		// TODO: Deal with dependencies (includes). Will require a deep read of the file.
 		//public List<ShaderFile> Dependencies = null;
+
+		// List all generated files so we can check if we should recompile them if they are missing. Or delete them if the shader file was deleted.
+		public List<string>		GeneratedFiles;
+
+		// All headers defined in the Shader
+		[NonSerialized]
+		public List<HeaderInfo> Headers;
+
 		public UInt32		FilenameHash;
 		public DateTime		ModifiedTime;
 		public bool			DidCompile;
@@ -25,6 +34,43 @@ namespace ShaderCompiler
 		public string GetFileName()
 		{
 			return Path.GetFileNameWithoutExtension(FullPath);
+		}
+
+		// Parses the whole file and finds "// ShaderCompiler." headers
+		public void CreateHeaders()
+		{
+			// Example of a shader header:
+			// "// ShaderCompiler. Name: Test_01, EntryPoint: main, Type: PS, Defines: DEFINE1; DEFINE2 = 0"
+
+			// Captures any line that starts with "// ShaderCompiler." and puts the content of the header in Group1
+			string HeaderRegex = @"//\s*ShaderCompiler\.(.*)";
+
+			Headers = new List<HeaderInfo>();
+
+			// For each line
+			using (StringReader reader = new StringReader(Content))
+			{
+				string line;
+				int lineNum = 1;
+				while ((line = reader.ReadLine()) != null)
+				{
+					Match headerMatch = Regex.Match(line, HeaderRegex, RegexOptions.IgnoreCase);
+					if (headerMatch.Success)
+					{
+						try
+						{
+							string str = headerMatch.Groups[1].ToString();
+							Headers.Add(HeaderInfo.FromString(str));
+						}
+						catch (MissingHeaderTagException e)
+						{
+							throw new Exception("Missing tag \"" + e.TagMissing + "\" in header. " + FullPath + "(" + lineNum + ")");
+						}
+					}
+
+					lineNum++;
+				}
+			}
 		}
 	}
 
@@ -46,18 +92,26 @@ namespace ShaderCompiler
 
 				ShaderFile shaderFile = new ShaderFile
 				{
-					Content         = file_content,
-					ShouldCompile   = true,
-					FullPath        = inFullPathToFile,
-					FilenameHash    = hash,
-					ModifiedTime    = modified_time,
-					DidCompile      = true
+					Content			= file_content,
+					ShouldCompile	= true,
+					FullPath		= inFullPathToFile,
+					FilenameHash	= hash,
+					ModifiedTime	= modified_time,
+					DidCompile		= true
 				};
 
-				if (CurrentResult.ContainsKey(hash))
+				// Find all headers in files
+				shaderFile.CreateHeaders();
+
+				// Find generated file names in advance
+				shaderFile.GeneratedFiles = new List<string>();
+				foreach (HeaderInfo header in shaderFile.Headers)
 				{
-					throw new Exception("Same file shouldn't be processed twice");
+					shaderFile.GeneratedFiles.Add(header.GetGeneratedFileName(shaderFile));
 				}
+
+				if (CurrentResult.ContainsKey(hash))
+					throw new Exception("Same file shouldn't be processed twice");
 
 				CurrentResult[hash] = shaderFile;
 			}
@@ -127,10 +181,27 @@ namespace ShaderCompiler
 			return inDictionary.TryGetValue(inKey, out TValue value) ? value : inDefaultValue;
 		}
 
-		static bool MarkShaderFilesThatNeedToCompile()
+		static void ProcessDeletedShaderFile(ShaderFile inShaderFile)
 		{
-			bool any_file_need_compile = false;
-			// Process existing files
+			string full_path = Config.GeneratedFolderPath;
+			// Delete obsolete generated H files
+			foreach (string filename in inShaderFile.GeneratedFiles)
+			{
+				// Don't process non shader compiled files
+				if (!filename.EndsWith(Config.GeneratedHeaderExtension))
+					throw new Exception("New generated files? Make sure they are handled properly");
+
+				File.Delete(Path.Combine(full_path, filename));
+			}
+		}
+
+		// Go through all previous elements in the DB to detect ShaderFiles that were deleted, added, or modified
+		// Returns true if the previous DB doesn't match the current DB
+		static bool UpdateDadaBase()
+		{
+			bool db_changed = false;
+
+			// Process previous files in DB. Could still exist, or be deleted
 			foreach (KeyValuePair<UInt32, ShaderFile> pair in PreviousResult)
 			{
 				ShaderFile previous_file	= pair.Value;
@@ -140,12 +211,28 @@ namespace ShaderCompiler
 				if (current_file != null)
 				{
 					// Retry shaders that didn't compile last time
-					bool should_compile = previous_file.DidCompile == false;
+					bool file_changed = previous_file.DidCompile == false;
 					// Retry Shaders that were modified
-					should_compile |= (current_file.ModifiedTime > previous_file.ModifiedTime);
+					file_changed |= (current_file.ModifiedTime > previous_file.ModifiedTime);
 
-					current_file.ShouldCompile = should_compile;
-					any_file_need_compile |= should_compile;
+					// Check if generated files are still here. If not, we need to recompile this shader
+					foreach (string filename in previous_file.GeneratedFiles)
+					{
+						if (!File.Exists(filename))
+						{
+							file_changed = true;
+							break;
+						}
+					}
+
+					current_file.ShouldCompile = file_changed;
+					db_changed |= file_changed;
+				}
+				// File was deleted
+				else
+				{
+					ProcessDeletedShaderFile(previous_file);
+					db_changed = true;
 				}
 			}
 
@@ -159,20 +246,18 @@ namespace ShaderCompiler
 				if (previous_file == null)
 				{
 					current_file.ShouldCompile	= true;
-					any_file_need_compile = true;
+					db_changed = true;
 				}
 			}
 
-			return any_file_need_compile;
+			return db_changed;
 		}
 
 		private static void CreateGeneratedFolder()
 		{
 			// DXC doesn't create directories automatically, so we need to do it manually.
 			if (!Directory.Exists(Config.GeneratedFolderPath))
-			{
 				Directory.CreateDirectory(Config.GeneratedFolderPath);
-			}
 		}
 
 		public static void Build()
@@ -185,11 +270,9 @@ namespace ShaderCompiler
 			// Go through all the files and create Shaderfiles
 			ProcessFolder(Config.ShaderSourcePath);
 
-			// Tag all shaders that need to recompile
-			bool any_file_need_compile = MarkShaderFilesThatNeedToCompile();
-
-			// Don't process anything if all files are up to date
-			if (any_file_need_compile)
+			// Tag all shaders that need to recompile and check if the DB was changed compared to the previous build
+			bool db_changed = UpdateDadaBase();
+			if (db_changed)
 			{
 				ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
 				fileParser.ProcessFiles();
@@ -199,8 +282,6 @@ namespace ShaderCompiler
 
 				// Generate \Shaders\include\ConstantBuffers.h
 				ShaderCompiler.GenerateConstantBufferHFile(fileParser.Structs);
-
-				// TODO: Delete generated files from shader files that were deleted
 
 				// Update DB by overwritting it
 				WriteDataBase();
@@ -234,14 +315,11 @@ namespace ShaderCompiler
 		{
 			// The DB is in the generated folder but delete it just in case
 			if (File.Exists(Config.DatabasePath))
-			{
 				File.Delete(Config.DatabasePath);
-			}
 
+			
 			if (Directory.Exists(Config.GeneratedFolderPath))
-			{
-				Directory.Delete(Config.GeneratedFolderPath, true);
-			}
+				Directory.Delete(Config.GeneratedFolderPath, recursive: true);
 		}
 
 		public static void StartProcessing(string rootFolder)
@@ -249,18 +327,12 @@ namespace ShaderCompiler
 			CurrentResult = new Dictionary<UInt32, ShaderFile>();
 
 			if (Arguments.IsClean())
-			{
 				Clean();
-			}
 
 			if (Arguments.IsBuild())
-			{
 				Build();
-			}
 			else if (Arguments.Operation == Arguments.OperationType.Test)
-			{
 				BuildForTest();
-			}
 		}
 	}
 }
