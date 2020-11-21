@@ -10,10 +10,6 @@ class DX12FreeListDescriptorHeap;
 class DX12Device
 {
 protected:
-	// Use WARP adapter
-	bool					m_UseWarp		= false;
-	bool					m_IsInitialized	= false;
-
 	// Command queues
 	DX12CommandQueue*		m_DirectCommandQueue;
 	DX12CommandQueue*		m_ComputeCommandQueue;
@@ -24,8 +20,13 @@ protected:
 	DX12FreeListDescriptorHeap*		m_DSVDescriptorHeap;
 	DX12FreeListDescriptorHeap*		m_SRVDescriptorHeap;
 
-	DX12SwapChain*			m_SwapChain;
 	ID3D12Device2*			m_D3DDevice;
+	DX12SwapChain*			m_SwapChain;
+
+	uint64					m_FrameID		= 0;
+
+	bool					m_UseWarp		= false;
+	bool					m_IsInitialized	= false;
 
 public:
 	DX12Device();
@@ -39,6 +40,7 @@ public:
 
 	ID3D12Device2*		GetD3DDevice() const		{ return m_D3DDevice; }
 	DX12SwapChain*		GetSwapChain() const		{ return m_SwapChain; }
+	uint64				GetFrameID() const			{ return m_FrameID; }
 	bool				IsInitialized() const		{ return m_IsInitialized; }
 
 protected:

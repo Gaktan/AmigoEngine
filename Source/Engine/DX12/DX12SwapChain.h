@@ -1,7 +1,5 @@
 #pragma once
 
-constexpr uint32 NUM_BUFFERED_FRAMES = 3;
-
 #include "DX12/DX12Includes.h"
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12RenderTarget.h"
@@ -9,6 +7,11 @@ constexpr uint32 NUM_BUFFERED_FRAMES = 3;
 class DX12SwapChain
 {
 protected:
+	enum
+	{
+		NUM_BUFFERED_FRAMES = 3
+	};
+
 	IDXGISwapChain4*		m_D3DSwapChain;
 
 	DX12RenderTarget*		m_BackBuffers[NUM_BUFFERED_FRAMES];
@@ -28,6 +31,4 @@ public:
 	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
 
 	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList);
-
-	uint32 GetCurrentBackBufferIndex();
 };

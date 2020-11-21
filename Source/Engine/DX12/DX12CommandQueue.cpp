@@ -81,8 +81,7 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(ID3D12CommandAll
 
 ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList()
 {
-	// TODO: Store frame index elsewhere
-	m_CurrentIndex = g_RenderingDevice.GetSwapChain()->GetCurrentBackBufferIndex();
+	m_CurrentIndex = g_RenderingDevice.GetFrameID() % NUM_BUFFERED_FRAMES;
 
 	// No need for fences, a commandlist from 3 frames ago should already have been processed by the GPU
 	auto& entry = m_CommandListEntries[m_CurrentIndex];

@@ -3,6 +3,12 @@
 
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12DescriptorHeap.h"
+#include "DX12/DX12SwapChain.h"
+
+#if defined(_DEBUG)
+#define USE_DEBUG_LAYER
+#define USE_GPU_VALIDATION
+#endif
 
 DX12Device g_RenderingDevice;
 
@@ -24,7 +30,7 @@ DX12Device::~DX12Device()
 	delete m_DSVDescriptorHeap;
 	delete m_SRVDescriptorHeap;
 
-#if defined(_DEBUG)
+#if defined(USE_DEBUG_LAYER)
 	ID3D12DebugDevice* debug_device = nullptr;
 	ThrowIfFailed(m_D3DDevice->QueryInterface(IID_PPV_ARGS(&debug_device)));
 
@@ -76,6 +82,8 @@ void DX12Device::Flush()
 void DX12Device::Present(ID3D12GraphicsCommandList2* inCommandList)
 {
 	m_SwapChain->Present(inCommandList, m_DirectCommandQueue);
+
+	m_FrameID++;
 }
 
 ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
@@ -84,7 +92,7 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
 	ThrowIfFailed(D3D12CreateDevice(inAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12_device2)));
 
 	// Enable debug messages in debug mode.
-#if defined(_DEBUG)
+#if defined(USE_DEBUG_LAYER)
 	ID3D12InfoQueue* info_queue;
 	if (SUCCEEDED(d3d12_device2->QueryInterface(IID_PPV_ARGS(&info_queue))))
 	{
@@ -128,7 +136,7 @@ ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
 
 void DX12Device::EnableGPUBasedValidation()
 {
-#if defined(_DEBUG)
+#if defined(USE_GPU_VALIDATION)
 	ID3D12Debug*	debug_controller0 = nullptr;
 	ID3D12Debug1*	debug_controller1 = nullptr;
 	ThrowIfFailed(D3D12GetDebugInterface(IID_PPV_ARGS(&debug_controller0)));
@@ -142,7 +150,7 @@ void DX12Device::EnableGPUBasedValidation()
 
 void DX12Device::EnableDebugLayer()
 {
-#if defined(_DEBUG)
+#if defined(USE_DEBUG_LAYER)
 	// Always enable the debug layer before doing anything DX12 related
 	// so all possible errors generated while creating DX12 objects
 	// are caught by the debug layer.
@@ -158,7 +166,7 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 {
 	IDXGIFactory4* dxgi_factory = nullptr;
 	UINT create_factory_flags = 0;
-#if defined(_DEBUG)
+#if defined(USE_DEBUG_LAYER)
 	create_factory_flags = DXGI_CREATE_FACTORY_DEBUG;
 #endif
 

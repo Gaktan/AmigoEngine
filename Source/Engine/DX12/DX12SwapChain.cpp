@@ -71,8 +71,7 @@ DX12SwapChain::DX12SwapChain(HWND inHandle, const DX12CommandQueue& inCommandQue
 		nullptr,
 		&swap_chain1));
 
-	// Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen
-	// will be handled manually.
+	// Disable the Alt+Enter fullscreen toggle feature. Switching to fullscreen. Will be handled manually
 	ThrowIfFailed(dxgi_factory4->MakeWindowAssociation(inHandle, DXGI_MWA_NO_ALT_ENTER));
 
 	ThrowIfFailed(swap_chain1->QueryInterface(IID_PPV_ARGS(&m_D3DSwapChain)));
@@ -147,6 +146,9 @@ void DX12SwapChain::ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) c
 
 void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12CommandQueue* inCommandQueue)
 {
+	// Make sure the device frame ID is in sync with our backbuffer index
+	Assert(g_RenderingDevice.GetFrameID() % NUM_BUFFERED_FRAMES == m_CurrentBackBufferIndex);
+
 	auto back_buffer = m_BackBuffers[m_CurrentBackBufferIndex];
 
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(back_buffer->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
@@ -176,9 +178,4 @@ void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList)
 
 	inCommandList->RSSetViewports(1, &viewport);
 	inCommandList->RSSetScissorRects(1, &scissor_rect);
-}
-
-uint32 DX12SwapChain::GetCurrentBackBufferIndex()
-{
-	return m_CurrentBackBufferIndex;
 }

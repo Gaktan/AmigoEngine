@@ -40,7 +40,7 @@ public:
 class DX12FreeListDescriptorHeap : public DX12DescriptorHeap
 {
 protected:
-	std::vector<int> m_FreeIndices;
+	std::vector<uint32> m_FreeIndices;
 
 public:
 	DX12FreeListDescriptorHeap(

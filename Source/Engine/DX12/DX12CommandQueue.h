@@ -2,14 +2,18 @@
 
 #include "DX12/DX12DescriptorHeap.h"
 #include "DX12/DX12Fence.h"
-// For NUM_BUFFERED_FRAMES
-#include "DX12/DX12SwapChain.h"
 
 #include <queue>
 
 class DX12CommandQueue
 {
 protected:
+	enum
+	{
+		// Using 3 buffered frames to avoid waiting on fences when resetting allocators
+		NUM_BUFFERED_FRAMES = 3
+	};
+
 	D3D12_COMMAND_LIST_TYPE		m_CommandListType;
 	ID3D12CommandQueue*			m_D3DCommandQueue;
 

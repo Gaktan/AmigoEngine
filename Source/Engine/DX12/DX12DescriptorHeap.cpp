@@ -116,10 +116,14 @@ void DX12FreeListDescriptorHeap::Release(uint32 inIndex)
 {
 	Assert(inIndex < m_NumDescriptors);
 
-	// TODO: Might want to check that we don't release the same index twice?
+	std::lock_guard<std::mutex> lock(m_FreeIndexMutex);
+
+#ifdef _DEBUG
+	// Check that we don't release the same index twice
+	Assert(std::find(m_FreeIndices.begin(), m_FreeIndices.end(), inIndex) == m_FreeIndices.end());
+#endif
 
 	// Add to free list again
-	std::lock_guard<std::mutex> lock(m_FreeIndexMutex);
 	m_FreeIndices.push_back(inIndex);
 }
 

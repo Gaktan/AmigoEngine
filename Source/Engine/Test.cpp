@@ -11,11 +11,12 @@
 #include "Math/Vec4.h"
 #include "Math/Mat4.h"
 
+#include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12Device.h"
 #include "DX12/DX12DescriptorHeap.h"
-#include "DX12/DX12Resource.h"
 #include "DX12/DX12RenderTarget.h"
-#include "DX12/DX12CommandQueue.h"
+#include "DX12/DX12Resource.h"
+#include "DX12/DX12SwapChain.h"
 #include "DX12/DX12Texture.h"
 
 #include "Gfx/DrawableObject.h"

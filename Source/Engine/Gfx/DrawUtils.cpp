@@ -3,7 +3,10 @@
 
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12Device.h"
+#include "DX12/DX12RenderTarget.h"
+
 #include "Gfx/Mesh.h"
+
 #include "Shaders/Include/Shaders.h"
 
 Mesh					DrawUtils::s_FullScreenTriangle;
