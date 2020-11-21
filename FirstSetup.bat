@@ -1,8 +1,10 @@
 @echo off
 
-git submodule init
-git submodule update
-git submodule update --recursive --remote
+rem Get submodules at the current revision
+git submodule update --init --recursive
+
+rem Update submodules to the latest revision
+rem git submodule update --recursive --remote
 
 rem Compile DirectXTex
 cd External\DirectXTex\

@@ -1,5 +1,11 @@
 # AmigoEngine
 
+# Compiling
+
+1. Run FirstSetup.bat to first get and compile dependencies.
+2. Run GenerateProjects to generate VS projects and solutions.
+3. You are ready to compile
+
 # TODO List
 
 - Material system
