@@ -33,16 +33,9 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 			-1.0f, -3.0f, 0.0f, 1.0f,	0.0f, 2.0f, 0.0f, 0.0f,
 		};
 
-		// TODO: shouldn't need an index buffer for this, but this is required
-		uint16 index_data[] =
-		{
-			0, 1, 2
-		};
-
 		s_FullScreenTriangle.Init(inCommandList,
 								  D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-								  &vertex_data[0], 3 * sizeof(VertexPosUV), sizeof(VertexPosUV),
-								  &index_data[0], 3 * sizeof(uint16));
+								  &vertex_data[0], 3 * sizeof(VertexPosUV), sizeof(VertexPosUV));
 	}
 
 	// Setup shaders
@@ -224,7 +217,7 @@ void DrawUtils::DrawFullScreenTriangle(ID3D12GraphicsCommandList2* inCommandList
 
 	SetupBindings(inCommandList, render_target);
 
-	inCommandList->DrawIndexedInstanced(3, 1, 0, 0, 0);
+	inCommandList->DrawInstanced(3, 1, 0, 0);
 
 	// Transition from back to Render target
 	{
