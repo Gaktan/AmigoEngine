@@ -35,8 +35,8 @@ class AmigoEngine : Project
 	{
 		conf.ProjectPath		= @"[project.RootPath]\Projects\[project.Name]\";
 		conf.ProjectFileName	= @"[project.Name].[target.DevEnv].[target.Platform]";
-		conf.IntermediatePath	= @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]";
-		conf.TargetPath			= @"[project.RootPath]\Output\[target.Platform]";
+		conf.IntermediatePath	= @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]\[target.Optimization]";
+		conf.TargetPath			= @"[project.RootPath]\Output\[target.Platform][target.Optimization]";
 
 		conf.IncludePaths.Add(@"[project.SourceRootPath]\");
 

@@ -31,7 +31,7 @@ class ShaderCompiler : CSharpProject
 	{
 		conf.ProjectPath = @"[project.RootPath]\Projects\Tools\";
 		conf.ProjectFileName = @"[project.Name]";
-		conf.IntermediatePath = @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]\[project.Name]";
+		conf.IntermediatePath = @"[project.RootPath]\Output\Temp\[target.DevEnv]\[target.Platform]\[target.Optimization]\[project.Name]";
 		conf.TargetPath = @"[project.RootPath]\Tools\[project.Name]";
 
 		conf.Options.Add(Sharpmake.Options.CSharp.TreatWarningsAsErrors.Enabled);
