@@ -55,7 +55,7 @@ namespace ShaderCompiler
 		// Processes all headers from a shader file and compiles every permutation
 		public void Compile(HeaderInfo inHeader, ShaderFile ioShaderFile)
 		{
-			Console.WriteLine("HEADER:\t\t" + inHeader.DebugPrint());
+			Console.WriteLine("HEADER:\t\t" + inHeader.GetDebugString());
 
 			// Shader code as header file or binary file
 			// TODO: Only header files for now

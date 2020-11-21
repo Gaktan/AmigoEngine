@@ -81,7 +81,7 @@ namespace ShaderCompiler
 		// Reads a single tag from a header and puts the result in Group1
 		private static readonly string HeaderTagRegex = @"\s*:\s*(.*?)\s*(,|$)";
 
-		public string DebugPrint()
+		public string GetDebugString()
 		{
 			string definesString = ", Defines:" + String.Join(", ", Defines.ToArray()) + ".";
 			return "Name: " + Name + ", EntryPoint: " + EntryPoint + ", Type: " + Type + (Defines.Count == 0 ? "." : definesString);
@@ -220,9 +220,10 @@ namespace ShaderCompiler
 		public static void GenerateConstantBufferHFile(List<Struct> inStructs)
 		{
 			StringBuilder constantBuffersBuilder = new StringBuilder();
+
 			foreach (Struct sr in inStructs)
 			{
-				string constant_buffer = sr.PrintAsConstantBuffer();
+				string constant_buffer = sr.GetConstantBufferString();
 				if (constant_buffer != null)
 					constantBuffersBuilder.AppendLine(constant_buffer);
 			}

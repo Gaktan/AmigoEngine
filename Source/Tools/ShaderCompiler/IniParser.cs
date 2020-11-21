@@ -40,9 +40,7 @@ namespace ShaderCompiler
 			if (Config.Compiler == Compiler.FXC)
 			{
 				if (Config.ShaderModel > ShaderModel._5_1)
-				{
 					return Throw("FXC doesn't support shader model beyond 5.1", throws);
-				}
 			}
 
 			return true;

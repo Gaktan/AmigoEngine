@@ -55,23 +55,24 @@ namespace ShaderCompiler
 		{
 			int current_pos = 0;
 			// Find interpolator, if any
-			Regex interpolReg = new Regex(InterpolationRegex, RegexOptions.None);
-			Interpolation = interpolReg.Match(shaderCode, current_pos).ToString();
-			if (Interpolation.Length > 0)
+			Regex interpolation_reg = new Regex(InterpolationRegex, RegexOptions.None);
+			Match interpolation_match = interpolation_reg.Match(shaderCode, current_pos);
+			if (interpolation_match.Success)
 			{
-				current_pos += Interpolation.Length;
+				Interpolation = interpolation_match.ToString();
+				current_pos += interpolation_match.Length;
 			}
 
 			// Find Type, Name, ArrayCount (if any)
-			Regex typeReg = new Regex(TypeNameRegex, RegexOptions.IgnoreCase);
-			Match typeMatch = typeReg.Match(shaderCode, current_pos);
-			if (typeMatch.Success)
+			Regex type_reg = new Regex(TypeNameRegex, RegexOptions.IgnoreCase);
+			Match type_match = type_reg.Match(shaderCode, current_pos);
+			if (type_match.Success)
 			{
-				BaseTypeName = typeMatch.Groups[1].ToString();
-				VariableName = typeMatch.Groups[2].ToString();
-				ArrayString = typeMatch.Groups[3].ToString();
+				BaseTypeName	= type_match.Groups[1].ToString();
+				VariableName	= type_match.Groups[2].ToString();
+				ArrayString		= type_match.Groups[3].ToString();
 
-				current_pos += typeMatch.Length;
+				current_pos += type_match.Length;
 			}
 			else
 			{
@@ -79,28 +80,25 @@ namespace ShaderCompiler
 			}
 
 			// Find NumCol and NumRows (if any)
-			Match decomposeMatch = Regex.Match(BaseTypeName, TypeNameDecompose, RegexOptions.None);
-			if (decomposeMatch.Success)
+			Match decompose_match = Regex.Match(BaseTypeName, TypeNameDecompose, RegexOptions.None);
+			if (decompose_match.Success)
 			{
 				// Decompose TypeName into Group 1: (BaseTypeName), Group 2: (NumCol), Group 4: (NumRows)
-				BaseTypeName = decomposeMatch.Groups[1].ToString();
-				if(!int.TryParse(decomposeMatch.Groups[2].ToString(), out NumCol))
-				{
+				BaseTypeName = decompose_match.Groups[1].ToString();
+				if (!int.TryParse(decompose_match.Groups[2].ToString(), out NumCol))
 					NumCol = 1;
-				}
-				if (!int.TryParse(decomposeMatch.Groups[4].ToString(), out NumRows))
-				{
+
+				if (!int.TryParse(decompose_match.Groups[4].ToString(), out NumRows))
 					NumRows = 1;
-				}
 			}
 
 			// Find Semantic, if any
-			Regex semanticReg = new Regex(SemanticRegex, RegexOptions.IgnoreCase);
-			Match semanticMatch = semanticReg.Match(shaderCode, current_pos);
-			if (semanticMatch.Success)
+			Regex semantic_reg = new Regex(SemanticRegex, RegexOptions.IgnoreCase);
+			Match semantic_match = semantic_reg.Match(shaderCode, current_pos);
+			if (semantic_match.Success)
 			{
 				// Get the result from Group1 directly
-				Semantic = semanticMatch.Groups[1].ToString();
+				Semantic = semantic_match.Groups[1].ToString();
 			}
 		}
 	}
@@ -123,9 +121,7 @@ namespace ShaderCompiler
 		public void AddStructElement(string shaderCode)
 		{
 			if (shaderCode.Length > 0)
-			{
 				Elements.Add(new StructElement(shaderCode));
-			}
 		}
 
 		public void DetectStructType()
@@ -146,9 +142,7 @@ namespace ShaderCompiler
 		public override bool Equals(object obj)
 		{
 			if (obj is Struct s)
-			{
 				return Name.Equals(s.Name);
-			}
 
 			return false;
 		}
@@ -161,26 +155,20 @@ namespace ShaderCompiler
 		public void DebugPrint()
 		{
 			if (IsConstantBuffer)
-			{
-				Console.Write(PrintAsConstantBuffer());
-			}
+				Console.Write(GetConstantBufferString());
 			else
-			{
-				Console.Write(PrintAsVertexLayout());
-			}
+				Console.Write(GetVertexLayoutString());
 		}
 
-		public string PrintAsConstantBuffer()
+		public string GetConstantBufferString()
 		{
+			if (!IsConstantBuffer)
+				return null;
+
 			StringBuilder ret = new StringBuilder("struct " + Name + Environment.NewLine + "{");
 
 			foreach (StructElement se in Elements)
 			{
-				// If we have a semantic then, this is not an actual Constant Buffer
-				if (se.Semantic != null)
-				{
-					return null;
-				}
 				string engine_type = EngineConversionDX.StructElementToEngineType(se);
 
 				ret.AppendLine();
@@ -191,7 +179,7 @@ namespace ShaderCompiler
 			return ret.ToString();
 		}
 
-		public string PrintAsVertexLayout()
+		public string GetVertexLayoutString()
 		{
 			// Prints something like this:
 			/*
@@ -207,21 +195,21 @@ namespace ShaderCompiler
 			foreach (StructElement se in Elements)
 			{
 				// TODO: Lots of TODOs in here gee.
-				string  semanticName         = se.Semantic;
-				uint    semanticIndex        = 0;                                                // TODO: Change this depending on number of float4
-				string  format               = "DXGI_FORMAT_R32G32B32A32_FLOAT";                 // TODO: Change format depending on num of components and packing
-				uint    inputSlot            = 0;                                                // TODO: Change depending on the input slot (in case of de interleaved buffers)
-				string  alignedByteOffset    = "D3D12_APPEND_ALIGNED_ELEMENT";                   // TODO: Handle packing (if any).
-				string  inputSlotClass       = "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA";     // TODO: Handle per instance data?
-				uint    instanceDataStepRate = 0;            // Needs to be 0 with Per_Vertex data. TODO: Same as above
+				string  semantic_name			= se.Semantic;
+				uint    semantic_index			= 0;												// TODO: Change this depending on number of float4
+				string  format					= "DXGI_FORMAT_R32G32B32A32_FLOAT";					// TODO: Change format depending on num of components and packing
+				uint    input_slot				= 0;												// TODO: Change depending on the input slot (in case of de interleaved buffers)
+				string  aligned_byte_offset		= "D3D12_APPEND_ALIGNED_ELEMENT";					// TODO: Handle packing (if any).
+				string  input_slot_class		= "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA";		// TODO: Handle per instance data?
+				uint    instance_data_step_rate	= 0;			// Needs to be 0 with Per_Vertex data. TODO: Same as above
 
 				string line = string.Format("\"{0}\", {1}, {2}, {3}, {4}, {5}, {6}",
-											semanticName,
-											semanticIndex,
+											semantic_name,
+											semantic_index,
 											format,
-											inputSlot,
-											alignedByteOffset,
-											inputSlotClass, instanceDataStepRate);
+											input_slot,
+											aligned_byte_offset,
+											input_slot_class, instance_data_step_rate);
 
 				ret += "\t{ " + line + " },\n";
 			}
@@ -252,10 +240,7 @@ namespace ShaderCompiler
 
 				// For each element separated by a semi-colon ;
 				foreach (string e in content.Split(new[] { ";" }, StringSplitOptions.RemoveEmptyEntries))
-				{
 					s.AddStructElement(e.Trim());
-
-				}
 
 				// Flag if struct is a constant buffer or not
 				s.DetectStructType();

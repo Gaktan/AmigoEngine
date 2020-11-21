@@ -42,9 +42,7 @@ namespace ShaderCompiler
 		void DebugPrint()
 		{
 			foreach (Struct s in Structs)
-			{
 				s.DebugPrint();
-			}
 		}
 	}
 }
