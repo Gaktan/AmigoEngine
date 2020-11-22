@@ -4,13 +4,6 @@
 
 #include "Math/Vec4.h"
 
-struct VertexPosUVNormal
-{
-	Vec4 Position;
-	Vec4 UV;
-	Vec4 Normal;
-};
-
 class Mesh
 {
 protected:

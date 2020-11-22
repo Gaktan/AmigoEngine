@@ -2,6 +2,7 @@
 
 #include "Engine.h"
 #include "Math/Vec4.h"
+#include "Math/Mat4.h"
 
 // Dummy Vector types until we get them for real
 using Vec2 = float[2];
@@ -23,7 +24,7 @@ struct ModelViewProjection
 	Mat4 Projection;
 };
 
-struct X1234
+struct TestX1234
 {
 	float x1;
 	Vec2 x2;
@@ -31,20 +32,20 @@ struct X1234
 	Vec4 x4;
 };
 
-struct ModelViewProjection2
+struct TestModelViewProjection2
 {
 	Mat4 MVP;
 };
 
-struct MultipleArrays
+struct TestMultipleArrays
 {
 	int32 i3[1][2] [3]	[4 ] [ 6 ]	[SEVEN][3];
 	Mat4 x4[1] [2* SEVEN-1];
 };
 
-struct InsideStruct
+struct TestInsideStruct
 {
-	X1234 X;
+	TestX1234 X;
 };
 // EndConstantBuffer
 }

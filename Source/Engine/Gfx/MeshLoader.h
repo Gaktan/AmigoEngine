@@ -9,6 +9,9 @@
 #include "Gfx/Mesh.h"
 #include "Gfx/RenderPass.h"
 
+#include "Shaders/Include/VertexLayouts.h"
+using namespace VertexFormats;
+
 class ShaderObject;
 
 enum class OBJKeyword

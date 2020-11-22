@@ -37,7 +37,7 @@ namespace ShaderCompiler
 		}
 
 		// Parses the whole file and finds "// ShaderCompiler." headers
-		public void CreateHeaders()
+		public void ParseHeaders()
 		{
 			// Example of a shader header:
 			// "// ShaderCompiler. Name: Test_01, EntryPoint: main, Type: PS, Defines: DEFINE1; DEFINE2 = 0"
@@ -101,7 +101,7 @@ namespace ShaderCompiler
 				};
 
 				// Find all headers in files
-				shaderFile.CreateHeaders();
+				shaderFile.ParseHeaders();
 
 				// Find generated file names in advance
 				shaderFile.GeneratedFiles = new List<string>();
@@ -117,19 +117,23 @@ namespace ShaderCompiler
 			}
 		}
 
-		static void ProcessFolder(string folder)
+		static void ProcessFolder(string inFullPathToFolder)
 		{
-			List<string> dirs = new List<string>(Directory.EnumerateDirectories(folder));
-			foreach (string dir in dirs)
+			// Check that this folder is not ignored
+			if (Config.IgnoredFolders.Any(x => inFullPathToFolder.Equals(x)))
+				return;
+
+			// Look through all folders and subfloders for shader files
+			if (Config.RecursiveSearch)
 			{
-				ProcessFolder(dir);
+				List<string> dirs = new List<string>(Directory.EnumerateDirectories(inFullPathToFolder));
+				foreach (string dir in dirs)
+					ProcessFolder(dir);
 			}
 
-			List<string> files = new List<string>(Directory.EnumerateFiles(folder));
+			List<string> files = new List<string>(Directory.EnumerateFiles(inFullPathToFolder));
 			foreach (string file in files)
-			{
 				ProcessFile(file);
-			}
 		}
 
 		static void ReadDataBase()
@@ -282,6 +286,9 @@ namespace ShaderCompiler
 
 				// Generate \Shaders\include\ConstantBuffers.h
 				ShaderCompiler.GenerateConstantBufferHFile(fileParser.Structs);
+
+				// Generate \Shaders\include\VertexLayouts.h
+				ShaderCompiler.GenerateVertexLayoutHFile(fileParser.Structs);
 
 				// Update DB by overwritting it
 				WriteDataBase();

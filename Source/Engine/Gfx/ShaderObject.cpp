@@ -2,7 +2,9 @@
 #include "ShaderObject.h"
 
 #include "DX12/DX12Device.h"
+
 #include "Shaders/Include/Shaders.h"
+#include "Shaders/Include/VertexLayouts.h"
 
 ShaderObject::ShaderObject(RenderPass inRenderPass, const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode) :
 	m_RenderPass(inRenderPass)
@@ -28,22 +30,12 @@ void ShaderObject::CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D
 {
 	Assert(m_RootSignature != nullptr);
 
-	// TODO: Create this from the Shader instead
-	// Create the vertex input layout
-	D3D12_INPUT_ELEMENT_DESC input_layout[] =
-	{
-		// Based on VertexPosUVNormal
-		{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-		{ "NORMAL",		0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-	};
-
 	D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc;
 	::memset(&pso_desc, 0, sizeof(D3D12_GRAPHICS_PIPELINE_STATE_DESC));
 	pso_desc.pRootSignature			= m_RootSignature;
 	pso_desc.VS						= inVSBytecode;
 	pso_desc.PS						= inPSBytecode;
-	pso_desc.InputLayout			= { input_layout, _countof(input_layout) };
+	pso_desc.InputLayout			= { VertexInputLayouts::VertexPosUVNormal, _countof(VertexInputLayouts::VertexPosUVNormal) };
 	pso_desc.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 	// What is this value? Documentation says: The sample mask for the blend state.

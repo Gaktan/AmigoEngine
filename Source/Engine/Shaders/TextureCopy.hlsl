@@ -1,14 +1,10 @@
 // ShaderCompiler. Name: TextureCopyPS, Type: PS, EntryPoint: MainPS
 // ShaderCompiler. Name: TextureCopyVS, Type: VS, EntryPoint: MainVS
 
+#include "VertexLayouts.h"
+
 Texture2D<float4> SceneTexture : register(t0);
 SamplerState Sampler : register(s0);
-
-struct VertexPosUV
-{
-	float4 Position	: POSITION;
-	float4 UV		: TEXCOORD;
-};
 
 struct VertexShaderOutput
 {

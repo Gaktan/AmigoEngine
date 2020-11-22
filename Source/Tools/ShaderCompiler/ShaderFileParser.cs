@@ -31,10 +31,13 @@ namespace ShaderCompiler
 				ProcessSingleFile(shaderFile);
 
 			// Find if it has any duplicates
-			bool duplicates = Structs.GroupBy(n => n).Any(c => c.Count() > 1);
+			var duplicates = Structs.Where(s => s.IsConstantBuffer && s.IsVertexLayout).GroupBy(s => s.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
 
-			if (duplicates)
+			if (duplicates.Count > 0)
+			{
+				Console.WriteLine("ERROR: Duplicate Structs: " + String.Join(", ", duplicates));
 				throw new Exception("Multiple structs have the same Name. Probably shouldn't allow it.");
+			}
 
 			//DebugPrint();
 		}

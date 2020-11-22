@@ -12,6 +12,9 @@ namespace ShaderCompiler
 		public static string		ShaderSourcePath;
 		public static string		ShaderHFile;
 		public static string		ConstantBufferHFile;
+		public static string		VertexLayoutHFile;
+		public static bool			RecursiveSearch;
+		public static List<string>  IgnoredFolders;
 		public static string		DatabasePath;
 		public static string		GeneratedFolderPath;
 		public static string		GeneratedHeaderExtension;
@@ -54,6 +57,9 @@ namespace ShaderCompiler
 			Console.WriteLine("ShaderSourcePath:			" + ShaderSourcePath);
 			Console.WriteLine("ShaderHFile:					" + ShaderHFile);
 			Console.WriteLine("ConstantBufferHFile:			" + ConstantBufferHFile);
+			Console.WriteLine("VertexLayoutHFile:			" + VertexLayoutHFile);
+			Console.WriteLine("RecursiveSearch:				" + RecursiveSearch);
+			Console.WriteLine("IgnoredFolders:				" + String.Join(", ", IgnoredFolders.ToArray()));
 			Console.WriteLine("DatabasePath:				" + DatabasePath);
 			Console.WriteLine("GeneratedFolderPath:			" + GeneratedFolderPath);
 			Console.WriteLine("GeneratedHeaderExtension:	" + GeneratedHeaderExtension);
@@ -174,38 +180,46 @@ namespace ShaderCompiler
 
 		private static string ResolvePath(string path, bool mustExist)
 		{
-			string resolvedPath = Path.Combine(Arguments.RootFolder, path);
-			if (mustExist && !File.Exists(resolvedPath) && !Directory.Exists(resolvedPath))
+			string resolved_path = Path.Combine(Arguments.RootFolder, path);
+			if (mustExist && !File.Exists(resolved_path) && !Directory.Exists(resolved_path))
 			{
-				throw new Exception("Path \"" + resolvedPath + "\" is not a file or a directory.");
+				throw new Exception("Path \"" + resolved_path + "\" is not a file or a directory.");
 			}
 
-			return resolvedPath;
+			return Path.GetFullPath(resolved_path);
 		}
 
 		private static void FillConfig()
 		{
 			string[] separators = { "," };
 
+			// Shaders extensions
 			Config.ShaderExtensions = new List<string>();
 			foreach (string extension in Data["ShaderCompiler"]["ShaderExtensions"].Split(separators, StringSplitOptions.RemoveEmptyEntries))
-			{
 				Config.ShaderExtensions.Add(extension.Trim());
-			}
+
+			// Ignored folders
+			Config.IgnoredFolders = new List<string>();
+			foreach (string folder in Data["ShaderCompiler"]["IgnoredFolders"].Split(separators, StringSplitOptions.RemoveEmptyEntries))
+				Config.IgnoredFolders.Add(ResolvePath(folder.Trim(), false));
 
 			Config.ShaderSourcePath			= ResolvePath(Data["ShaderCompiler"]["ShaderSourcePath"], true);
 			Config.ShaderHFile				= ResolvePath(Data["ShaderCompiler"]["ShaderHFile"], true);
 			Config.ConstantBufferHFile		= ResolvePath(Data["ShaderCompiler"]["ConstantBufferHFile"], true);
+			Config.VertexLayoutHFile		= ResolvePath(Data["ShaderCompiler"]["VertexLayoutHFile"], true);
 			Config.DatabasePath				= ResolvePath(Data["ShaderCompiler"]["DatabasePath"], false);
 			Config.GeneratedFolderPath		= ResolvePath(Data["ShaderCompiler"]["GeneratedFolderPath"], false);
 			Config.GeneratedHeaderExtension = Data["ShaderCompiler"]["GeneratedHeaderExtension"];
 
-			// EnableDebugInformation
-			bool succes						= Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
+			// RecursiveSearch
+			bool succes						= Boolean.TryParse(Data["ShaderCompiler"]["RecursiveSearch"], out Config.RecursiveSearch);
 			if (!succes)
-			{
+				Config.RecursiveSearch = false;
+
+			// EnableDebugInformation
+			succes							= Boolean.TryParse(Data["ShaderCompiler"]["EnableDebugInformation"], out Config.EnableDebugInformation);
+			if (!succes)
 				Config.EnableDebugInformation = false;
-			}
 
 			// Weird setup, this is to make code smaller
 			string currentKey = "";

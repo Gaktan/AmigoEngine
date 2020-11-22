@@ -8,6 +8,7 @@
 #include "Gfx/Mesh.h"
 
 #include "Shaders/Include/Shaders.h"
+#include "Shaders/Include/VertexLayouts.h"
 
 Mesh					DrawUtils::s_FullScreenTriangle;
 ID3D12PipelineState*	DrawUtils::m_PipelineState = nullptr;
@@ -18,13 +19,6 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 {
 	// Setup meshes
 	{
-		// TODO: Yuck
-		struct VertexPosUV
-		{
-			Vec4 Position;
-			Vec4 UV;
-		};
-
 		float vertex_data[] =
 		{
 			// Position					// UV
@@ -35,7 +29,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 
 		s_FullScreenTriangle.Init(inCommandList,
 								  D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST,
-								  &vertex_data[0], 3 * sizeof(VertexPosUV), sizeof(VertexPosUV));
+								  &vertex_data[0], 3 * sizeof(VertexFormats::VertexPosUV), sizeof(VertexFormats::VertexPosUV));
 	}
 
 	// Setup shaders
@@ -87,19 +81,10 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 
 		//void ShaderObject::CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode)
 		{
-			// TODO: Create this from the Shader instead
-			// Create the vertex input layout
-			static D3D12_INPUT_ELEMENT_DESC input_layout[] =
-			{
-				// Based on VertexPosUV
-				{ "POSITION",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-				{ "TEXCOORD",	0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-			};
-
 			pso_desc.pRootSignature			= m_RootSignature;
 			pso_desc.VS						= InlineShaders::TextureCopyVS;
 			pso_desc.PS						= InlineShaders::TextureCopyPS;
-			pso_desc.InputLayout			= { input_layout, _countof(input_layout) };
+			pso_desc.InputLayout			= { VertexInputLayouts::VertexPosUV, _countof(VertexInputLayouts::VertexPosUV) };
 			pso_desc.PrimitiveTopologyType	= D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
 			// What is this value? Documentation says: The sample mask for the blend state.

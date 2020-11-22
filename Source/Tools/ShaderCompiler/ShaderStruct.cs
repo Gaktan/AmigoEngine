@@ -107,7 +107,8 @@ namespace ShaderCompiler
 	{
 		public string Name;
 		public List<StructElement> Elements;
-		public bool IsConstantBuffer;
+		public bool IsConstantBuffer	= false;
+		public bool IsVertexLayout		= false;
 
 		// Captures a single struct and its content between {}. Group1: Name, Group2: Content
 		private static readonly string StructRegex = @"struct\s+(.+)\s*\{([^}]*)\}";
@@ -128,15 +129,30 @@ namespace ShaderCompiler
 		{
 			foreach (StructElement se in Elements)
 			{
-				// At least one semantic or interpolation means we are definitely sure this is not a constant buffer
-				if (se.Semantic != null || se.Interpolation != null)
+				// If we use SV_Position, it means this is a vertex shader output, not an input. So we don't consider it as a vertex layout or constant buffer
+				// TODO: Regex test maybe?
+				if (se.Semantic != null && se.Semantic == "SV_Position")
 				{
-					IsConstantBuffer = false;
+					IsConstantBuffer	= false;
+					IsVertexLayout		= false;
 					return;
 				}
 			}
 
-			IsConstantBuffer = true;
+			foreach (StructElement se in Elements)
+			{
+				// At least one semantic or interpolation means we are definitely sure this is a vertex layout
+				if (se.Semantic != null || se.Interpolation != null)
+				{
+					IsConstantBuffer	= false;
+					IsVertexLayout		= true;
+					return;
+				}
+			}
+
+			// Else, this is probably a constant buffer
+			IsConstantBuffer	= true;
+			IsVertexLayout		= false;
 		}
 
 		public override bool Equals(object obj)
@@ -162,9 +178,6 @@ namespace ShaderCompiler
 
 		public string GetConstantBufferString()
 		{
-			if (!IsConstantBuffer)
-				return null;
-
 			StringBuilder ret = new StringBuilder("struct " + Name + Environment.NewLine + "{");
 
 			foreach (StructElement se in Elements)
@@ -183,14 +196,14 @@ namespace ShaderCompiler
 		{
 			// Prints something like this:
 			/*
-			D3D12_INPUT_ELEMENT_DESC inputLayout[] =
+			static D3D12_INPUT_ELEMENT_DESC inputLayout[] =
 			{
 				{ "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 				{ "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
 			};
 			*/
 
-			string ret = "D3D12_INPUT_ELEMENT_DESC g_" + Name + "[] =\n{\n";
+			string ret = "static D3D12_INPUT_ELEMENT_DESC " + Name + "[] =" + Environment.NewLine + "{" + Environment.NewLine;
 
 			foreach (StructElement se in Elements)
 			{
@@ -211,10 +224,10 @@ namespace ShaderCompiler
 											aligned_byte_offset,
 											input_slot_class, instance_data_step_rate);
 
-				ret += "\t{ " + line + " },\n";
+				ret += "\t{ " + line + " }," + Environment.NewLine;
 			}
 
-			ret += "};\n";
+			ret += "};" + Environment.NewLine;
 			return ret;
 		}
 

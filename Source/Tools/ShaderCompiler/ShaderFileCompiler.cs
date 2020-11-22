@@ -133,7 +133,7 @@ namespace ShaderCompiler
 			bool header_file			= true;
 			string output_extension		= header_file ? Config.GeneratedHeaderExtension : ".bin";
 			string shader_name			= inShaderFile.GetFileName() + "_" + Name + "_" + EnumUtils.ToDescription(Type);
-			string shader_output_file	= Config.GeneratedFolderPath + shader_name + output_extension;
+			string shader_output_file	= Path.Combine(Config.GeneratedFolderPath, shader_name) + output_extension;
 
 			return shader_output_file;
 		}
@@ -219,18 +219,43 @@ namespace ShaderCompiler
 
 		public static void GenerateConstantBufferHFile(List<Struct> inStructs)
 		{
-			StringBuilder constantBuffersBuilder = new StringBuilder();
+			StringBuilder string_builder = new StringBuilder();
 
+			// Go through all structs and only append constant buffers
 			foreach (Struct sr in inStructs)
 			{
-				string constant_buffer = sr.GetConstantBufferString();
-				if (constant_buffer != null)
-					constantBuffersBuilder.AppendLine(constant_buffer);
+				if (sr.IsConstantBuffer)
+					string_builder.AppendLine(sr.GetConstantBufferString());
 			}
 
-			string constant_buffer_string = constantBuffersBuilder.ToString().TrimEnd() + Environment.NewLine;
+			string constant_buffer_string = string_builder.ToString().TrimEnd() + Environment.NewLine;
 
 			ReplaceFileContent(Config.ConstantBufferHFile, "ConstantBuffer", constant_buffer_string);
+		}
+
+		public static void GenerateVertexLayoutHFile(List<Struct> inStructs)
+		{
+			StringBuilder vertex_format_sb = new StringBuilder();
+			StringBuilder vertex_layout_sb = new StringBuilder();
+
+			// Go through all structs and only append vertex layouts
+			foreach (Struct sr in inStructs)
+			{
+				if (sr.IsVertexLayout)
+				{
+					// Print them as constant buffers to generate the cpp struct for the format
+					vertex_format_sb.AppendLine(sr.GetConstantBufferString());
+
+					// Generate vertex layout
+					vertex_layout_sb.AppendLine(sr.GetVertexLayoutString());
+				}
+			}
+
+			string vertex_format_string = vertex_format_sb.ToString().TrimEnd() + Environment.NewLine;
+			string vertex_layout_string = vertex_layout_sb.ToString().TrimEnd() + Environment.NewLine;
+
+			ReplaceFileContent(Config.VertexLayoutHFile, "VertexFormat", vertex_format_string);
+			ReplaceFileContent(Config.VertexLayoutHFile, "VertexInputLayout", vertex_layout_string);
 		}
 	}
 }

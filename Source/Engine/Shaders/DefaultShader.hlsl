@@ -1,6 +1,8 @@
 // ShaderCompiler. Name: DefaultPS, Type: PS, EntryPoint: MainPS
 // ShaderCompiler. Name: DefaultVS, Type: VS, EntryPoint: MainVS
 
+#include "VertexLayouts.h"
+
 struct ModelViewProjection
 {
     float4x4	Model;
@@ -17,13 +19,6 @@ cbuffer ModelViewProjectionCB : register(b0)
 	ModelViewProjection ModelViewProjectionCB;
 }
 #endif
-
-struct VertexPosUVNormal
-{
-	float4 Position	: POSITION;
-	float4 UV		: TEXCOORD;
-	float4 Normal	: NORMAL;
-};
 
 struct VertexShaderOutput
 {
@@ -44,12 +39,7 @@ VertexShaderOutput MainVS(VertexPosUVNormal IN)
 Texture2D<float4> SceneTexture : register(t0);
 SamplerState Sampler : register(s0);
 
-struct PixelShaderInput
-{
-	float2 UV : TEXCOORD;
-};
-
-float4 MainPS(PixelShaderInput IN) : SV_Target
+float4 MainPS(VertexShaderOutput IN) : SV_Target
 {
     return SceneTexture.SampleLevel(Sampler, IN.UV, 0);
 }

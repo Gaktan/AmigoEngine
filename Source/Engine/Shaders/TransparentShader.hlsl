@@ -3,12 +3,13 @@
 Texture2D<float4> SceneTexture : register(t0);
 SamplerState Sampler : register(s0);
 
-struct PixelShaderInput
+struct VertexShaderOutput
 {
-	float2 UV : TEXCOORD;
+	float2 UV		: TEXCOORD;
+    float4 Position : SV_Position;
 };
 
-float4 main(PixelShaderInput IN) : SV_Target
+float4 main(VertexShaderOutput IN) : SV_Target
 {
 	float alpha = 0.3;
     return float4(SceneTexture.SampleLevel(Sampler, IN.UV, 0).rgb, alpha);
