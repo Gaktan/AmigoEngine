@@ -22,22 +22,41 @@ protected:
 		};
 	};
 
-	static Mat4 s_Zero;
-	static Mat4 s_Identity;
+	static Mat4 Zero()
+	{
+		static Mat4 zero = 
+		{
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 0.0f }
+		};
+
+		return zero;
+	}
+
+	static Mat4 Identity()
+	{
+		static Mat4 identity =
+		{
+			{ 1.0f, 0.0f, 0.0f, 0.0f },
+			{ 0.0f, 1.0f, 0.0f, 0.0f },
+			{ 0.0f, 0.0f, 1.0f, 0.0f },
+			{ 0.0f, 0.0f, 0.0f, 1.0f }
+		};
+
+		return identity;
+	}
 
 public:
 
 	Mat4(bool inIdentity = false)
 	{
 		if (inIdentity)
-		{
-			*this = s_Identity;
-		}
+			*this = Identity();
 #if defined(_DEBUG)
 		else
-		{
-			*this = s_Zero;
-		}
+			*this = Zero();
 #endif
 	}
 
@@ -240,22 +259,4 @@ public:
 		Vec4 up(_m01, _m11, _m21, _m31);
 		return up;
 	}
-};
-
-#pragma warning(default : 4201)
-
-Mat4 Mat4::s_Zero		= 
-{
-	{ 0.0f, 0.0f, 0.0f, 0.0f },
-	{ 0.0f, 0.0f, 0.0f, 0.0f },
-	{ 0.0f, 0.0f, 0.0f, 0.0f },
-	{ 0.0f, 0.0f, 0.0f, 0.0f }
-};
-
-Mat4 Mat4::s_Identity	=
-{
-	{ 1.0f, 0.0f, 0.0f, 0.0f },
-	{ 0.0f, 1.0f, 0.0f, 0.0f },
-	{ 0.0f, 0.0f, 1.0f, 0.0f },
-	{ 0.0f, 0.0f, 0.0f, 1.0f }
 };
