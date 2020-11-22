@@ -69,9 +69,9 @@ class MeshLoader
 {
 protected:
 	// TODO: Hardcoded VertexFormat
-	std::vector<Vec4>				m_AllPositions;
-	std::vector<Vec4>				m_AllNormals;
-	std::vector<Vec4>				m_AllUVCoords;
+	std::vector<Vec3>				m_AllPositions;
+	std::vector<Vec3>				m_AllNormals;
+	std::vector<Vec2>				m_AllUVCoords;
 	std::vector<VertexPosUVNormal>	m_VertexData;
 	std::vector<uint16>				m_IndexData;
 	std::map<std::string, uint16>	m_IndexMap;

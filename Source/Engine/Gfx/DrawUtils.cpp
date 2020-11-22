@@ -21,11 +21,12 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 	{
 		float vertex_data[] =
 		{
-			// Position					// UV
-			-1.0f, 1.0f, 0.0f, 1.0f,	0.0f, 0.0f, 0.0f, 0.0f,
-			3.0f, 1.0f, 0.0f, 1.0f,		2.0f, 0.0f, 0.0f, 0.0f,
-			-1.0f, -3.0f, 0.0f, 1.0f,	0.0f, 2.0f, 0.0f, 0.0f,
+			// Position				// UV
+			-1.0f, 1.0f, 0.0f,		0.0f, 0.0f,
+			3.0f, 1.0f, 0.0f,		2.0f, 0.0f,
+			-1.0f, -3.0f, 0.0f,		0.0f, 2.0f,
 		};
+		static_assert(sizeof(vertex_data) == 3 * sizeof(VertexFormats::VertexPosUV));
 
 		s_FullScreenTriangle.Init(inCommandList,
 								  D3D_PRIMITIVE_TOPOLOGY::D3D10_PRIMITIVE_TOPOLOGY_TRIANGLELIST,

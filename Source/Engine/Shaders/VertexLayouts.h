@@ -2,13 +2,13 @@
 
 struct VertexPosUV
 {
-	float4 Position	: POSITION;
-	float4 UV		: TEXCOORD;
+	float3 Position	: POSITION;
+	float2 UV		: TEXCOORD;
 };
 
 struct VertexPosUVNormal
 {
-	float4 Position	: POSITION;
-	float4 UV		: TEXCOORD;
-	float4 Normal	: NORMAL;
+	float3 Position	: POSITION;
+	float2 UV		: TEXCOORD;
+	float3 Normal	: NORMAL;
 };

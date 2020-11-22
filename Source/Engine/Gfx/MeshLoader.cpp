@@ -209,7 +209,7 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		float y = String::ToFloat(all_elem[1]);
 		float z = String::ToFloat(all_elem[2]);
 
-		m_AllPositions.push_back(Vec4(x, y, z, 0));
+		m_AllPositions.push_back(Vec3(x, y, z));
 		break;
 	}
 	case OBJKeyword::VertexNormal:
@@ -220,7 +220,7 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		float y = String::ToFloat(all_elem[1]);
 		float z = String::ToFloat(all_elem[2]);
 
-		m_AllNormals.push_back(Vec4(x, y, z, 0));
+		m_AllNormals.push_back(Vec3(x, y, z));
 		break;
 	}
 	case OBJKeyword::VertexUV:
@@ -231,7 +231,7 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		float x = String::ToFloat(all_elem[0]);
 		float y = String::ToFloat(all_elem[1]);
 
-		m_AllUVCoords.push_back(Vec4(x, y, 0, 0));
+		m_AllUVCoords.push_back(Vec2(x, y));
 		break;
 	}
 	case OBJKeyword::MaterialLibrary:

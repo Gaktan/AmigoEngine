@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Text;
 using System.Text.RegularExpressions;
 
@@ -100,6 +101,50 @@ namespace ShaderCompiler
 				// Get the result from Group1 directly
 				Semantic = semantic_match.Groups[1].ToString();
 			}
+		}
+
+		public string GetDXGIFormat()
+		{
+			// Matrices not supported
+			Debug.Assert(NumRows == 1);
+
+			string dxgi_format = "DXGI_FORMAT_UNKNOWN";
+
+			string dxgi_type;
+
+			switch (BaseTypeName)
+			{
+			case "float":
+				dxgi_type = "FLOAT";
+				break;
+			case "int":
+				dxgi_type = "SINT";
+				break;
+			case "uint":
+			case "dword":
+				dxgi_type = "UINT";
+				break;
+			default:
+				dxgi_type = "TYPELESS";
+				break;
+			}
+
+			string dxgi_channels = "R{0}";
+
+			if (NumCol > 1)
+				dxgi_channels += "G{0}";
+			if (NumCol > 2)
+				dxgi_channels += "B{0}";
+			if (NumCol > 3)
+				dxgi_channels += "A{0}";
+
+			// Stick with 32bits types only for now
+			int type_size = 32;
+			dxgi_channels = String.Format(dxgi_channels, type_size);
+
+			dxgi_format = String.Format(@"DXGI_FORMAT_{0}_{1}", dxgi_channels, dxgi_type);
+
+			return dxgi_format;
 		}
 	}
 
@@ -210,7 +255,7 @@ namespace ShaderCompiler
 				// TODO: Lots of TODOs in here gee.
 				string  semantic_name			= se.Semantic;
 				uint    semantic_index			= 0;												// TODO: Change this depending on number of float4
-				string  format					= "DXGI_FORMAT_R32G32B32A32_FLOAT";					// TODO: Change format depending on num of components and packing
+				string  format					= se.GetDXGIFormat();
 				uint    input_slot				= 0;												// TODO: Change depending on the input slot (in case of de interleaved buffers)
 				string  aligned_byte_offset		= "D3D12_APPEND_ALIGNED_ELEMENT";					// TODO: Handle packing (if any).
 				string  input_slot_class		= "D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA";		// TODO: Handle per instance data?
