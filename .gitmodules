@@ -6,3 +6,6 @@
 [submodule "External/DirectXTex"]
 	path = External/DirectXTex
 	url = https://github.com/microsoft/DirectXTex
+[submodule "External/mathfu"]
+	path = External/mathfu
+	url = https://github.com/google/mathfu
