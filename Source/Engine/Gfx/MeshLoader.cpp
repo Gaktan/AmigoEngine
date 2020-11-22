@@ -55,7 +55,7 @@ void MeshLoader::ReverseWinding()
 	// Flip X axis
 	for (auto it = m_VertexData.begin(); it != m_VertexData.end(); ++it)
 	{
-		it->Position.X() = (1.f - it->Position.X());
+		it->Position.x = (1.f - it->Position.x);
 	}
 
 	// Flip UV's Y axis
@@ -63,7 +63,7 @@ void MeshLoader::ReverseWinding()
 	// Whereas DirectX's origin is at the top left corner
 	for (auto it = m_VertexData.begin(); it != m_VertexData.end(); ++it)
 	{
-		it->UV.Y() = (1.f - it->UV.Y());
+		it->UV.y = (1.f - it->UV.y);
 	}
 }
 
@@ -208,9 +208,8 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		float x = String::ToFloat(all_elem[0]);
 		float y = String::ToFloat(all_elem[1]);
 		float z = String::ToFloat(all_elem[2]);
-		float w = 1.0;
 
-		m_AllPositions.push_back(Vec4(x, y, z, w));
+		m_AllPositions.push_back(Vec4(x, y, z, 0));
 		break;
 	}
 	case OBJKeyword::VertexNormal:
@@ -221,7 +220,7 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		float y = String::ToFloat(all_elem[1]);
 		float z = String::ToFloat(all_elem[2]);
 
-		m_AllNormals.push_back(Vec4(x, y, z));
+		m_AllNormals.push_back(Vec4(x, y, z, 0));
 		break;
 	}
 	case OBJKeyword::VertexUV:
@@ -232,7 +231,7 @@ void MeshLoader::ProcessLine(const std::string& inLine)
 		float x = String::ToFloat(all_elem[0]);
 		float y = String::ToFloat(all_elem[1]);
 
-		m_AllUVCoords.push_back(Vec4(x, y, 0.0f));
+		m_AllUVCoords.push_back(Vec4(x, y, 0, 0));
 		break;
 	}
 	case OBJKeyword::MaterialLibrary:

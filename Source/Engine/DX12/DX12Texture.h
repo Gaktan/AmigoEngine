@@ -1,7 +1,6 @@
 #pragma once
 
 #include "DX12/DX12Resource.h"
-#include "Math/Vec4.h"
 
 class DX12Texture : public DX12Resource
 {

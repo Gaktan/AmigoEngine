@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Gfx/RenderPass.h"
-#include "Math/Vec4.h"
 
 // A ShaderObject actually regroups multiple shaders. (e.g Pixel+Vertex shader)
 // In this case, shaders a grouped into a single PSO

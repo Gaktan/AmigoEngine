@@ -8,8 +8,6 @@
 // based on this one
 
 #include "Math/Math.h"
-#include "Math/Vec4.h"
-#include "Math/Mat4.h"
 
 #include "DX12/DX12CommandQueue.h"
 #include "DX12/DX12Device.h"
@@ -43,11 +41,11 @@ std::map<std::string, ShaderObject*> m_AllShaderObjects;
 RenderBuckets m_RenderBuckets;
 
 float	m_FOV;
-Mat4	m_ModelMatrix;
-Mat4	m_ViewMatrix;
-Mat4	m_ProjectionMatrix;
+Mat4x4	m_ModelMatrix;
+Mat4x4	m_ViewMatrix;
+Mat4x4	m_ProjectionMatrix;
 
-Vec4	m_SavedPosition;
+Vec3	m_SavedPosition;
 
 bool	m_ContentLoaded;
 
@@ -67,9 +65,9 @@ bool LoadContent(uint32 inWidth, uint32 inHeight)
 		m_FOV				= 45.0f;
 		m_ContentLoaded		= false;
 
-		const Vec4 eye_position(10.0f, 3.5f, 0.0f, 0);
-		float eye_distance = 10.0f;
-		m_SavedPosition		= Vec4::Normalize(eye_position) * eye_distance;
+		const Vec3 eye_position(10.0f, 3.5f, 0.0f);
+		float eye_distance	= 10.0f;
+		m_SavedPosition		= eye_position.Normalized() * eye_distance;
 	}
 
 	MeshLoader::Init();
@@ -110,7 +108,7 @@ bool LoadContent(uint32 inWidth, uint32 inHeight)
 
 	// Create Constant Buffer View
 	m_ConstantBuffer = new DX12ConstantBuffer();
-	m_ConstantBuffer->InitAsConstantBuffer(sizeof(ConstantBuffers::ModelViewProjection));
+	m_ConstantBuffer->InitAsConstantBuffer(sizeof(ConstantBuffers::DefaultConstantBuffer));
 
 	auto fence_value = command_queue->ExecuteCommandList(command_list);
 	command_queue->WaitForFenceValue(fence_value);
@@ -157,22 +155,19 @@ void OnResize(uint32 inWidth, uint32 inHeight)
 	ResizeBuffers(inWidth, inHeight);
 }
 
-float TTT = 0.0f;
-
 void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 {
 	Mouse::GetInstance().UpdateWindowSize(inWidth, inHeight);
 	Mouse::GetInstance().Update();
 
-	TTT += inDeltaT;
-
 	// Update the model matrix.
-	const Vec4 rotation_axis(0, 1, 0, 0);
-	m_ModelMatrix = Mat4::CreateRotationMatrix(rotation_axis, Math::ToRadians(180.0f));
+	const Vec3 rotation_axis(0, 1, 0);
+	Quat quat = Quat::FromAngleAxis(Math::ToRadians(180.0f), rotation_axis);
+	m_ModelMatrix = Mat4x4::FromRotationMatrix(quat.ToMatrix());
 
-	Vec4 eye_position = m_SavedPosition;
-	const Vec4 focus_point(0, 3.5f, 0, 0);
-	const Vec4 up_direction(0, 1, 0, 0);
+	Vec3 eye_position = m_SavedPosition;
+	const Vec3 focus_point(0, 3.5f, 0);
+	const Vec3 up_direction(0, 1, 0);
 
 	Mouse& mouse = Mouse::GetInstance();
 	if (mouse.IsButtonDown(MouseButton::Middle) || mouse.WasJustReleased(MouseButton::Middle))
@@ -181,10 +176,10 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 		MousePos mouse_pos		= mouse.GetNormalizedPos();
 		MousePos mouse_movement	= { click_pos.x - mouse_pos.x, click_pos.y - mouse_pos.y };
 
-		Vec4 local_point(eye_position - focus_point);
-		float x = local_point.X();
-		float y = local_point.Y();
-		float z = local_point.Z();
+		Vec3 local_point(eye_position - focus_point);
+		float x = local_point.x;
+		float y = local_point.y;
+		float z = local_point.z;
 		float r = local_point.Length();
 
 		float phi	= Math::Atan2(z, x);
@@ -199,16 +194,16 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 		const float limit = 0.1f;
 		theta = Math::Clamp(theta, limit, Math::Pi - limit);
 
-		local_point.X() = r * Math::Sin(theta) * Math::Cos(phi);
-		local_point.Y() = r * Math::Cos(theta);
-		local_point.Z() = r * Math::Sin(theta) * Math::Sin(phi);
+		local_point.x = r * Math::Sin(theta) * Math::Cos(phi);
+		local_point.y = r * Math::Cos(theta);
+		local_point.z = r * Math::Sin(theta) * Math::Sin(phi);
 
 		// Preserve the correct distance
-		eye_position = Vec4::Normalize(local_point + focus_point) * m_SavedPosition.Length();
+		eye_position = (local_point + focus_point).Normalized() * m_SavedPosition.Length();
 	}
 
 	// Update the view matrix.
-	m_ViewMatrix = Mat4::CreateLookAtMatrix(eye_position, focus_point, up_direction);
+	m_ViewMatrix = Mat4x4::LookAt(focus_point, eye_position, up_direction);
 
 	// Release middle click means we need to save the new position
 	if (mouse.WasJustReleased(MouseButton::Middle))
@@ -220,7 +215,9 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 
 	// Update the projection matrix.
 	float aspect_ratio = inWidth / static_cast<float>(inHeight);
-	m_ProjectionMatrix = Mat4::CreatePerspectiveMatrix(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f);
+	// We apparently need to be in right-handed coordinates. Unsure why
+	float handedness = -1.0f;
+	m_ProjectionMatrix = Mat4x4::Perspective(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f, handedness);
 }
 
 void SetupBindings(ID3D12GraphicsCommandList2* inCommandList)
@@ -236,11 +233,9 @@ void SetupBindings(ID3D12GraphicsCommandList2* inCommandList)
 
 void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 {
-	// TODO: Pre multiply matrix
-	ConstantBuffers::ModelViewProjection mvp;
-	mvp.Model		= m_ModelMatrix;
-	mvp.View		= m_ViewMatrix;
-	mvp.Projection	= m_ProjectionMatrix;
+	ConstantBuffers::DefaultConstantBuffer constant_buffer;
+	// We absolutely need to transpose from Row Major (mathfu) to Colum Major (HLSL)
+	constant_buffer.MVP = (m_ProjectionMatrix*m_ViewMatrix*m_ModelMatrix).Transpose();
 
 	for (DrawableObject* d : m_RenderBuckets[(int) RenderPass::OpaqueGeometry])
 	{
@@ -249,7 +244,7 @@ void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 		SetupBindings(inCommandList);
 
 		// Upload Constant Buffer to GPU
-		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
+		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::DefaultConstantBuffer), &constant_buffer);
 		m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
 
 		d->Render(inCommandList);
@@ -258,11 +253,9 @@ void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 
 void RenderTransparent(ID3D12GraphicsCommandList2* inCommandList)
 {
-	// TODO: Pre multiply matrix
-	ConstantBuffers::ModelViewProjection mvp;
-	mvp.Model		= m_ModelMatrix;
-	mvp.View		= m_ViewMatrix;
-	mvp.Projection	= m_ProjectionMatrix;
+	// TODO: Just figured out that updating constant buffers this way does not work. Only the last map/unmap is taken into account for the whole pass...
+	//ConstantBuffers::DefaultConstantBuffer constant_buffer;
+	//constant_buffer.MVP = (m_ProjectionMatrix*m_ViewMatrix*m_ModelMatrix).Transpose();
 
 	for (DrawableObject* d : m_RenderBuckets[(int) RenderPass::Transparent])
 	{
@@ -271,8 +264,8 @@ void RenderTransparent(ID3D12GraphicsCommandList2* inCommandList)
 		SetupBindings(inCommandList);
 
 		// Upload Constant Buffer to GPU
-		m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::ModelViewProjection), &mvp);
-		m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
+		//m_ConstantBuffer->UpdateBufferResource(inCommandList, sizeof(ConstantBuffers::DefaultConstantBuffer), &constant_buffer);
+		//m_ConstantBuffer->SetConstantBuffer(inCommandList, 1);
 
 		d->Render(inCommandList);
 	}

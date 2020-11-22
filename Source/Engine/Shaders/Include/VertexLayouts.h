@@ -1,15 +1,11 @@
 #pragma once
 
 #include "Engine.h"
-#include "Math/Vec4.h"
+#include "Math/Math.h"
 
 // Need to include ConstantBuffers because some structs needed here are declarer there
 #include "Shaders/Include/ConstantBuffers.h"
 using namespace ConstantBuffers;
-
-// Dummy Vector types until we get them for real
-using Vec2 = float[2];
-using Vec3 = float[3];
 
 // TODO: Defines are tricky because we souldn't allow to generate the same structure with different define values
 // This case is fine because it's a constant, but think of a define from a Shader Header.

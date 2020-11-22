@@ -54,17 +54,10 @@ namespace ShaderCompiler
 			{
 				switch (scalar_type)
 				{
+				// Replace float4x4 to Mat4x4
 				case "float":
-					// Only support float4x4 -> Mat4
-					if (num_col == 4 && num_rows == 4)
-					{
-						engine_type = "Mat4";
-						break;
-					}
-					else
-					{
-						goto default;
-					}
+					engine_type = "Mat" + num_col + "x" + num_rows;
+					break;
 				default:
 					// Default is just a 2D array
 					array_string += "[" + num_col + "][" + num_rows + "]";

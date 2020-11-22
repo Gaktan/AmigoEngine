@@ -3,20 +3,18 @@
 
 #include "VertexLayouts.h"
 
-struct ModelViewProjection
+struct DefaultConstantBuffer
 {
-    float4x4	Model;
-	float4x4	View;
-	float4x4	Projection;
+	float4x4 MVP;
 };
 
 // TODO: Make this a little nicer.
 #if SHADER_MODEL > 50
-ConstantBuffer<ModelViewProjection> ModelViewProjectionCB : register(b0);
+ConstantBuffer<DefaultConstantBuffer> DefaultCB : register(b0);
 #else
-cbuffer ModelViewProjectionCB : register(b0)
+cbuffer DefaultCB : register(b0)
 {
-	ModelViewProjection ModelViewProjectionCB;
+	DefaultConstantBuffer ModelViewProjectionCB;
 }
 #endif
 
@@ -30,7 +28,7 @@ VertexShaderOutput MainVS(VertexPosUVNormal IN)
 {
 	VertexShaderOutput OUT;
 
-	OUT.Position	= mul(ModelViewProjectionCB.Projection, mul(ModelViewProjectionCB.View, mul(ModelViewProjectionCB.Model, float4(IN.Position.xyz, 1.0f))));
+	OUT.Position	= mul(float4(IN.Position.xyz, 1.0f), DefaultCB.MVP);
 	OUT.UV			= IN.UV.xy;
 
 	return OUT;

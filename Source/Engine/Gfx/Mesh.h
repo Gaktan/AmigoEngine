@@ -2,8 +2,6 @@
 
 #include "DX12/DX12Resource.h"
 
-#include "Math/Vec4.h"
-
 class Mesh
 {
 protected:

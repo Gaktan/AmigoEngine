@@ -3,6 +3,18 @@
 #include <Math.h>
 #include <cmath>
 
+#include <mathfu/quaternion.h>
+#include <mathfu/matrix.h>
+#include <mathfu/vector.h>
+
+typedef mathfu::Vector<float, 2> Vec2;
+typedef mathfu::Vector<float, 3> Vec3;
+typedef mathfu::Vector<float, 4> Vec4;
+
+typedef mathfu::Matrix<float, 4, 4> Mat4x4;
+
+typedef mathfu::Quaternion<float> Quat;
+
 namespace Math
 {
 	constexpr float Pi = 3.141592653589793238462643383279f;

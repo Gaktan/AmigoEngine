@@ -4,8 +4,6 @@
 #include <string>
 #include <vector>
 
-#include "Math/Vec4.h"
-
 #include "Gfx/Mesh.h"
 #include "Gfx/RenderPass.h"
 
@@ -70,6 +68,7 @@ struct MaterialInfo
 class MeshLoader
 {
 protected:
+	// TODO: Hardcoded VertexFormat
 	std::vector<Vec4>				m_AllPositions;
 	std::vector<Vec4>				m_AllNormals;
 	std::vector<Vec4>				m_AllUVCoords;

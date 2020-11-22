@@ -2,7 +2,6 @@
 
 #include "DX12/DX12Device.h"
 #include "DX12/DX12Resource.h"
-#include "Math/Vec4.h"
 
 // TODO: extend from texture
 class DX12RenderTarget : public DX12Resource
@@ -11,7 +10,7 @@ protected:
 	uint32			m_Width			= 0;
 	uint32			m_Height		= 0;
 	DXGI_FORMAT		m_Format		= DXGI_FORMAT_UNKNOWN;
-	Vec4			m_ClearValue	= 0.0f;
+	Vec4			m_ClearValue	= Vec4(0.0f);
 
 	D3D12_CPU_DESCRIPTOR_HANDLE	m_RTVDescriptorHandle = { 0 };
 
@@ -22,12 +21,12 @@ public:
 
 	void InitAsRenderTarget(
 		uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat = DXGI_FORMAT_UNKNOWN,
-		Vec4 inClearValue = 0.0f);
+		Vec4 inClearValue = Vec4(0.0f));
 
 	void InitFromResource(
 		ID3D12Resource* inResource,
 		DXGI_FORMAT inFormat = DXGI_FORMAT_UNKNOWN,
-		Vec4 inClearValue = 0.0f);
+		Vec4 inClearValue = Vec4(0.0f));
 
 	virtual void ReleaseResources() override;
 

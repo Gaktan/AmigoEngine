@@ -79,6 +79,9 @@ class AmigoEngine : Project
 		string target_configuration = (target.Optimization == Optimization.Debug) ? "Debug" : "Release";
 		conf.LibraryPaths.Add(@"[project.RootPath]\External\DirectXTex\DirectXTex\Bin\Desktop_2017\x64\" + target_configuration);
 		conf.LibraryFiles.Add(@"DirectXTex.lib");
+		
+		// MathFu
+		conf.IncludePaths.Add(@"[project.RootPath]\External\mathfu\include\");
 
 		// Add dependency to ShaderCompiler
 		conf.AddPrivateDependency<ShaderCompiler>(target, DependencySetting.OnlyBuildOrder);
