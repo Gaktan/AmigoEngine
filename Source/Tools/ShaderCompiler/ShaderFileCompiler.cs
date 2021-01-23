@@ -149,6 +149,8 @@ namespace ShaderCompiler
 		// Processes all headers from a shader file and compiles every permutation
 		public static void Compile(ShaderFile inShaderFile)
 		{
+			Console.WriteLine("Compiling shaders for file \"{0}\"", inShaderFile.FullPath);
+
 			ShaderCompilerDX shaderCompiler;
 
 			switch (Config.Compiler)

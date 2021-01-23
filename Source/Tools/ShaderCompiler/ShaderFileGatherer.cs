@@ -15,10 +15,12 @@ namespace ShaderCompiler
 		public string		Content;
 		[NonSerialized]
 		public bool			ShouldCompile;
-
+		[NonSerialized]
 		public string		FullPath;
-		// TODO: Deal with dependencies (includes). Will require a deep read of the file.
-		//public List<ShaderFile> Dependencies = null;
+
+		// List all direct and indirect dependencies (includes) FROM this shader
+		[NonSerialized]
+		public List<ShaderFile> Dependencies = null;
 
 		// List all generated files so we can check if we should recompile them if they are missing. Or delete them if the shader file was deleted.
 		public List<string>		GeneratedFiles;
@@ -43,43 +45,60 @@ namespace ShaderCompiler
 			// "// ShaderCompiler. Name: Test_01, EntryPoint: main, Type: PS, Defines: DEFINE1; DEFINE2 = 0"
 
 			// Captures any line that starts with "// ShaderCompiler." and puts the content of the header in Group1
-			string HeaderRegex = @"//\s*ShaderCompiler\.(.*)";
+			const string header_regex = @"//\s*ShaderCompiler\.(.*)";
 
 			Headers = new List<HeaderInfo>();
 
-			// For each line
-			using (StringReader reader = new StringReader(Content))
+			MatchCollection matches = Regex.Matches(Content, header_regex, RegexOptions.IgnoreCase);
+			foreach (Match match in matches)
 			{
-				string line;
-				int lineNum = 1;
-				while ((line = reader.ReadLine()) != null)
+				try
 				{
-					Match headerMatch = Regex.Match(line, HeaderRegex, RegexOptions.IgnoreCase);
-					if (headerMatch.Success)
+					string str = match.Groups[1].ToString();
+					Headers.Add(HeaderInfo.FromString(str));
+				}
+				catch (MissingHeaderTagException e)
+				{
+					// Find line number where the problem occurs
+					int line_number = 1;
+					for (int i = 0; i < match.Index; i++)
 					{
-						try
-						{
-							string str = headerMatch.Groups[1].ToString();
-							Headers.Add(HeaderInfo.FromString(str));
-						}
-						catch (MissingHeaderTagException e)
-						{
-							throw new Exception("Missing tag \"" + e.TagMissing + "\" in header. " + FullPath + "(" + lineNum + ")");
-						}
+						if (Content[i] == '\n')
+							line_number++;
 					}
-
-					lineNum++;
+					throw new Exception("Missing tag \"" + e.TagMissing + "\" in header. " + FullPath + "(" + line_number + ")");
 				}
 			}
+		}
+
+		public List<string> ParseIncludes()
+		{
+			List<string> includes = new List<string>();
+			// Captures any line that starts with "#include" and puts the include name without quotes in Group1
+			const string include_regex = "#include\\s*\"(.*)\"";
+
+			MatchCollection matches = Regex.Matches(Content, include_regex, RegexOptions.IgnoreCase);
+			foreach (Match match in matches)
+			{
+				string str = match.Groups[1].ToString();
+				includes.Add(str);
+			}
+
+			return includes;
 		}
 	}
 
 	static class ShaderFileGatherer
 	{
-		private static Dictionary<UInt32, ShaderFile> PreviousResult = null;
-		private static Dictionary<UInt32, ShaderFile> CurrentResult = null;
+		private static Dictionary<UInt32, ShaderFile> PreviousDB = null;
+		private static Dictionary<UInt32, ShaderFile> CurrentDB = null;
 
-		static void ProcessFile(string inFullPathToFile)
+		private static UInt32 GetFilenameHash(string inFullPathToFile)
+		{
+			return new Crc32().Get(inFullPathToFile);
+		}
+
+		private static void ProcessFile(string inFullPathToFile)
 		{
 			// Make sure file ends with one of the shader extension
 			if (Config.ShaderExtensions.Any(x => inFullPathToFile.EndsWith(x)))
@@ -88,16 +107,17 @@ namespace ShaderCompiler
 				DateTime modified_time = File.GetLastWriteTime(inFullPathToFile);
 
 				// Create hash from file name, to check with previous version of the file
-				UInt32 hash = new Crc32().Get(inFullPathToFile);
+				UInt32 hash = GetFilenameHash(inFullPathToFile);
 
 				ShaderFile shaderFile = new ShaderFile
 				{
 					Content			= file_content,
 					ShouldCompile	= true,
 					FullPath		= inFullPathToFile,
-					FilenameHash	= hash,
+					FilenameHash	= GetFilenameHash(inFullPathToFile),
 					ModifiedTime	= modified_time,
-					DidCompile		= true
+					DidCompile		= true,
+					Dependencies	= new List<ShaderFile>()
 				};
 
 				// Find all headers in files
@@ -110,14 +130,14 @@ namespace ShaderCompiler
 					shaderFile.GeneratedFiles.Add(header.GetGeneratedFileName(shaderFile));
 				}
 
-				if (CurrentResult.ContainsKey(hash))
+				if (CurrentDB.ContainsKey(hash))
 					throw new Exception("Same file shouldn't be processed twice");
 
-				CurrentResult[hash] = shaderFile;
+				CurrentDB[hash] = shaderFile;
 			}
 		}
 
-		static void ProcessFolder(string inFullPathToFolder)
+		private static void ProcessFolder(string inFullPathToFolder)
 		{
 			// Check that this folder is not ignored
 			if (Config.IgnoredFolders.Any(x => inFullPathToFolder.Equals(x)))
@@ -136,7 +156,7 @@ namespace ShaderCompiler
 				ProcessFile(file);
 		}
 
-		static void ReadDataBase()
+		private static void ReadDataBase()
 		{
 			if (File.Exists(Config.DatabasePath))
 			{
@@ -144,19 +164,19 @@ namespace ShaderCompiler
 				Stream stream = new FileStream(Config.DatabasePath, FileMode.Open, FileAccess.Read);
 				try
 				{
-					PreviousResult = (Dictionary<UInt32, ShaderFile>) formatter.Deserialize(stream);
+					PreviousDB = (Dictionary<UInt32, ShaderFile>) formatter.Deserialize(stream);
 				}
 				catch (SerializationException)
 				{
 					// Deserialization didnd't work. Recompile everything
-					PreviousResult = new Dictionary<UInt32, ShaderFile>();
+					PreviousDB = new Dictionary<UInt32, ShaderFile>();
 				}
 
 				stream.Close();
 			}
 			else
 			{
-				PreviousResult = new Dictionary<UInt32, ShaderFile>();
+				PreviousDB = new Dictionary<UInt32, ShaderFile>();
 			}
 		}
 
@@ -164,28 +184,17 @@ namespace ShaderCompiler
 		{
 			IFormatter formatter = new BinaryFormatter();
 			Stream stream = new FileStream(Config.DatabasePath, FileMode.OpenOrCreate, FileAccess.Write);
-			formatter.Serialize(stream, CurrentResult);
+			formatter.Serialize(stream, CurrentDB);
 			stream.Close();
 		}
 
-		// TODO: Should also add all the dependencies!
-		static void AddShaderFileToList(ShaderFile shaderFile, List<ShaderFile> list)
-		{
-			//foreach (ShaderFile f in shaderFile.Dependencies)
-			//{
-			//	Add(f, list);
-			//}
-
-			list.Add(shaderFile);
-		}
-
 		// Create new function for Dictionary to return null if key was not found
-		public static TValue GetValue<TKey, TValue>(this IDictionary<TKey, TValue> inDictionary, TKey inKey, TValue inDefaultValue = default(TValue))
+		private static TValue GetValue<TKey, TValue>(this IDictionary<TKey, TValue> inDictionary, TKey inKey, TValue inDefaultValue = default(TValue))
 		{
 			return inDictionary.TryGetValue(inKey, out TValue value) ? value : inDefaultValue;
 		}
 
-		static void ProcessDeletedShaderFile(ShaderFile inShaderFile)
+		private static void ProcessDeletedShaderFile(ShaderFile inShaderFile)
 		{
 			string full_path = Config.GeneratedFolderPath;
 			// Delete obsolete generated H files
@@ -199,34 +208,85 @@ namespace ShaderCompiler
 			}
 		}
 
+		// Recursive function to find all dependencies FROM a given shader file
+		private static void FindDependenciesInFile(ShaderFile inShaderFile, List<ShaderFile> outList)
+		{
+			string shader_directory = Path.GetDirectoryName(inShaderFile.FullPath);
+
+			List<string> includes = inShaderFile.ParseIncludes();
+			foreach (string include in includes)
+			{
+				string include_path = Path.GetFullPath(Path.Combine(shader_directory, include));
+
+				// Check the file actually exists
+				if (File.Exists(include_path))
+				{
+					// Get shader file from full path
+					UInt32 file_hash = GetFilenameHash(include_path);
+					ShaderFile include_shader_file = GetValue(CurrentDB, file_hash);
+
+					// Check that a ShaderFile of this path exists
+					if (include_shader_file != null)
+					{
+						// Check that we didn't parse this include already. Otherwise it means we have cyclic dependencies
+						if (!outList.Contains(include_shader_file))
+						{
+							outList.Add(include_shader_file);
+
+							// Recursion. Find all dependencies of all included files
+							FindDependenciesInFile(include_shader_file, outList);
+						}
+						else
+							throw new Exception(String.Format("Include path \"{0}\" in file \"{1}\" is a cyclic dependency.", include, inShaderFile.FullPath));
+					}
+					else
+					{
+						throw new Exception(String.Format("Include path \"{0}\" in file \"{1}\" exists, but wasn't parsed by the ShaderFileGatherer." +
+							"Extension missing in configuration?", include, inShaderFile.FullPath));
+					}
+				}
+				else
+					throw new Exception(String.Format("Include path \"{0}\" in file \"{1}\" doesn't exist", include, inShaderFile.FullPath));
+			}
+		}
+
+		private static void CreateDependencies()
+		{
+			// List all DIRECT and INDIRECT dependencies FROM each ShaderFiles
+			foreach (KeyValuePair<UInt32, ShaderFile> pair in CurrentDB)
+			{
+				ShaderFile current_file = pair.Value;
+				FindDependenciesInFile(current_file, current_file.Dependencies);
+			}
+		}
+
 		// Go through all previous elements in the DB to detect ShaderFiles that were deleted, added, or modified
+		// Set their ShouldCompile member variable to true if we need to recompile them
 		// Returns true if the previous DB doesn't match the current DB
-		static bool UpdateDadaBase()
+		private static bool UpdateDadaBase()
 		{
 			bool db_changed = false;
 
 			// Process previous files in DB. Could still exist, or be deleted
-			foreach (KeyValuePair<UInt32, ShaderFile> pair in PreviousResult)
+			foreach (KeyValuePair<UInt32, ShaderFile> pair in PreviousDB)
 			{
 				ShaderFile previous_file	= pair.Value;
-				ShaderFile current_file		= CurrentResult.GetValue(pair.Key);
+				ShaderFile current_file		= CurrentDB.GetValue(pair.Key);
 
 				// File was not deleted
 				if (current_file != null)
 				{
 					// Retry shaders that didn't compile last time
 					bool file_changed = previous_file.DidCompile == false;
-					// Retry Shaders that were modified
-					file_changed |= (current_file.ModifiedTime > previous_file.ModifiedTime);
+					// Recompile shaders that were modified
+					file_changed |= (current_file.ModifiedTime != previous_file.ModifiedTime);
+					// Recompile moved/renamed shaders 
+					file_changed |= (current_file.FilenameHash != previous_file.FilenameHash);
 
-					// Check if generated files are still here. If not, we need to recompile this shader
-					foreach (string filename in previous_file.GeneratedFiles)
+					// Recompile if generated files don't exist
+					if (previous_file.GeneratedFiles.Any(filename => !File.Exists(filename)))
 					{
-						if (!File.Exists(filename))
-						{
-							file_changed = true;
-							break;
-						}
+						file_changed = true;
 					}
 
 					current_file.ShouldCompile = file_changed;
@@ -241,16 +301,33 @@ namespace ShaderCompiler
 			}
 
 			// Process added files
-			foreach (KeyValuePair<UInt32, ShaderFile> pair in CurrentResult)
+			foreach (KeyValuePair<UInt32, ShaderFile> pair in CurrentDB)
 			{
 				ShaderFile current_file		= pair.Value;
-				ShaderFile previous_file	= PreviousResult.GetValue(pair.Key);
+				ShaderFile previous_file	= PreviousDB.GetValue(pair.Key);
 
 				// Current file was added
 				if (previous_file == null)
 				{
 					current_file.ShouldCompile	= true;
 					db_changed = true;
+				}
+			}
+
+			// Process dependencies
+			foreach (KeyValuePair<UInt32, ShaderFile> pair in CurrentDB)
+			{
+				ShaderFile current_file = pair.Value;
+
+				// Go through all direct and indirect dependencies
+				foreach (ShaderFile dependency in current_file.Dependencies)
+				{
+					// Recompile if at least one of them was changed
+					if (dependency.ShouldCompile)
+					{
+						current_file.ShouldCompile = true;
+						break;
+					}
 				}
 			}
 
@@ -274,11 +351,13 @@ namespace ShaderCompiler
 			// Go through all the files and create Shaderfiles
 			ProcessFolder(Config.ShaderSourcePath);
 
+			CreateDependencies();
+
 			// Tag all shaders that need to recompile and check if the DB was changed compared to the previous build
 			bool db_changed = UpdateDadaBase();
 			if (db_changed)
 			{
-				ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
+				ShaderFileParser fileParser = new ShaderFileParser(CurrentDB.Values.ToList());
 				fileParser.ProcessFiles();
 
 				// Generate \Shaders\include\Shaders.h
@@ -300,7 +379,7 @@ namespace ShaderCompiler
 			// Go through all the files and create Shaderfiles
 			ProcessFolder(Config.ShaderSourcePath);
 
-			ShaderFileParser fileParser = new ShaderFileParser(CurrentResult.Values.ToList());
+			ShaderFileParser fileParser = new ShaderFileParser(CurrentDB.Values.ToList());
 
 			// Iterate all Compiler/ShaderModel combinations
 			EnumUtils.ForEach<Compiler>((compiler) =>
@@ -331,7 +410,7 @@ namespace ShaderCompiler
 
 		public static void StartProcessing(string rootFolder)
 		{
-			CurrentResult = new Dictionary<UInt32, ShaderFile>();
+			CurrentDB = new Dictionary<UInt32, ShaderFile>();
 
 			if (Arguments.IsClean())
 				Clean();

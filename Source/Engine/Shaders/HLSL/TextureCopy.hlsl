@@ -1,7 +1,7 @@
 // ShaderCompiler. Name: TextureCopyPS, Type: PS, EntryPoint: MainPS
 // ShaderCompiler. Name: TextureCopyVS, Type: VS, EntryPoint: MainVS
 
-#include "VertexLayouts.h"
+#include "Common/VertexLayouts.h"
 
 Texture2D<float4> SceneTexture : register(t0);
 SamplerState Sampler : register(s0);

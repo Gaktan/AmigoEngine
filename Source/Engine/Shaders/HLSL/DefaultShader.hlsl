@@ -1,7 +1,7 @@
 // ShaderCompiler. Name: DefaultPS, Type: PS, EntryPoint: MainPS
 // ShaderCompiler. Name: DefaultVS, Type: VS, EntryPoint: MainVS
 
-#include "VertexLayouts.h"
+#include "Common/VertexLayouts.h"
 
 struct DefaultConstantBuffer
 {

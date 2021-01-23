@@ -24,7 +24,7 @@ ShaderCompiler. Name: Test_21, EntryPoint: mainD, Type: PS
 // ShaderCompiler. Name: Test_23, EntryPoint: mainD, Type: PS, Defines: TEST23=1;TEST24=0
 // ShaderCompiler. Name: Test_24, EntryPoint: mainD, Type: PS, Defines: TEST23 = 0; TEST24=1
 
-#include "VertexLayouts.h"
+#include "Common/VertexLayouts.h"
 
 struct TestX1234
 {
