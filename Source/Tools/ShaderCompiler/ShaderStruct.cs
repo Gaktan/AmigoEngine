@@ -152,8 +152,8 @@ namespace ShaderCompiler
 	{
 		public string Name;
 		public List<StructElement> Elements;
-		public bool IsConstantBuffer	= false;
-		public bool IsVertexLayout		= false;
+		public bool IsVertexShaderOutput	= false;
+		public bool IsVertexLayout			= false;
 
 		// Captures a single struct and its content between {}. Group1: Name, Group2: Content
 		private static readonly string StructRegex = @"struct\s+(.+)\s*\{([^}]*)\}";
@@ -172,14 +172,17 @@ namespace ShaderCompiler
 
 		public void DetectStructType()
 		{
+			IsVertexShaderOutput	= false;
+			IsVertexLayout			= false;
+
 			foreach (StructElement se in Elements)
 			{
 				// If we use SV_Position, it means this is a vertex shader output, not an input. So we don't consider it as a vertex layout or constant buffer
 				// TODO: Regex test maybe?
 				if (se.Semantic != null && se.Semantic == "SV_Position")
 				{
-					IsConstantBuffer	= false;
-					IsVertexLayout		= false;
+					IsVertexShaderOutput	= true;
+					IsVertexLayout			= false;
 					return;
 				}
 			}
@@ -189,15 +192,11 @@ namespace ShaderCompiler
 				// At least one semantic or interpolation means we are definitely sure this is a vertex layout
 				if (se.Semantic != null || se.Interpolation != null)
 				{
-					IsConstantBuffer	= false;
-					IsVertexLayout		= true;
+					IsVertexShaderOutput	= false;
+					IsVertexLayout			= true;
 					return;
 				}
 			}
-
-			// Else, this is probably a constant buffer
-			IsConstantBuffer	= true;
-			IsVertexLayout		= false;
 		}
 
 		public override bool Equals(object obj)
@@ -215,10 +214,12 @@ namespace ShaderCompiler
 
 		public void DebugPrint()
 		{
-			if (IsConstantBuffer)
-				Console.Write(GetConstantBufferString());
-			else
+			if (IsVertexShaderOutput)
 				Console.Write(GetVertexLayoutString());
+			else if (IsVertexLayout)
+				Console.Write(GetVertexLayoutString());
+			else
+				Console.Write(GetConstantBufferString());
 		}
 
 		public string GetConstantBufferString()

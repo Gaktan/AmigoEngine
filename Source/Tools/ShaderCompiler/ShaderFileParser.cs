@@ -30,8 +30,8 @@ namespace ShaderCompiler
 			foreach (ShaderFile shaderFile in ShaderFiles)
 				ProcessSingleFile(shaderFile);
 
-			// Find if it has any duplicates
-			var duplicates = Structs.Where(s => s.IsConstantBuffer && s.IsVertexLayout).GroupBy(s => s.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
+			// Find if it has any duplicate structs that aren't vertex shader outputs
+			var duplicates = Structs.Where(s => !s.IsVertexShaderOutput).GroupBy(s => s.Name).Where(g => g.Count() > 1).Select(g => g.Key).ToList();
 
 			if (duplicates.Count > 0)
 			{

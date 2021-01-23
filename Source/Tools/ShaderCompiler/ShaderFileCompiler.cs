@@ -226,7 +226,7 @@ namespace ShaderCompiler
 			// Go through all structs and only append constant buffers
 			foreach (Struct sr in inStructs)
 			{
-				if (sr.IsConstantBuffer)
+				if (!sr.IsVertexShaderOutput && !sr.IsVertexLayout)
 					string_builder.AppendLine(sr.GetConstantBufferString());
 			}
 
