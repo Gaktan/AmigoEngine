@@ -172,9 +172,9 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	Mouse& mouse = Mouse::GetInstance();
 	if (mouse.IsButtonDown(MouseButton::Middle) || mouse.WasJustReleased(MouseButton::Middle))
 	{
-		MousePos click_pos		= mouse.GetNormalizedClickPos(MouseButton::Middle);
-		MousePos mouse_pos		= mouse.GetNormalizedPos();
-		MousePos mouse_movement	= { click_pos.x - mouse_pos.x, click_pos.y - mouse_pos.y };
+		Vec2 click_pos		= mouse.GetNormalizedClickPos(MouseButton::Middle);
+		Vec2 mouse_pos		= mouse.GetNormalizedPos();
+		Vec2 mouse_movement(click_pos.x - mouse_pos.x, click_pos.y - mouse_pos.y);
 
 		Vec3 local_point(eye_position - focus_point);
 		float x = local_point.x;

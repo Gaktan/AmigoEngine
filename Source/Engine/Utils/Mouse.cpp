@@ -80,17 +80,17 @@ void Mouse::UpdateWindowSize(int inWidth, int inHeight)
 	m_WindowSize = { (float) inWidth, (float) inHeight };
 }
 
-MousePos Mouse::GetCurrentPos() const
+Vec2 Mouse::GetCurrentPos() const
 {
 	return m_CurrentPos;
 }
 
-MousePos Mouse::GetNormalizedPos() const
+Vec2 Mouse::GetNormalizedPos() const
 {
 	return m_NormalizedPos;
 }
 
-MousePos Mouse::GetNormalizedClickPos(MouseButton inButton) const
+Vec2 Mouse::GetNormalizedClickPos(MouseButton inButton) const
 {
 	return m_ButtonStates[(int) inButton].m_NormalizedPosAtClick;
 }

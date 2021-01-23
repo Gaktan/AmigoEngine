@@ -1,11 +1,6 @@
 #pragma once
 
-// TODO: Replace this with a Vec2
-struct MousePos
-{
-	float x = 0.0f;
-	float y = 0.0f;
-};
+#include "Math/Math.h"
 
 enum class MouseButton
 {
@@ -17,17 +12,17 @@ enum class MouseButton
 
 struct ButtonState
 {
-	bool		m_IsDown				= false;
-	bool		m_WasPressed			= false;
-	MousePos	m_NormalizedPosAtClick	= { 0.0f, 0.0f };
+	bool	m_IsDown				= false;
+	bool	m_WasPressed			= false;
+	Vec2	m_NormalizedPosAtClick	= { 0.0f, 0.0f };
 };
 
 class Mouse
 {
 protected:
-	MousePos	m_CurrentPos;
-	MousePos	m_NormalizedPos;
-	MousePos	m_WindowSize;
+	Vec2	m_CurrentPos;
+	Vec2	m_NormalizedPos;
+	Vec2	m_WindowSize;
 
 	ButtonState	m_ButtonStates[(int) MouseButton::Count];
 
@@ -36,13 +31,13 @@ public:
 	void		UpdateWindowSize(int inWidth, int inHeight);
 
 	// Mouse coords in [0..m_WindowSize] range, (0, 0) is the top left corner
-	MousePos	GetCurrentPos() const;
+	Vec2		GetCurrentPos() const;
 
 	// Mouse coords in [-1..1] range, (0, 0) is the center of the screen
-	MousePos	GetNormalizedPos() const;
+	Vec2		GetNormalizedPos() const;
 
 	// Get normalized coords of a button click
-	MousePos	GetNormalizedClickPos(MouseButton inButton) const;
+	Vec2		GetNormalizedClickPos(MouseButton inButton) const;
 
 	// Returns true if the passed button is currently pressed this frame
 	bool		IsButtonDown(MouseButton inButton) const;
