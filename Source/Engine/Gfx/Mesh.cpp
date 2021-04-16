@@ -1,11 +1,6 @@
 #include "Engine.h"
 #include "Mesh.h"
 
-Mesh::~Mesh()
-{
-	Release();
-}
-
 void Mesh::Init(
 	ID3D12GraphicsCommandList2* inCommandList,
 	D3D_PRIMITIVE_TOPOLOGY inPrimitiveTopology,
@@ -27,9 +22,14 @@ void Mesh::Init(
 
 void Mesh::Release()
 {
+	m_VertexBuffer->Release();
 	delete m_VertexBuffer;
+
 	if (m_IndexBuffer != nullptr)
+	{
+		m_IndexBuffer->Release();
 		delete m_IndexBuffer;
+	}
 }
 
 void Mesh::SetResourceName(const std::string& inName)

@@ -164,6 +164,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 
 void DrawUtils::Destroy()
 {
+	s_FullScreenTriangle.Release();
 	m_PipelineState->Release();
 	m_PipelineState = nullptr;
 	m_RootSignature->Release();

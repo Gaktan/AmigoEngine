@@ -33,10 +33,10 @@ GBuffer::~GBuffer()
 
 void GBuffer::ReleaseResources()
 {
-	m_DepthBuffer->ReleaseResources();
+	m_DepthBuffer->Release();
 
 	for (uint32 i = 0; i < m_NumRenderTargets; ++i)
-		m_RenderTargets[i]->ReleaseResources();
+		m_RenderTargets[i]->Release();
 }
 
 void GBuffer::AllocateResources(uint32 inTargetWidth, uint32 inTargetHeight)

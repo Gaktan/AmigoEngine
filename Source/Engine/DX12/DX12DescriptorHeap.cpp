@@ -5,10 +5,9 @@
 
 DX12DescriptorHeap::DX12DescriptorHeap(
 	D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors,
-	D3D12_DESCRIPTOR_HEAP_FLAGS inFlags/* = D3D12_DESCRIPTOR_HEAP_FLAG_NONE*/)
+	D3D12_DESCRIPTOR_HEAP_FLAGS inFlags/* = D3D12_DESCRIPTOR_HEAP_FLAG_NONE*/) :
+	m_NumDescriptors(inNumDescriptors)
 {
-	m_NumDescriptors = inNumDescriptors;
-
 	D3D12_DESCRIPTOR_HEAP_DESC desc = {};
 	desc.NumDescriptors	= inNumDescriptors;
 	desc.Type			= inHeapType;
@@ -74,11 +73,6 @@ D3D12_GPU_DESCRIPTOR_HANDLE DX12DescriptorHeap::GetGPUHandle(uint32 inIndex) con
 	return handle;
 }
 
-ID3D12DescriptorHeap* DX12DescriptorHeap::GetD3DDescriptorHeap() const
-{
-	return m_D3DDescriptorHeap;
-}
-
 DX12FreeListDescriptorHeap::DX12FreeListDescriptorHeap(
 	D3D12_DESCRIPTOR_HEAP_TYPE inHeapType, uint32 inNumDescriptors,
 	D3D12_DESCRIPTOR_HEAP_FLAGS inFlags/* = D3D12_DESCRIPTOR_HEAP_FLAG_NONE*/) :
@@ -87,10 +81,6 @@ DX12FreeListDescriptorHeap::DX12FreeListDescriptorHeap(
 	m_FreeIndices.reserve(inNumDescriptors);
 	for (uint32 i = 0; i < inNumDescriptors; ++i)
 		m_FreeIndices.push_back(i);
-}
-
-DX12FreeListDescriptorHeap::~DX12FreeListDescriptorHeap()
-{
 }
 
 uint32 DX12FreeListDescriptorHeap::Allocate()

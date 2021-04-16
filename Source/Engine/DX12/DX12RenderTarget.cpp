@@ -77,10 +77,8 @@ void DX12RenderTarget::InitFromResource(
 	SetResourceName(m_Resource, "DX12RenderTarget::InitFromResource");
 }
 
-void DX12RenderTarget::ReleaseResources()
+void DX12RenderTarget::OnReleased()
 {
-	DX12Resource::ReleaseResources();
-
 	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
 	descriptor_heap->Release(m_RTVDescriptorHandle);
 }
@@ -88,16 +86,6 @@ void DX12RenderTarget::ReleaseResources()
 void DX12RenderTarget::ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const
 {
 	inCommandList->ClearRenderTargetView(m_RTVDescriptorHandle, &m_ClearValue[0], 0, nullptr);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE DX12RenderTarget::GetCPUDescriptorHandle() const
-{
-	return m_RTVDescriptorHandle;
-}
-
-DXGI_FORMAT DX12RenderTarget::GetFormat() const
-{
-	return m_Format;
 }
 
 void DX12DepthBuffer::InitAsDepthStencilBuffer(
@@ -147,10 +135,8 @@ void DX12DepthBuffer::InitAsDepthStencilBuffer(
 	SetResourceName(m_Resource, "DX12DepthRenderTarget::InitAsDepthStencilBuffer");
 }
 
-void DX12DepthBuffer::ReleaseResources()
+void DX12DepthBuffer::OnReleased()
 {
-	DX12Resource::ReleaseResources();
-
 	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV);
 	descriptor_heap->Release(m_DSVDescriptorHandle);
 }
@@ -158,9 +144,4 @@ void DX12DepthBuffer::ReleaseResources()
 void DX12DepthBuffer::ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const
 {
 	inCommandList->ClearDepthStencilView(m_DSVDescriptorHandle, D3D12_CLEAR_FLAG_DEPTH | D3D12_CLEAR_FLAG_STENCIL, m_ClearValue, m_StencilClearValue, 0, nullptr);
-}
-
-D3D12_CPU_DESCRIPTOR_HANDLE DX12DepthBuffer::GetCPUDescriptorHandle() const
-{
-	return m_DSVDescriptorHandle;
 }

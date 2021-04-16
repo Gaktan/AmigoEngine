@@ -4,12 +4,6 @@
 #include "DX12/DX12DescriptorHeap.h"
 #include "DX12/DX12Device.h"
 
-DX12Texture::~DX12Texture()
-{
-	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	descriptor_heap->Release(m_CPUHandle);
-}
-
 void DX12Texture::InitAsTexture(
 	ID3D12GraphicsCommandList2* inCommandList,
 	uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
@@ -95,7 +89,8 @@ void DX12Texture::UpdateBufferResource(
 	SetResourceName(m_IntermediateResource, "DX12Texture::UpdateBufferResource");
 }
 
-D3D12_CPU_DESCRIPTOR_HANDLE DX12Texture::GetCPUHandle() const
+void DX12Texture::OnReleased()
 {
-	return m_CPUHandle;
+	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	descriptor_heap->Release(m_CPUHandle);
 }

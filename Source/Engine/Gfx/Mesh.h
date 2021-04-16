@@ -11,8 +11,6 @@ protected:
 	D3D_PRIMITIVE_TOPOLOGY		m_PrimitiveTopology = D3D_PRIMITIVE_TOPOLOGY_UNDEFINED;
 
 public:
-	~Mesh();
-
 	void Init(
 		ID3D12GraphicsCommandList2* inCommandList,
 		D3D_PRIMITIVE_TOPOLOGY inPrimitiveTopology,

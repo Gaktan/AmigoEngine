@@ -19,7 +19,7 @@ bool HandleAssert(const char* inFileName, int inLineNumber, const char* inExpres
 	Trace("******************************************************************************************************************************************************");
 	Trace("*                                                            Assert failed                                                                           *");
 	Trace("******************************************************************************************************************************************************");
-	int expression_size = 142 - std::strlen(inFileName) - ::log10((float) inLineNumber);
+	size_t expression_size = 142 - std::strlen(inFileName) - static_cast<size_t>(::log10(static_cast<float>(inLineNumber)));
 	Trace("* %s(%d): %-*s *", inFileName, inLineNumber, expression_size, inExpression);
 	if (inMessage != nullptr)
 		Trace("* %-*s *", 146, inMessage);

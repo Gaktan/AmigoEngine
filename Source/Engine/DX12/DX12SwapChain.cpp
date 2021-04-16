@@ -91,7 +91,10 @@ DX12SwapChain::DX12SwapChain(HWND inHandle, const DX12CommandQueue& inCommandQue
 DX12SwapChain::~DX12SwapChain()
 {
 	for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
+	{
+		m_BackBuffers[i]->Release();
 		delete m_BackBuffers[i];
+	}
 
 	m_D3DSwapChain->Release();
 }
@@ -107,7 +110,7 @@ void DX12SwapChain::UpdateRenderTargetViews(uint32 inWidth, uint32 inHeight, boo
 		for (uint32 i = 0; i < NUM_BUFFERED_FRAMES; ++i)
 		{
 			// Any references to the back buffers must be released before the swap chain can be resized.
-			m_BackBuffers[i]->ReleaseResources();
+			m_BackBuffers[i]->Release();
 			m_FrameFenceValues[i] = m_FrameFenceValues[m_CurrentBackBufferIndex];
 		}
 

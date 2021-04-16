@@ -141,10 +141,13 @@ void UnloadContent()
 
 	DrawUtils::Destroy();
 
+	m_ConstantBuffer->Release();
 	delete m_ConstantBuffer;
 
+	m_GBuffer->ReleaseResources();
 	delete m_GBuffer;
 
+	m_DummyTexture->Release();
 	delete m_DummyTexture;
 
 	m_ContentLoaded = false;
@@ -157,6 +160,7 @@ void OnResize(uint32 inWidth, uint32 inHeight)
 
 void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 {
+	(void)inDeltaT;
 	Mouse::GetInstance().UpdateWindowSize(inWidth, inHeight);
 	Mouse::GetInstance().Update();
 

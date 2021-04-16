@@ -25,18 +25,15 @@ void DX12Resource::InitAsResource(
 	SetResourceName(m_Resource, "DX12Resource::InitAsResource");
 }
 
-void DX12Resource::ReleaseResources()
+void DX12Resource::Release()
 {
+	OnReleased();
+
 	if (m_Resource != nullptr)
 		m_Resource->Release();
 
 	if (m_IntermediateResource != nullptr)
 		m_IntermediateResource->Release();
-}
-
-DX12Resource::~DX12Resource()
-{
-	ReleaseResources();
 }
 
 void DX12Resource::UpdateBufferResource(
@@ -72,11 +69,6 @@ void DX12Resource::UpdateBufferResource(
 						   m_Resource, m_IntermediateResource,
 						   0, 0, 1, &subresource_data);
 	}
-}
-
-ID3D12Resource* DX12Resource::GetResource() const
-{
-	return m_Resource;
 }
 
 void DX12Resource::SetResourceName(ID3D12Resource* inResource, const std::string& inName)

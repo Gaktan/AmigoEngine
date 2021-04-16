@@ -5,10 +5,9 @@
 #include "DX12/DX12SwapChain.h"
 
 DX12CommandQueue::DX12CommandQueue(D3D12_COMMAND_LIST_TYPE inType) :
-	m_CommandListType(inType),
-	m_Fence()
+	m_CommandListType(inType)
 {
-	D3D12_COMMAND_QUEUE_DESC desc = {};
+	D3D12_COMMAND_QUEUE_DESC desc{};
 	desc.Type		= inType;
 	desc.Priority	= D3D12_COMMAND_QUEUE_PRIORITY_NORMAL;
 	desc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE;

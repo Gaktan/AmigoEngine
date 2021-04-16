@@ -7,7 +7,7 @@
 #include "Gfx/RenderPass.h"
 #include "Gfx/ShaderObject.h"
 
-DrawableObject::DrawableObject(const Mesh* inMesh, const ShaderObject* inShaderObjet) :
+DrawableObject::DrawableObject(Mesh* inMesh, const ShaderObject* inShaderObjet) :
 	m_Mesh(inMesh),
 	m_Shader(inShaderObjet)
 {
@@ -17,6 +17,7 @@ DrawableObject::DrawableObject(const Mesh* inMesh, const ShaderObject* inShaderO
 
 DrawableObject::~DrawableObject()
 {
+	m_Mesh->Release();
 	delete m_Mesh;
 }
 
