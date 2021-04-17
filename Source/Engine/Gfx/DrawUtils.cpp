@@ -11,8 +11,8 @@
 #include "Shaders/Include/VertexLayouts.h"
 
 Mesh					DrawUtils::s_FullScreenTriangle;
-ID3D12PipelineState*	DrawUtils::m_PipelineState = nullptr;
-ID3D12RootSignature*	DrawUtils::m_RootSignature = nullptr;
+ID3D12PipelineState*	DrawUtils::s_PipelineState = nullptr;
+ID3D12RootSignature*	DrawUtils::s_RootSignature = nullptr;
 
 // TODO: This is all a VERY big mess right now. This is temporary, just so I finally can render something on screen
 void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
@@ -74,7 +74,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 
 			// Create the root signature.
 			ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-																				root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+																				root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&s_RootSignature)));
 		}
 
 		D3D12_GRAPHICS_PIPELINE_STATE_DESC pso_desc;
@@ -82,7 +82,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 
 		//void ShaderObject::CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode)
 		{
-			pso_desc.pRootSignature			= m_RootSignature;
+			pso_desc.pRootSignature			= s_RootSignature;
 			pso_desc.VS						= InlineShaders::TextureCopyVS;
 			pso_desc.PS						= InlineShaders::TextureCopyPS;
 			pso_desc.InputLayout			= { VertexInputLayouts::VertexPosUV, _countof(VertexInputLayouts::VertexPosUV) };
@@ -158,17 +158,17 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 		}
 
 		// Finally create the PSO
-		ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
+		ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&s_PipelineState)));
 	}
 }
 
 void DrawUtils::Destroy()
 {
 	s_FullScreenTriangle.Release();
-	m_PipelineState->Release();
-	m_PipelineState = nullptr;
-	m_RootSignature->Release();
-	m_RootSignature = nullptr;
+	s_PipelineState->Release();
+	s_PipelineState = nullptr;
+	s_RootSignature->Release();
+	s_RootSignature = nullptr;
 }
 
 void SetupBindings(ID3D12GraphicsCommandList2* inCommandList, DX12RenderTarget* inRenderTarget)
@@ -192,8 +192,8 @@ void DrawUtils::DrawFullScreenTriangle(ID3D12GraphicsCommandList2* inCommandList
 
 	s_FullScreenTriangle.Set(inCommandList);
 
-	inCommandList->SetGraphicsRootSignature(m_RootSignature);
-	inCommandList->SetPipelineState(m_PipelineState);
+	inCommandList->SetGraphicsRootSignature(s_RootSignature);
+	inCommandList->SetPipelineState(s_PipelineState);
 
 	// Transition from Render target to SRV
 	{

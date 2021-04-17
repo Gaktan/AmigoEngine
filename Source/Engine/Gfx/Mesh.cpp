@@ -52,8 +52,3 @@ void Mesh::Set(ID3D12GraphicsCommandList2* inCommandList) const
 	if (m_IndexBuffer != nullptr)
 		m_IndexBuffer->SetIndexBuffer(inCommandList);
 }
-
-uint32 Mesh::GetNumIndices() const
-{
-	return m_NumIndices;
-}

@@ -139,5 +139,4 @@ void RenderPassDesc::SetupRenderPassDesc(RenderPass inRenderPass, D3D12_GRAPHICS
 	default:
 		Assert(false, "RenderPass nor supported.");
 	}
-
 }

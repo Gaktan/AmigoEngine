@@ -7,13 +7,13 @@
 #include <mathfu/matrix.h>
 #include <mathfu/vector.h>
 
-typedef mathfu::Vector<float, 2> Vec2;
-typedef mathfu::Vector<float, 3> Vec3;
-typedef mathfu::Vector<float, 4> Vec4;
+using Vec2 = mathfu::Vector<float, 2>;
+using Vec3 = mathfu::Vector<float, 3>;
+using Vec4 = mathfu::Vector<float, 4>;
 
-typedef mathfu::Matrix<float, 4, 4> Mat4x4;
+using Mat4x4 = mathfu::Matrix<float, 4, 4>;
 
-typedef mathfu::Quaternion<float> Quat;
+using Quat = mathfu::Quaternion<float>;
 
 namespace Math
 {

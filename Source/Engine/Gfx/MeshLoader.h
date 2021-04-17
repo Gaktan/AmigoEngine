@@ -48,11 +48,11 @@ struct Range
 
 struct MeshInfo
 {
-	Range				m_VertexBuffeRange;
-	Range				m_IndexBufferRange;
+	Range			m_VertexBuffeRange;
+	Range			m_IndexBufferRange;
 
-	std::string			m_ObjectName;
-	std::string			m_MaterialName;
+	std::string		m_ObjectName;
+	std::string		m_MaterialName;
 
 	MeshInfo();
 	MeshInfo(const MeshInfo& inPreviousMeshInfo);
@@ -65,9 +65,27 @@ struct MaterialInfo
 	bool m_IsTransparent = false;
 };
 
-class MeshLoader
+class MeshLoader final
 {
-protected:
+public:
+	void	LoadFromFile(const std::string& inFile);
+	void	Finalize(ID3D12GraphicsCommandList2* inCommandList,
+					 const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& outBuckets);
+
+private:
+	void	ProcessLine(const std::string& inLine);
+	void	ProcessTriangle(const std::vector<std::string>& inFaceElements);
+	void	ReverseWinding();
+	void	ProcessMaterialLibraryFile(const std::string& inFile);
+
+private:
+	static std::map<std::string, OBJKeyword> s_OBJKeywords;
+
+	static OBJKeyword GetKeywordFromString(const std::string& inStr);
+public:
+	static void Init();
+
+private:
 	// TODO: Hardcoded VertexFormat
 	std::vector<Vec3>				m_AllPositions;
 	std::vector<Vec3>				m_AllNormals;
@@ -82,23 +100,4 @@ protected:
 	size_t							m_CurrentMeshInfo		= 0;
 
 	std::map<std::string, MaterialInfo>		m_MaterialInfos;
-
-public:
-	void	LoadFromFile(const std::string& inFile);
-	void	Finalize(ID3D12GraphicsCommandList2* inCommandList,
-					 const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& outBuckets);
-
-private:
-	void	ProcessLine(const std::string& inLine);
-	void	ProcessTriangle(const std::vector<std::string>& inFaceElements);
-	void	ReverseWinding();
-	void	ProcessMaterialLibraryFile(const std::string& inFile);
-
-	// Static members
-protected:
-	static std::map<std::string, OBJKeyword> s_OBJKeywords;
-
-	static OBJKeyword GetKeywordFromString(const std::string& inStr);
-public:
-	static void Init();
 };

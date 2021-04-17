@@ -6,13 +6,13 @@ class Mesh;
 class ShaderObject;
 class DX12Resource;
 
-class DrawUtils
+class DrawUtils final
 {
-protected:
+private:
 	static Mesh						s_FullScreenTriangle;
 	// TODO: turn this into a ShaderObject
-	static ID3D12PipelineState*		m_PipelineState;
-	static ID3D12RootSignature*		m_RootSignature;
+	static ID3D12PipelineState*		s_PipelineState;
+	static ID3D12RootSignature*		s_RootSignature;
 
 public:
 	static void Init(ID3D12GraphicsCommandList2* inCommandList);

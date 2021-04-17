@@ -11,8 +11,8 @@ enum RenderPass : uint32
 	Count
 };
 
-typedef std::vector<DrawableObject*> RenderBucket;
-typedef RenderBucket RenderBuckets[RenderPass::Count];
+using RenderBucket	= std::vector<DrawableObject*>;
+using RenderBuckets	= RenderBucket[RenderPass::Count];
 
 class RenderPassDesc
 {

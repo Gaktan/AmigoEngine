@@ -6,16 +6,15 @@
 
 class DX12Texture;
 
-class TextureLoader
+class TextureLoader final
 {
-protected:
-	DirectX::ScratchImage m_ScratchImage;
-
 public:
 	void			LoadFromFile(const std::string& inFile);
 	DX12Texture*	CreateTexture(ID3D12GraphicsCommandList2* inCommandList);
 
-	// Static members
 public:
 	static void		Init();
+
+private:
+	DirectX::ScratchImage m_ScratchImage;
 };
