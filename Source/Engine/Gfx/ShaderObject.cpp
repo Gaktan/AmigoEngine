@@ -19,11 +19,11 @@ ShaderObject::~ShaderObject()
 	m_RootSignature->Release();
 }
 
-void ShaderObject::Set(ID3D12GraphicsCommandList2* inCommandList) const
+void ShaderObject::Set(ID3D12GraphicsCommandList2& inCommandList) const
 {
 	// TODO: Deal with actual shader bindings (textures, constant buffers, ...)
-	inCommandList->SetGraphicsRootSignature(m_RootSignature);
-	inCommandList->SetPipelineState(m_PipelineState);
+	inCommandList.SetGraphicsRootSignature(m_RootSignature);
+	inCommandList.SetPipelineState(m_PipelineState);
 }
 
 void ShaderObject::CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode)
@@ -43,7 +43,7 @@ void ShaderObject::CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D
 
 	RenderPassDesc::SetupRenderPassDesc(m_RenderPass, pso_desc);
 
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&m_PipelineState)));
 }
 
 void ShaderObject::CreateRootSignature()
@@ -53,7 +53,7 @@ void ShaderObject::CreateRootSignature()
 	// Create a root signature.
 	D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
 	feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-	if (FAILED(g_RenderingDevice.GetD3DDevice()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
+	if (FAILED(g_RenderingDevice.GetD3DDevice().CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
 	{
 		feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 	}
@@ -87,6 +87,6 @@ void ShaderObject::CreateRootSignature()
 														feature_data.HighestVersion, &root_signature_blob, &error_blob));
 
 	// Create the root signature.
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
-																		root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
+																	   root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&m_RootSignature)));
 }

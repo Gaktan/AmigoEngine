@@ -14,23 +14,23 @@ private:
 	~DX12CommandQueue();
 
 	ID3D12CommandAllocator*		CreateCommandAllocator() const;
-	ID3D12GraphicsCommandList2* CreateCommandList(ID3D12CommandAllocator* inCommandAllocator) const;
+	ID3D12GraphicsCommandList2* CreateCommandList(ID3D12CommandAllocator& inCommandAllocator) const;
 
 public:
 	// Get an available command list from the command queue.
-	ID3D12GraphicsCommandList2*	GetCommandList();
+	ID3D12GraphicsCommandList2&	GetCommandList();
 	DX12DescriptorHeap&			GetDescriptorHeap();
 
 	// Execute a command list.
 	// Returns the fence value to wait for for this command list.
-	uint64	ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList);
+	uint64	ExecuteCommandList(ID3D12GraphicsCommandList2& inCommandList);
 
 	uint64	Signal();
 	bool	IsFenceComplete(uint64 fenceValue) const;
 	void	WaitForFenceValue(uint64 fenceValue) const;
 	void	Flush();
 
-	inline ID3D12CommandQueue* GetD3D12CommandQueue() const		{ return m_D3DCommandQueue; }
+	inline ID3D12CommandQueue& GetD3D12CommandQueue() const		{ return *m_D3DCommandQueue; }
 
 private:
 	enum

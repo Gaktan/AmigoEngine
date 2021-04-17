@@ -15,7 +15,7 @@ ID3D12PipelineState*	DrawUtils::s_PipelineState = nullptr;
 ID3D12RootSignature*	DrawUtils::s_RootSignature = nullptr;
 
 // TODO: This is all a VERY big mess right now. This is temporary, just so I finally can render something on screen
-void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
+void DrawUtils::Init(ID3D12GraphicsCommandList2& inCommandList)
 {
 	// Setup meshes
 	{
@@ -42,7 +42,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 			// Create a root signature.
 			D3D12_FEATURE_DATA_ROOT_SIGNATURE feature_data = {};
 			feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_1;
-			if (FAILED(g_RenderingDevice.GetD3DDevice()->CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
+			if (FAILED(g_RenderingDevice.GetD3DDevice().CheckFeatureSupport(D3D12_FEATURE_ROOT_SIGNATURE, &feature_data, sizeof(feature_data))))
 				feature_data.HighestVersion = D3D_ROOT_SIGNATURE_VERSION_1_0;
 
 			// Allow input layout and deny unnecessary access to certain pipeline stages.
@@ -73,7 +73,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 																feature_data.HighestVersion, &root_signature_blob, &error_blob));
 
 			// Create the root signature.
-			ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
+			ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateRootSignature(0, root_signature_blob->GetBufferPointer(),
 																				root_signature_blob->GetBufferSize(), IID_PPV_ARGS(&s_RootSignature)));
 		}
 
@@ -158,7 +158,7 @@ void DrawUtils::Init(ID3D12GraphicsCommandList2* inCommandList)
 		}
 
 		// Finally create the PSO
-		ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&s_PipelineState)));
+		ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateGraphicsPipelineState(&pso_desc, IID_PPV_ARGS(&s_PipelineState)));
 	}
 }
 
@@ -171,45 +171,45 @@ void DrawUtils::Destroy()
 	s_RootSignature = nullptr;
 }
 
-void SetupBindings(ID3D12GraphicsCommandList2* inCommandList, DX12RenderTarget* inRenderTarget)
+void SetupBindings(ID3D12GraphicsCommandList2& inCommandList, DX12RenderTarget& inRenderTarget)
 {
 	// TODO: This is whack
-	auto& descriptor_heap = g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->GetDescriptorHeap();
+	auto& descriptor_heap = g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT).GetDescriptorHeap();
 	uint32 descriptor_index = descriptor_heap.Allocate();
 	D3D12_CPU_DESCRIPTOR_HANDLE descriptor_handle = descriptor_heap.GetCPUHandle(descriptor_index);
 
 	// Create temporary SRV of the render target
-	g_RenderingDevice.GetD3DDevice()->CreateShaderResourceView(inRenderTarget->GetResource(), nullptr, descriptor_handle);
+	g_RenderingDevice.GetD3DDevice().CreateShaderResourceView(inRenderTarget.GetResource(), nullptr, descriptor_handle);
 
 	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-	inCommandList->SetGraphicsRootDescriptorTable(0, descriptor_heap.GetGPUHandle(descriptor_index));
+	inCommandList.SetGraphicsRootDescriptorTable(0, descriptor_heap.GetGPUHandle(descriptor_index));
 }
 
-void DrawUtils::DrawFullScreenTriangle(ID3D12GraphicsCommandList2* inCommandList, DX12Resource* inTexture)
+void DrawUtils::DrawFullScreenTriangle(ID3D12GraphicsCommandList2& inCommandList, DX12Resource& inTexture)
 {
-	DX12RenderTarget* render_target = dynamic_cast<DX12RenderTarget*>(inTexture);
+	DX12RenderTarget* render_target = dynamic_cast<DX12RenderTarget*>(&inTexture);
 	Assert(render_target != nullptr);
 
 	s_FullScreenTriangle.Set(inCommandList);
 
-	inCommandList->SetGraphicsRootSignature(s_RootSignature);
-	inCommandList->SetPipelineState(s_PipelineState);
+	inCommandList.SetGraphicsRootSignature(s_RootSignature);
+	inCommandList.SetPipelineState(s_PipelineState);
 
 	// Transition from Render target to SRV
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			inTexture->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
-		inCommandList->ResourceBarrier(1, &barrier);
+			inTexture.GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
+		inCommandList.ResourceBarrier(1, &barrier);
 	}
 
-	SetupBindings(inCommandList, render_target);
+	SetupBindings(inCommandList, *render_target);
 
-	inCommandList->DrawInstanced(3, 1, 0, 0);
+	inCommandList.DrawInstanced(3, 1, 0, 0);
 
 	// Transition from back to Render target
 	{
 		CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(
-			inTexture->GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
-		inCommandList->ResourceBarrier(1, &barrier);
+			inTexture.GetResource(), D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET);
+		inCommandList.ResourceBarrier(1, &barrier);
 	}
 }

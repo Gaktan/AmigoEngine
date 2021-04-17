@@ -13,12 +13,12 @@ DX12CommandQueue::DX12CommandQueue(D3D12_COMMAND_LIST_TYPE inType) :
 	desc.Flags		= D3D12_COMMAND_QUEUE_FLAG_NONE;
 	desc.NodeMask	= 0;
 
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommandQueue(&desc, IID_PPV_ARGS(&m_D3DCommandQueue)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateCommandQueue(&desc, IID_PPV_ARGS(&m_D3DCommandQueue)));
 
 	for (auto& entry : m_CommandListEntries)
 	{
 		entry.m_D3DCommandAllocator	= CreateCommandAllocator();
-		entry.m_D3DCommandList		= CreateCommandList(entry.m_D3DCommandAllocator);
+		entry.m_D3DCommandList		= CreateCommandList(*entry.m_D3DCommandAllocator);
 		entry.m_DescriptorHeap		= new DX12DescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 2048, D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE);
 	}
 }
@@ -42,7 +42,10 @@ DX12CommandQueue::~DX12CommandQueue()
 
 uint64_t DX12CommandQueue::Signal()
 {
-	return m_Fence.Signal(m_D3DCommandQueue);
+	uint64 fence_value_for_signal = m_Fence.Increment();
+	ThrowIfFailed(m_D3DCommandQueue->Signal(&m_Fence.GetD3DFence(), fence_value_for_signal));
+
+	return fence_value_for_signal;
 }
 
 bool DX12CommandQueue::IsFenceComplete(uint64 inFenceValue) const
@@ -63,22 +66,22 @@ void DX12CommandQueue::Flush()
 ID3D12CommandAllocator* DX12CommandQueue::CreateCommandAllocator() const
 {
 	ID3D12CommandAllocator* command_allocator;
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&command_allocator)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateCommandAllocator(m_CommandListType, IID_PPV_ARGS(&command_allocator)));
 
 	return command_allocator;
 }
 
-ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(ID3D12CommandAllocator* inCommandAllocator) const
+ID3D12GraphicsCommandList2* DX12CommandQueue::CreateCommandList(ID3D12CommandAllocator& inCommandAllocator) const
 {
 	ID3D12GraphicsCommandList2* command_list;
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommandList(0, m_CommandListType, inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateCommandList(0, m_CommandListType, &inCommandAllocator, nullptr, IID_PPV_ARGS(&command_list)));
 
 	command_list->Close();
 
 	return command_list;
 }
 
-ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList()
+ID3D12GraphicsCommandList2& DX12CommandQueue::GetCommandList()
 {
 	m_CurrentIndex = g_RenderingDevice.GetFrameID() % NUM_BUFFERED_FRAMES;
 
@@ -93,7 +96,7 @@ ID3D12GraphicsCommandList2* DX12CommandQueue::GetCommandList()
 		entry.m_D3DCommandList->Reset(entry.m_D3DCommandAllocator, nullptr);
 	}
 
-	return entry.m_D3DCommandList;
+	return *entry.m_D3DCommandList;
 }
 
 DX12DescriptorHeap& DX12CommandQueue::GetDescriptorHeap()
@@ -103,13 +106,13 @@ DX12DescriptorHeap& DX12CommandQueue::GetDescriptorHeap()
 
 // Execute a command list.
 // Returns the fence value to wait for for this command list.
-uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inCommandList)
+uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2& inCommandList)
 {
-	inCommandList->Close();
+	inCommandList.Close();
 
 	ID3D12CommandList* const ppCommandLists[] =
 	{
-		inCommandList
+		&inCommandList
 	};
 
 	m_D3DCommandQueue->ExecuteCommandLists(1, ppCommandLists);
@@ -117,7 +120,7 @@ uint64 DX12CommandQueue::ExecuteCommandList(ID3D12GraphicsCommandList2* inComman
 
 	auto& entry = m_CommandListEntries[m_CurrentIndex];
 	// Make sure we are executing a commandlist from the correct frame
-	Assert(entry.m_D3DCommandList == inCommandList);
+	Assert(entry.m_D3DCommandList == &inCommandList);
 
 	entry.m_IsBeingRecorded = false;
 

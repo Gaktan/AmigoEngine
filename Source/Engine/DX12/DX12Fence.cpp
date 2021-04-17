@@ -13,7 +13,7 @@ HANDLE CreateEventHandle()
 
 DX12Fence::DX12Fence()
 {
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_D3DFence)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateFence(0, D3D12_FENCE_FLAG_NONE, IID_PPV_ARGS(&m_D3DFence)));
 	m_FenceEvent = CreateEventHandle();
 }
 
@@ -23,12 +23,9 @@ DX12Fence::~DX12Fence()
 	::CloseHandle(m_FenceEvent);
 }
 
-uint64 DX12Fence::Signal(ID3D12CommandQueue* inCommandQueue)
+uint64 DX12Fence::Increment()
 {
-	uint64 fence_value_for_signal = ++m_FenceValue;
-	ThrowIfFailed(inCommandQueue->Signal(m_D3DFence, fence_value_for_signal));
-
-	return fence_value_for_signal;
+	return ++m_FenceValue;
 }
 
 void DX12Fence::WaitForFenceValue(uint64 inFenceValue, std::chrono::milliseconds inDuration/* = std::chrono::milliseconds::max()*/) const

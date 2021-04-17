@@ -5,7 +5,7 @@
 #include "DX12/DX12Device.h"
 
 void DX12Texture::InitAsTexture(
-	ID3D12GraphicsCommandList2* inCommandList,
+	ID3D12GraphicsCommandList2& inCommandList,
 	uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 	const void* inBufferData)
 {
@@ -16,7 +16,7 @@ void DX12Texture::InitAsTexture(
 	D3D12_HEAP_PROPERTIES	heap_properties = CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT);
 	D3D12_RESOURCE_DESC		resource_desc	= CD3DX12_RESOURCE_DESC::Tex2D(m_Format, m_Width, m_Height, /*arraySize*/ 1, /*mipLevels*/ 1);
 
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -31,7 +31,7 @@ void DX12Texture::InitAsTexture(
 		m_Resource,
 		D3D12_RESOURCE_STATE_COPY_DEST, D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE);
 
-	inCommandList->ResourceBarrier(1, &barrier);
+	inCommandList.ResourceBarrier(1, &barrier);
 
 	// Create the shader resourcer view.
 	D3D12_SHADER_RESOURCE_VIEW_DESC view_desc = {};
@@ -44,16 +44,16 @@ void DX12Texture::InitAsTexture(
 
 	// Allocate descriptors
 	{
-		DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-		uint32 descriptor_index	= descriptor_heap->Allocate();
-		m_CPUHandle = descriptor_heap->GetCPUHandle(descriptor_index);
+		DX12DescriptorHeap& descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+		uint32 descriptor_index	= descriptor_heap.Allocate();
+		m_CPUHandle = descriptor_heap.GetCPUHandle(descriptor_index);
 	}
 
-	g_RenderingDevice.GetD3DDevice()->CreateShaderResourceView(m_Resource, &view_desc, m_CPUHandle);
+	g_RenderingDevice.GetD3DDevice().CreateShaderResourceView(m_Resource, &view_desc, m_CPUHandle);
 }
 
 void DX12Texture::UpdateBufferResource(
-	ID3D12GraphicsCommandList2* inCommandList,
+	ID3D12GraphicsCommandList2& inCommandList,
 	size_t inBufferSize/* = 0*/, const void* inBufferData/* = nullptr*/)
 {
 	// Make sure inBufferSize is ignored
@@ -69,7 +69,7 @@ void DX12Texture::UpdateBufferResource(
 	D3D12_RESOURCE_DESC resource_desc		= CD3DX12_RESOURCE_DESC::Buffer(upload_buffer_size);
 
 	// Create upload buffer on the CPU
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateCommittedResource(
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateCommittedResource(
 		&heap_properties,
 		D3D12_HEAP_FLAG_NONE,
 		&resource_desc,
@@ -82,15 +82,15 @@ void DX12Texture::UpdateBufferResource(
 	subresource_data.RowPitch	= m_Width * 4; // TODO: Change this based on format!!
 	subresource_data.SlicePitch	= m_Width * m_Height * 4;
 
-	UpdateSubresources(inCommandList,
-						m_Resource, m_IntermediateResource,
-						0, 0, 1, &subresource_data);
+	UpdateSubresources(&inCommandList,
+					   m_Resource, m_IntermediateResource,
+					   0, 0, 1, &subresource_data);
 
-	SetResourceName(m_IntermediateResource, "DX12Texture::UpdateBufferResource");
+	SetResourceName(*m_IntermediateResource, "DX12Texture::UpdateBufferResource");
 }
 
 void DX12Texture::OnReleased()
 {
-	DX12DescriptorHeap* descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
-	descriptor_heap->Release(m_CPUHandle);
+	DX12DescriptorHeap& descriptor_heap = g_RenderingDevice.GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	descriptor_heap.Release(m_CPUHandle);
 }

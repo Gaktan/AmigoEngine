@@ -9,14 +9,14 @@ public:
 
 private:
 	virtual void UpdateBufferResource(
-		ID3D12GraphicsCommandList2* inCommandList,
+		ID3D12GraphicsCommandList2& inCommandList,
 		size_t inBufferSize = 0, const void* inBufferData = nullptr) override;
 
 	void OnReleased() override;
 
 public:
 	void InitAsTexture(
-		ID3D12GraphicsCommandList2* inCommandList,
+		ID3D12GraphicsCommandList2& inCommandList,
 		uint32 inWidth, uint32 inHeight, DXGI_FORMAT inFormat,
 		const void* inBufferData);
 

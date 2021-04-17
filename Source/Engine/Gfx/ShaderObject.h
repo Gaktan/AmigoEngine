@@ -13,7 +13,7 @@ public:
 	inline const std::string&	GetName() const			{ return m_Name; }
 	inline RenderPass			GetRenderPass() const	{ return m_RenderPass; }
 
-	void Set(ID3D12GraphicsCommandList2* inCommandList) const;
+	void Set(ID3D12GraphicsCommandList2& inCommandList) const;
 
 private:
 	void CreatePSO(const D3D12_SHADER_BYTECODE inVSBytecode, const D3D12_SHADER_BYTECODE inPSBytecode);

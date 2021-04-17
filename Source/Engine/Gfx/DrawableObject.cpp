@@ -21,14 +21,14 @@ DrawableObject::~DrawableObject()
 	delete m_Mesh;
 }
 
-void DrawableObject::SetupBindings(ID3D12GraphicsCommandList2* inCommandList)
+void DrawableObject::SetupBindings(ID3D12GraphicsCommandList2& inCommandList)
 {
 	m_Shader->Set(inCommandList);
 	m_Mesh->Set(inCommandList);
 }
 
-void DrawableObject::Render(ID3D12GraphicsCommandList2* inCommandList)
+void DrawableObject::Render(ID3D12GraphicsCommandList2& inCommandList)
 {
-	inCommandList->DrawIndexedInstanced(m_Mesh->GetNumIndices(), 1, 0, 0, 0);
+	inCommandList.DrawIndexedInstanced(m_Mesh->GetNumIndices(), 1, 0, 0, 0);
 }
 

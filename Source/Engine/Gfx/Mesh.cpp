@@ -2,7 +2,7 @@
 #include "Mesh.h"
 
 void Mesh::Init(
-	ID3D12GraphicsCommandList2* inCommandList,
+	ID3D12GraphicsCommandList2& inCommandList,
 	D3D_PRIMITIVE_TOPOLOGY inPrimitiveTopology,
 	void* inVertexBuffer, int32 inVertexBufferSize, int32 inStride,
 	void* inIndexBuffer/* = nullptr*/, int32 inIndexBufferSize/* = 0*/)
@@ -43,9 +43,9 @@ void Mesh::SetResourceName(const std::string& inName)
 		m_IndexBuffer->GetResource()->SetName((wide_str + L"_IndexBuffer").c_str());
 }
 
-void Mesh::Set(ID3D12GraphicsCommandList2* inCommandList) const
+void Mesh::Set(ID3D12GraphicsCommandList2& inCommandList) const
 {
-	inCommandList->IASetPrimitiveTopology(m_PrimitiveTopology);
+	inCommandList.IASetPrimitiveTopology(m_PrimitiveTopology);
 
 	m_VertexBuffer->SetVertexBuffer(inCommandList, 0);
 

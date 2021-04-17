@@ -15,8 +15,8 @@ private:
 	static ID3D12RootSignature*		s_RootSignature;
 
 public:
-	static void Init(ID3D12GraphicsCommandList2* inCommandList);
+	static void Init(ID3D12GraphicsCommandList2& inCommandList);
 	static void Destroy();
 
-	static void DrawFullScreenTriangle(ID3D12GraphicsCommandList2* inCommandList, DX12Resource* inTexture);
+	static void DrawFullScreenTriangle(ID3D12GraphicsCommandList2& inCommandList, DX12Resource& inTexture);
 };

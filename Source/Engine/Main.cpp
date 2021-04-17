@@ -280,5 +280,7 @@ int CALLBACK wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, PWSTR lpCmdL
 
 	UnloadContent();
 
+	g_RenderingDevice.Release();
+
 	return 0;
 }

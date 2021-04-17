@@ -64,7 +64,7 @@ DX12SwapChain::DX12SwapChain(HWND inHandle, const DX12CommandQueue& inCommandQue
 
 	IDXGISwapChain1* swap_chain1;
 	ThrowIfFailed(dxgi_factory4->CreateSwapChainForHwnd(
-		inCommandQueue.GetD3D12CommandQueue(),
+		&inCommandQueue.GetD3D12CommandQueue(),
 		inHandle,
 		&swap_chain_desc,
 		nullptr,
@@ -127,11 +127,11 @@ void DX12SwapChain::UpdateRenderTargetViews(uint32 inWidth, uint32 inHeight, boo
 		ID3D12Resource* back_buffer;
 		ThrowIfFailed(m_D3DSwapChain->GetBuffer(i, IID_PPV_ARGS(&back_buffer)));
 
-		m_BackBuffers[i]->InitFromResource(back_buffer, DXGI_FORMAT_R8G8B8A8_UNORM, clear_color);
+		m_BackBuffers[i]->InitFromResource(*back_buffer, DXGI_FORMAT_R8G8B8A8_UNORM, clear_color);
 	}
 }
 
-void DX12SwapChain::ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) const
+void DX12SwapChain::ClearBackBuffer(ID3D12GraphicsCommandList2& inCommandList) const
 {
 	auto back_buffer = m_BackBuffers[m_CurrentBackBufferIndex];
 
@@ -141,13 +141,13 @@ void DX12SwapChain::ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) c
 			back_buffer->GetResource(),
 			D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
 
-		inCommandList->ResourceBarrier(1, &barrier);
+		inCommandList.ResourceBarrier(1, &barrier);
 
 		back_buffer->ClearBuffer(inCommandList);
 	}
 }
 
-void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12CommandQueue* inCommandQueue)
+void DX12SwapChain::Present(ID3D12GraphicsCommandList2& inCommandList, DX12CommandQueue& inCommandQueue)
 {
 	// Make sure the device frame ID is in sync with our backbuffer index
 	Assert(g_RenderingDevice.GetFrameID() % NUM_BUFFERED_FRAMES == m_CurrentBackBufferIndex);
@@ -155,9 +155,9 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 	auto back_buffer = m_BackBuffers[m_CurrentBackBufferIndex];
 
 	CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(back_buffer->GetResource(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
-	inCommandList->ResourceBarrier(1, &barrier);
+	inCommandList.ResourceBarrier(1, &barrier);
 
-	m_FrameFenceValues[m_CurrentBackBufferIndex] = inCommandQueue->ExecuteCommandList(inCommandList);
+	m_FrameFenceValues[m_CurrentBackBufferIndex] = inCommandQueue.ExecuteCommandList(inCommandList);
 
 	uint32 sync_interval = m_VSync ? 1 : 0;
 	uint32 present_flags = m_TearingSupported && !m_VSync ? DXGI_PRESENT_ALLOW_TEARING : 0;
@@ -165,13 +165,13 @@ void DX12SwapChain::Present(ID3D12GraphicsCommandList2* inCommandList, DX12Comma
 
 	m_CurrentBackBufferIndex = m_D3DSwapChain->GetCurrentBackBufferIndex();
 
-	inCommandQueue->WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
+	inCommandQueue.WaitForFenceValue(m_FrameFenceValues[m_CurrentBackBufferIndex]);
 }
 
-void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList)
+void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2& inCommandList)
 {
 	D3D12_CPU_DESCRIPTOR_HANDLE rtv = m_BackBuffers[m_CurrentBackBufferIndex]->GetCPUDescriptorHandle();
-	inCommandList->OMSetRenderTargets(1, &rtv, false, nullptr);
+	inCommandList.OMSetRenderTargets(1, &rtv, false, nullptr);
 
 	// TODO: Allow to set custom viewports and scissor rects
 	D3D12_RESOURCE_DESC desc = m_BackBuffers[m_CurrentBackBufferIndex]->GetResource()->GetDesc();
@@ -179,6 +179,6 @@ void DX12SwapChain::SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList)
 	D3D12_RECT		scissor_rect	= CD3DX12_RECT(0, 0, LONG_MAX, LONG_MAX);
 	D3D12_VIEWPORT	viewport		= CD3DX12_VIEWPORT(0.0f, 0.0f, static_cast<float>(desc.Width), static_cast<float>(desc.Height));
 
-	inCommandList->RSSetViewports(1, &viewport);
-	inCommandList->RSSetScissorRects(1, &scissor_rect);
+	inCommandList.RSSetViewports(1, &viewport);
+	inCommandList.RSSetScissorRects(1, &scissor_rect);
 }

@@ -25,7 +25,7 @@ public:
 
 	D3D12_CPU_DESCRIPTOR_HANDLE		GetCPUHandle(uint32 inIndex) const;
 	D3D12_GPU_DESCRIPTOR_HANDLE		GetGPUHandle(uint32 inIndex) const;
-	inline ID3D12DescriptorHeap*	GetD3DDescriptorHeap() const			{ return m_D3DDescriptorHeap; }
+	inline ID3D12DescriptorHeap&	GetD3DDescriptorHeap() const			{ return *m_D3DDescriptorHeap; }
 
 private:
 	ID3D12DescriptorHeap*			m_D3DDescriptorHeap	= nullptr;

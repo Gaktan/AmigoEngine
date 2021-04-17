@@ -20,6 +20,38 @@ DX12Device::DX12Device()
 
 DX12Device::~DX12Device()
 {
+
+}
+
+void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
+{
+	// Make sure we don't use multiple DX12Devices or init the same device twice
+	Assert(!g_RenderingDevice.IsInitialized() && !m_IsInitialized);
+
+	EnableDebugLayer();
+	EnableGPUBasedValidation();
+
+	{
+		IDXGIAdapter4& dxgi_adapter4 = *GetAdapter(m_UseWarp);
+		m_D3DDevice = CreateDevice(dxgi_adapter4);
+		dxgi_adapter4.Release();
+	}
+
+	m_RTVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2048);
+	m_DSVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024);
+	m_SRVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
+
+	m_DirectCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	m_ComputeCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
+	m_CopyCommandQueue		= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
+
+	m_SwapChain = new DX12SwapChain(inWindowHandle, *m_DirectCommandQueue, inWidth, inHeight);
+
+	m_IsInitialized = true;
+}
+
+void DX12Device::Release()
+{
 	delete m_DirectCommandQueue;
 	delete m_ComputeCommandQueue;
 	delete m_CopyCommandQueue;
@@ -45,33 +77,6 @@ DX12Device::~DX12Device()
 	m_IsInitialized = false;
 }
 
-void DX12Device::Init(HWND inWindowHandle, uint32 inWidth, uint32 inHeight)
-{
-	// Make sure we don't use multiple DX12Devices or init the same device twice
-	Assert(!g_RenderingDevice.IsInitialized() && !m_IsInitialized);
-
-	EnableDebugLayer();
-	EnableGPUBasedValidation();
-
-	{
-		IDXGIAdapter4* dxgi_adapter4 = GetAdapter(m_UseWarp);
-		m_D3DDevice = CreateDevice(dxgi_adapter4);
-		dxgi_adapter4->Release();
-	}
-
-	m_RTVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_RTV, 2048);
-	m_DSVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_DSV, 1024);
-	m_SRVDescriptorHeap		= new DX12FreeListDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV, 4096);
-
-	m_DirectCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	m_ComputeCommandQueue	= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COMPUTE);
-	m_CopyCommandQueue		= new DX12CommandQueue(D3D12_COMMAND_LIST_TYPE_COPY);
-
-	m_SwapChain = new DX12SwapChain(inWindowHandle, *m_DirectCommandQueue, inWidth, inHeight);
-
-	m_IsInitialized = true;
-}
-
 void DX12Device::Flush()
 {
 	m_DirectCommandQueue->Flush();
@@ -79,17 +84,17 @@ void DX12Device::Flush()
 	m_CopyCommandQueue->Flush();
 }
 
-void DX12Device::Present(ID3D12GraphicsCommandList2* inCommandList)
+void DX12Device::Present(ID3D12GraphicsCommandList2& inCommandList)
 {
-	m_SwapChain->Present(inCommandList, m_DirectCommandQueue);
+	m_SwapChain->Present(inCommandList, *m_DirectCommandQueue);
 
 	m_FrameID++;
 }
 
-ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4* inAdapter)
+ID3D12Device2* DX12Device::CreateDevice(IDXGIAdapter4& inAdapter)
 {
-	ID3D12Device2* d3d12_device2;
-	ThrowIfFailed(D3D12CreateDevice(inAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12_device2)));
+	ID3D12Device2* d3d12_device2 = nullptr;
+	ThrowIfFailed(D3D12CreateDevice(&inAdapter, D3D_FEATURE_LEVEL_11_0, IID_PPV_ARGS(&d3d12_device2)));
 
 	// Enable debug messages in debug mode.
 #if defined(USE_DEBUG_LAYER)
@@ -210,7 +215,7 @@ IDXGIAdapter4* DX12Device::GetAdapter(bool inUseWarp)
 	return dxgi_adapter4;
 }
 
-DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
+DX12CommandQueue& DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) const
 {
 	DX12CommandQueue* command_queue = nullptr;
 	switch (type)
@@ -228,10 +233,10 @@ DX12CommandQueue* DX12Device::GetCommandQueue(D3D12_COMMAND_LIST_TYPE type) cons
 		Assert(false, "Invalid command queue type.");
 	}
 
-	return command_queue;
+	return *command_queue;
 }
 
-DX12DescriptorHeap* DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const
+DX12DescriptorHeap& DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inType) const
 {
 	DX12DescriptorHeap* descriptor_heap = nullptr;
 	switch (inType)
@@ -250,5 +255,5 @@ DX12DescriptorHeap* DX12Device::GetDescriptorHeap(D3D12_DESCRIPTOR_HEAP_TYPE inT
 		break;
 	}
 
-	return descriptor_heap;
+	return *descriptor_heap;
 }

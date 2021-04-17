@@ -5,13 +5,19 @@
 
 class DX12Fence final
 {
+	friend class DX12CommandQueue;
+
 public:
 	DX12Fence();
 	~DX12Fence();
 
-	uint64	Signal(ID3D12CommandQueue* inCommandQueue);
-	void	WaitForFenceValue(uint64 inFenceValue, std::chrono::milliseconds inDuration = (std::chrono::milliseconds::max)()) const;
-	bool	IsFenceComplete(uint64 inFenceValue) const;
+private:
+	inline ID3D12Fence&		GetD3DFence() const				{ return *m_D3DFence; }
+
+public:
+	uint64					Increment();
+	void					WaitForFenceValue(uint64 inFenceValue, std::chrono::milliseconds inDuration = (std::chrono::milliseconds::max)()) const;
+	bool					IsFenceComplete(uint64 inFenceValue) const;
 
 private:
 	ID3D12Fence*	m_D3DFence;

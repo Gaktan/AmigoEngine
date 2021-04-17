@@ -52,7 +52,7 @@ bool	m_ContentLoaded;
 void ResizeBuffers(int inNewWidth, int inNewHeight)
 {
 	// Recreate swapchain buffers (causes a flush)
-	g_RenderingDevice.GetSwapChain()->UpdateRenderTargetViews(inNewWidth, inNewHeight);
+	g_RenderingDevice.GetSwapChain().UpdateRenderTargetViews(inNewWidth, inNewHeight);
 
 	//Recreate GBuffer
 	m_GBuffer->ReleaseResources();
@@ -73,8 +73,8 @@ bool LoadContent(uint32 inWidth, uint32 inHeight)
 	MeshLoader::Init();
 	TextureLoader::Init();
 
-	auto* command_queue	= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
-	auto* command_list	= command_queue->GetCommandList();
+	auto& command_queue	= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT); // Don't use COPY for this.
+	auto& command_list	= command_queue.GetCommandList();
 
 	m_GBuffer = new GBuffer;
 
@@ -110,8 +110,8 @@ bool LoadContent(uint32 inWidth, uint32 inHeight)
 	m_ConstantBuffer = new DX12ConstantBuffer();
 	m_ConstantBuffer->InitAsConstantBuffer(sizeof(ConstantBuffers::DefaultConstantBuffer));
 
-	auto fence_value = command_queue->ExecuteCommandList(command_list);
-	command_queue->WaitForFenceValue(fence_value);
+	auto fence_value = command_queue.ExecuteCommandList(command_list);
+	command_queue.WaitForFenceValue(fence_value);
 
 	m_ContentLoaded = true;
 
@@ -224,18 +224,18 @@ void OnUpdate(uint32 inWidth, uint32 inHeight, float inDeltaT)
 	m_ProjectionMatrix = Mat4x4::Perspective(Math::ToRadians(m_FOV), aspect_ratio, 0.1f, 100.0f, handedness);
 }
 
-void SetupBindings(ID3D12GraphicsCommandList2* inCommandList)
+void SetupBindings(ID3D12GraphicsCommandList2& inCommandList)
 {
 	// TODO: This is whack
-	auto& descriptor_heap = g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT)->GetDescriptorHeap();
+	auto& descriptor_heap = g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT).GetDescriptorHeap();
 	uint32 descriptor_index = descriptor_heap.Allocate();
-	g_RenderingDevice.GetD3DDevice()->CopyDescriptorsSimple(1, descriptor_heap.GetCPUHandle(descriptor_index), m_DummyTexture->GetCPUHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
+	g_RenderingDevice.GetD3DDevice().CopyDescriptorsSimple(1, descriptor_heap.GetCPUHandle(descriptor_index), m_DummyTexture->GetCPUHandle(), D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV);
 
 	// Set slot 0 of our root signature to point to our descriptor heap with the texture SRV
-	inCommandList->SetGraphicsRootDescriptorTable(0, descriptor_heap.GetGPUHandle(descriptor_index));
+	inCommandList.SetGraphicsRootDescriptorTable(0, descriptor_heap.GetGPUHandle(descriptor_index));
 }
 
-void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
+void RenderGeometry(ID3D12GraphicsCommandList2& inCommandList)
 {
 	ConstantBuffers::DefaultConstantBuffer constant_buffer;
 	// We absolutely need to transpose from Row Major (mathfu) to Colum Major (HLSL)
@@ -255,7 +255,7 @@ void RenderGeometry(ID3D12GraphicsCommandList2* inCommandList)
 	}
 }
 
-void RenderTransparent(ID3D12GraphicsCommandList2* inCommandList)
+void RenderTransparent(ID3D12GraphicsCommandList2& inCommandList)
 {
 	// TODO: Just figured out that updating constant buffers this way does not work. Only the last map/unmap is taken into account for the whole pass...
 	//ConstantBuffers::DefaultConstantBuffer constant_buffer;
@@ -275,26 +275,26 @@ void RenderTransparent(ID3D12GraphicsCommandList2* inCommandList)
 	}
 }
 
-void CopyToBackBuffer(ID3D12GraphicsCommandList2* inCommandList)
+void CopyToBackBuffer(ID3D12GraphicsCommandList2& inCommandList)
 {
-	auto* swap_chain = g_RenderingDevice.GetSwapChain();
+	auto& swap_chain = g_RenderingDevice.GetSwapChain();
 
 	// Clear will trigger a resource transition
-	swap_chain->ClearBackBuffer(inCommandList);
+	swap_chain.ClearBackBuffer(inCommandList);
 	
-	swap_chain->SetRenderTarget(inCommandList);
+	swap_chain.SetRenderTarget(inCommandList);
 
-	DrawUtils::DrawFullScreenTriangle(inCommandList, m_GBuffer->GetRenderTarget(0));
+	DrawUtils::DrawFullScreenTriangle(inCommandList, *m_GBuffer->GetRenderTarget(0));
 }
 
 void OnRender()
 {
-	auto* command_queue		= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
-	auto* command_list		= command_queue->GetCommandList();
+	auto& command_queue		= g_RenderingDevice.GetCommandQueue(D3D12_COMMAND_LIST_TYPE_DIRECT);
+	auto& command_list		= command_queue.GetCommandList();
 
 	// Set the descriptor heap containing all textures
-	ID3D12DescriptorHeap* heaps[] = { command_queue->GetDescriptorHeap().GetD3DDescriptorHeap() };
-	command_list->SetDescriptorHeaps(1, heaps);
+	ID3D12DescriptorHeap* heaps[] = { &command_queue.GetDescriptorHeap().GetD3DDescriptorHeap() };
+	command_list.SetDescriptorHeaps(1, heaps);
 
 	// Clear the GBuffer targets.
 	m_GBuffer->ClearDepthBuffer(command_list);

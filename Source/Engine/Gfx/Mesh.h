@@ -6,7 +6,7 @@ class Mesh final
 {
 public:
 	void Init(
-		ID3D12GraphicsCommandList2* inCommandList,
+		ID3D12GraphicsCommandList2& inCommandList,
 		D3D_PRIMITIVE_TOPOLOGY inPrimitiveTopology,
 		void* inVertexBuffer, int32 inVertexBufferSize, int32 inStride,
 		void* inIndexBuffer = nullptr, int32 inIndexBufferSize = 0);
@@ -15,7 +15,7 @@ public:
 
 	void	SetResourceName(const std::string& inName);
 
-	void			Set(ID3D12GraphicsCommandList2* inCommandList) const;
+	void			Set(ID3D12GraphicsCommandList2& inCommandList) const;
 	inline uint32	GetNumIndices() const			{ return m_NumIndices; }
 
 private:

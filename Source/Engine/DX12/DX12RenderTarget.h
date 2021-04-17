@@ -18,11 +18,11 @@ public:
 		Vec4 inClearValue = Vec4(0.0f));
 
 	void InitFromResource(
-		ID3D12Resource* inResource,
+		ID3D12Resource& inResource,
 		DXGI_FORMAT inFormat = DXGI_FORMAT_UNKNOWN,
 		Vec4 inClearValue = Vec4(0.0f));
 
-	void ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
+	void ClearBuffer(ID3D12GraphicsCommandList2& inCommandList) const;
 
 	inline D3D12_CPU_DESCRIPTOR_HANDLE		GetCPUDescriptorHandle() const	{ return m_RTVDescriptorHandle; }
 	inline DXGI_FORMAT						GetFormat() const				{ return m_Format; }
@@ -51,7 +51,7 @@ public:
 		float inClearValue = 1.0f, uint8 inStencilClearValue = 0,
 		DXGI_FORMAT inDepthFormat = DXGI_FORMAT_D24_UNORM_S8_UINT);
 
-	void ClearBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
+	void ClearBuffer(ID3D12GraphicsCommandList2& inCommandList) const;
 
 	D3D12_CPU_DESCRIPTOR_HANDLE GetCPUDescriptorHandle() const		{ return m_DSVDescriptorHandle; }
 

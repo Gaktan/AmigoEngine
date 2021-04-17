@@ -10,7 +10,7 @@ class TextureLoader final
 {
 public:
 	void			LoadFromFile(const std::string& inFile);
-	DX12Texture*	CreateTexture(ID3D12GraphicsCommandList2* inCommandList);
+	DX12Texture*	CreateTexture(ID3D12GraphicsCommandList2& inCommandList);
 
 public:
 	static void		Init();

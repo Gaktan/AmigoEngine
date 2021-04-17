@@ -13,10 +13,10 @@ private:
 
 public:
 	void UpdateRenderTargetViews(uint32 inClientWidth, uint32 inClientHeight, bool inFirstCall = false);
-	void ClearBackBuffer(ID3D12GraphicsCommandList2* inCommandList) const;
-	void Present(ID3D12GraphicsCommandList2* commandList, DX12CommandQueue* commandQueue);
+	void ClearBackBuffer(ID3D12GraphicsCommandList2& inCommandList) const;
+	void Present(ID3D12GraphicsCommandList2& commandList, DX12CommandQueue& commandQueue);
 
-	void SetRenderTarget(ID3D12GraphicsCommandList2* inCommandList);
+	void SetRenderTarget(ID3D12GraphicsCommandList2& inCommandList);
 
 private:
 	enum

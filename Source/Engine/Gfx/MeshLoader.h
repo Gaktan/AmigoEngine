@@ -69,8 +69,8 @@ class MeshLoader final
 {
 public:
 	void	LoadFromFile(const std::string& inFile);
-	void	Finalize(ID3D12GraphicsCommandList2* inCommandList,
-					 const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& outBuckets);
+	void	Finalize(ID3D12GraphicsCommandList2& inCommandList,
+					 const std::map<std::string, ShaderObject*>& inShaderObjects, RenderBuckets& ioBuckets);
 
 private:
 	void	ProcessLine(const std::string& inLine);

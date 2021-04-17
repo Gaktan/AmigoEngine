@@ -13,9 +13,9 @@ DX12DescriptorHeap::DX12DescriptorHeap(
 	desc.Type			= inHeapType;
 	desc.NodeMask		= 0;
 	desc.Flags			= inFlags;
-	ThrowIfFailed(g_RenderingDevice.GetD3DDevice()->CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_D3DDescriptorHeap)));
+	ThrowIfFailed(g_RenderingDevice.GetD3DDevice().CreateDescriptorHeap(&desc, IID_PPV_ARGS(&m_D3DDescriptorHeap)));
 
-	m_IncrementSize	= g_RenderingDevice.GetD3DDevice()->GetDescriptorHandleIncrementSize(inHeapType);
+	m_IncrementSize	= g_RenderingDevice.GetD3DDevice().GetDescriptorHandleIncrementSize(inHeapType);
 	m_CPUHandle		= m_D3DDescriptorHeap->GetCPUDescriptorHandleForHeapStart();
 	m_GPUHandle		= m_D3DDescriptorHeap->GetGPUDescriptorHandleForHeapStart();
 }
